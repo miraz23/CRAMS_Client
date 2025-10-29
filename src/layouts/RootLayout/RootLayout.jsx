@@ -1,5 +1,6 @@
 import React from "react";
 import Navbar from "../../Components/shared/Navbar/Navbar.jsx";
+import Home from "../../pages/Home/Home.jsx";
 import { Outlet, useLocation } from "react-router-dom";
 
 const RootLayout = () => {
@@ -11,6 +12,7 @@ const RootLayout = () => {
   return (
     <div>
       {!shouldHideNavbar && <Navbar />}
+      {/* {<Home />} */}
       <Outlet />
     </div>
   );
