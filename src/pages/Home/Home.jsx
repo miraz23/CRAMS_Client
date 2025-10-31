@@ -1,6 +1,15 @@
 import React from "react";
 import Navbar from "../../Components/shared/Navbar/Navbar";
 import caplogo from "../../assets/CAP.png";
+import {
+  FiClock,
+  FiCheckCircle,
+  FiCalendar,
+  FiUsers,
+  FiBell,
+  FiCircle,
+} from "react-icons/fi";
+import { LuGraduationCap } from "react-icons/lu";
 function Home() {
   return (
     <>
@@ -50,7 +59,7 @@ function Home() {
                 </div>
                 <div>
                   {/* icon */}
-                  <i class=" fa-circle-check"></i>
+                  <FiCheckCircle className="h-6 w-6 text-green-500" />
                 </div>
               </div>
               {/* ------ */}
@@ -61,7 +70,10 @@ function Home() {
                   <p className="text-xl font-bold">CSE-3641</p>
                   <p className="text-gray-500 text-lg">Software Engineering</p>
                 </div>
-                <div>{/* icon */}</div>
+                <div>
+                  {/* icon */}
+                  <FiCheckCircle className="h-6 w-6 text-green-500" />
+                </div>
               </div>
               {/* ------- */}
               <div className=" p-3 mb-4 rounded-lg flex justify-between items-center bg-[#EDF2F8]">
@@ -71,7 +83,10 @@ function Home() {
                   <p className="text-xl font-bold">CSE-3631</p>
                   <p className="text-gray-500 text-lg">Database Systems</p>
                 </div>
-                <div>{/* icon */}</div>
+                <div>
+                  {/* icon */}
+                  <FiClock className="w-6 h-6 text-gray-400" />
+                </div>
               </div>
               {/* ----------- */}
             </div>
@@ -91,7 +106,7 @@ function Home() {
           </div>
           <div className="grid grid-cols-3 gap-8 px-18 mb-20">
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
-              {/* icon */}
+              <FiCalendar className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">
                 Real-time conflict Detection
               </h1>
@@ -103,6 +118,7 @@ function Home() {
             {/* -------- */}
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               {/* icon */}
+              <FiUsers className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">Streamlined Advisor Review</h1>
               <p className="text-gray-500 mt-2">
                 Efficient approval workflows with feedback mechanisms for better
@@ -112,6 +128,7 @@ function Home() {
             {/* ================ */}
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               {/* icon */}
+              <FiCheckCircle className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">
                 Seat Allocation & Waitlisting
               </h1>
@@ -123,6 +140,7 @@ function Home() {
             {/* --------- */}
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               {/* icon */}
+              <FiBell className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">Smart Notifications</h1>
               <p className="text-gray-500 mt-2">
                 Email and SMS updates for approvals, changes, and important
@@ -132,6 +150,7 @@ function Home() {
             {/* ------------ */}
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               {/* icon */}
+              <LuGraduationCap className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">Academic planning Tools</h1>
               <p className="text-gray-500 mt-2">
                 Integrated tools to help students plan their academic journey
@@ -141,6 +160,7 @@ function Home() {
             {/* --------- */}
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               {/* icon */}
+              <FiClock className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">Real-time Availability</h1>
               <p className="text-gray-500 mt-2">
                 Live course availability updates to help you make informed
