@@ -5,13 +5,12 @@ import Register from "../pages/Register/Register.jsx";
 import Home from "../pages/Home/Home.jsx";
 import DashboardLayout from "../layouts/DashboardLayout/DashboardLayout.jsx";
 import PrivateRoutes from "../routes/PrivateRoutes/PrivateRoutes.jsx";
-
-import AdminDashboard from "../pages/Dashboard/Admin/Dashboard/AdminDasboard.jsx";
-import CourseManagement from "../pages/Dashboard/Admin/CourseManagement/CourseManagement.jsx";
-import SectionManagement from "../pages/Dashboard/Admin/SectionManagement/SectionManagement.jsx";
-import UserManagement from "../pages/Dashboard/Admin/UserManagement/UserManagement.jsx";
-import SystemSettings from "../pages/Dashboard/Admin/SystemSettings/SystemSettings.jsx";
-import Profile from "../pages/Dashboard/Shared/Profile.jsx";
+import Dashboard from "../pages/Dashboard/Dashboard.jsx";
+// Student Pages
+import StdDashboard from "../pages/Dashboard/Student/StdDashboard";
+import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
+import MySchedule from "../pages/Dashboard/Student/MySchedule";
+import RegistrationStatus from "../pages/Dashboard/Student/Registrationstatus";
 
 export const router = createBrowserRouter([
   {
@@ -31,12 +30,40 @@ export const router = createBrowserRouter([
       </PrivateRoutes>
     ),
     children: [
-      { index: true, element: <AdminDashboard /> },
-      { path: "course-management", element: <CourseManagement /> },
-      { path: "section-management", element: <SectionManagement /> },
-      { path: "user-management", element: <UserManagement /> },
-      { path: "system-settings", element: <SystemSettings /> },
-      {path: "profile",element: <Profile/>}
+      {
+        index: true,
+        element: (
+          <PrivateRoutes>
+            <Dashboard></Dashboard>
+          </PrivateRoutes>
+        ),
+      },
+    ],
+  },
+  {
+    path: "/student/dashboard",
+    element: (
+      <PrivateRoutes allowedRoles={["student"]}>
+        <DashboardLayout />
+      </PrivateRoutes>
+    ),
+    children: [
+      {
+        index: true,
+        element: <StdDashboard />, // Default dashboard page
+      },
+      {
+        path: "courseselection",
+        element: <CourseSelection />,
+      },
+      {
+        path: "myschedule",
+        element: <MySchedule />,
+      },
+      {
+        path: "registrationstatus",
+        element: <RegistrationStatus />,
+      },
     ],
   },
 ]);
