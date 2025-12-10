@@ -1,110 +1,140 @@
 // import React, { useState } from "react";
 // import { createUserWithEmailAndPassword } from "firebase/auth";
 // import { auth } from "../../service/firebase.config.js";
-// import { useNavigate } from "react-router-dom";
+// import { useNavigate, Link } from "react-router-dom";
+// import Swal from "sweetalert2";
 
 // const Register = () => {
-//   // State for form fields
 //   const [fullName, setFullName] = useState("");
 //   const [studentId, setStudentId] = useState("");
 //   const [email, setEmail] = useState("");
 //   const [password, setPassword] = useState("");
+//   const [role, setRole] = useState("Student");
 //   const navigate = useNavigate();
+//   const primaryBlue = "rgb(19, 102, 194)";
 
-//   // Handle registration
 //   const handleRegister = async (e) => {
 //     e.preventDefault();
 //     try {
 //       await createUserWithEmailAndPassword(auth, email, password);
-//       alert("Registration successful!");
+
+//       Swal.fire({
+//         icon: "success",
+//         title: `Registration successful as ${role}!`,
+//         showConfirmButton: false,
+//         timer: 1500,
+//       });
+
 //       navigate("/login");
 //     } catch (error) {
-//       console.error(error.message);
-//       alert(error.message);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Registration Failed",
+//         text: error.message,
+//       });
 //     }
 //   };
 
 //   return (
-//     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-//       <div className="w-full max-w-md bg-white shadow-lg rounded-lg border border-gray-200 p-6">
-//         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-//           Student Registration
-//         </h2>
+//     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+//       <div className="w-full max-w-lg bg-white shadow-xl rounded-lg p-8">
+
+//         <div className="text-center mb-6">
+//           <h2 className="text-2xl font-bold text-gray-800">CRAMS Account Registration</h2>
+//           <p className="text-sm text-gray-500">Create your account for Course Registration & Advising.</p>
+//         </div>
+
+//         <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
+//           {["Student", "Advisor", "Admin"].map((r) => (
+//             <button
+//               key={r}
+//               type="button"
+//               className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
+//                 role === r
+//                   ? "bg-white shadow-sm text-gray-800"
+//                   : "text-gray-500 hover:bg-gray-200"
+//               }`}
+//               onClick={() => setRole(r)}
+//             >
+//               <i className={`mr-1 ${
+//                 r === "Student" ? "fas fa-user" :
+//                 r === "Advisor" ? "fas fa-user-tie" :
+//                 "fas fa-user-shield"
+//               }`}></i>
+//               {r}
+//             </button>
+//           ))}
+//         </div>
 
 //         <form onSubmit={handleRegister} className="space-y-4">
-          
+
 //           <div>
-//             <label className="block text-gray-700 text-sm font-medium mb-1">
-//               Full Name
-//             </label>
+//             <label className="block text-gray-700 text-sm font-medium mb-1">Full Name</label>
 //             <input
 //               type="text"
 //               placeholder="Enter your full name"
 //               value={fullName}
 //               onChange={(e) => setFullName(e.target.value)}
-//               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+//               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
 //               required
 //             />
 //           </div>
 
-        
 //           <div>
-//             <label className="block text-gray-700 text-sm font-medium mb-1">
-//               Student ID
-//             </label>
+//             <label className="block text-gray-700 text-sm font-medium mb-1">Student ID</label>
 //             <input
 //               type="text"
-//               placeholder="Enter Your Student ID"
+//               placeholder="e.g., C231261"
 //               pattern="[A-Za-z][0-9]{6}"
-//               title="Example: C231261 (CSE)"
+//               title="Example: C231261 (Letter + 6 digits)"
 //               value={studentId}
 //               onChange={(e) => setStudentId(e.target.value)}
-//               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+//               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
 //               required
 //             />
 //           </div>
 
-        
 //           <div>
-//             <label className="block text-gray-700 text-sm font-medium mb-1">
-//               University Email
-//             </label>
+//             <label className="block text-gray-700 text-sm font-medium mb-1">University Email</label>
 //             <input
 //               type="email"
-//               placeholder="example@ugrad.iiuc.ac.bd"
-//               pattern="[a-zA-Z0-9._%+-]+@ugrad\.iiuc\.ac\.bd"
-//               title="Use your IIUC email (e.g., id@ugrad.iiuc.ac.bd)"
+//               placeholder="id@ugrad.university.edu"
 //               value={email}
 //               onChange={(e) => setEmail(e.target.value)}
-//               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+//               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
 //               required
 //             />
 //           </div>
 
-          
 //           <div>
-//             <label className="block text-gray-700 text-sm font-medium mb-1">
-//               Password
-//             </label>
+//             <label className="block text-gray-700 text-sm font-medium mb-1">Password</label>
 //             <input
 //               type="password"
-//               placeholder="Enter your password"
+//               placeholder="Min 6 characters"
 //               minLength={6}
 //               value={password}
 //               onChange={(e) => setPassword(e.target.value)}
-//               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+//               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
 //               required
 //             />
 //           </div>
 
-          
 //           <button
 //             type="submit"
-//             className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition cursor-pointer"
+//             style={{ backgroundColor: primaryBlue }}
+//             className="w-full text-white py-2 rounded-md font-semibold hover:opacity-90 transition"
 //           >
 //             Register
 //           </button>
 //         </form>
+
+//         <div className="text-center mt-4 text-sm">
+//           Already have an account?{" "}
+//           <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+//             Log In
+//           </Link>
+//         </div>
+
 //       </div>
 //     </div>
 //   );
@@ -113,156 +143,210 @@
 // export default Register;
 
 
-import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../service/firebase.config.js";
-import { useNavigate, Link } from "react-router-dom";
-import Swal from "sweetalert2";
+// src/pages/Register.jsx
+import React, { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../service/firebase.config.js';
+import Swal from 'sweetalert2';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
-  // State for form fields
-  const [fullName, setFullName] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  // NEW: State for selected role, defaulting to Student
-  const [role, setRole] = useState("Student"); 
-  const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  // Tailwind CSS class for the primary blue color (to match the CRAMS login)
-  const primaryBlue = "rgb(19, 102, 194)"; 
+  const [fullName, setFullName] = useState('');
+  const [studentId, setStudentId] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('Student');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Handle registration
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
+  const primaryBlue = 'rgb(19, 102, 194)';
 
-      console.log(`Attempting to register new user as: ${role}`); 
-      
-      Swal.fire({
-        icon: "success",
-        title: `Registration successful as ${role}!`,
-        showConfirmButton: false,
-        timer: 1500
-      });
-      navigate("/login");
-    } catch (error) {
-      console.error(error.message);
-      alert(error.message); 
-    }
-  };
+  // ---------- VALIDATION ----------
+  const isValidEmail = (e) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e);
+  const isIIUCEmail = (e) => e.toLowerCase().endsWith('@ugrad.iiuc.ac.bd');
+  const isValidStudentId = (id) => /^[A-Z][0-9]{6}$/.test(id);
 
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
-      <div className="w-full max-w-lg bg-white shadow-xl rounded-lg border border-gray-100 p-8">
-        
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            CRAMS Account Registration
-          </h2>
-          <p className="text-sm text-gray-500">Create your account for Course Registration & Advising.</p>
-        </div>
+  // ---------- SUBMIT ----------
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        {/* Role Selection Tabs (Copied from Login.jsx for consistency) */}
-        <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
-          {["Student", "Advisor", "Admin"].map((r) => (
-            <button
-              key={r}
-              type="button" // Important: use type="button" to prevent form submission
-              className={`flex-1 flex items-center justify-center space-x-1 py-2 rounded-md text-sm font-medium transition ${
-                role === r
-                  ? "bg-white shadow-sm text-gray-800"
-                  : "text-gray-500 hover:bg-gray-200"
-              }`}
-              onClick={() => setRole(r)}
-            >
-              {/* Icons: User, User-Group, Shield-Check (placeholders) */}
-              <i className={`mr-1 ${r === "Student" ? 'fas fa-user' : r === 'Advisor' ? 'fas fa-user-tie' : 'fas fa-user-shield'}`}></i>
-              <span>{r}</span>
-            </button>
-          ))}
-        </div>
+    // 1. Email
+    if (!isValidEmail(email)) {
+      Swal.fire({ icon: 'error', title: 'Invalid Email', text: 'Enter a proper email address.' });
+      setIsLoading(false);
+      return;
+    }
+    if (!isIIUCEmail(email)) {
+      Swal.fire({ icon: 'error', title: 'Wrong Domain', text: 'Use *@ugrad.iiuc.ac.bd' });
+      setIsLoading(false);
+      return;
+    }
 
-        {/* Registration Form */}
-        <form onSubmit={handleRegister} className="space-y-4">
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Full Name</label>
-            <input
-              type="text"
-              placeholder="Enter your full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
+    // 2. Student ID (only for Student)
+    if (role === 'Student' && !isValidStudentId(studentId)) {
+      Swal.fire({ icon: 'error', title: 'Invalid Student ID', text: 'Format: C231272' });
+      setIsLoading(false);
+      return;
+    }
 
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Student ID</label>
-            <input
-              type="text"
-              placeholder="Enter Your Student ID (e.g., C231261)"
-              pattern="[A-Za-z][0-9]{6}"
-              title="Example: C231261 (Dept letter followed by 6 digits)"
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
+    try {
+      // ONLY AUTH – no Firestore getDoc / setDoc
+      console.log('Creating Auth user...');
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Auth user created:', cred.user.uid);
 
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">University Email</label>
-            <input
-              type="email"
-              placeholder="id@ugrad.university.edu"
-              title="Use your official university email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
+      // OPTIONAL: store profile data in localStorage for later use
+      const profile = {
+        uid: cred.user.uid,
+        fullName,
+        studentId: role === 'Student' ? studentId : '',
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('tempUserProfile', JSON.stringify(profile));
 
-          
-          <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password (min 6 characters)"
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              required
-            />
-          </div>
+      // Success
+      Swal.fire({
+        icon: 'success',
+        title: `Registered as ${role}!`,
+        text: 'You can now log in.',
+        timer: 2000,
+        showConfirmButton: false,
+      });
 
-          
-          <button
-            type="submit"
-            style={{ backgroundColor: primaryBlue }}
-            className="w-full text-white py-2 rounded-md font-semibold hover:opacity-90 transition cursor-pointer"
-          >
-            Register
-          </button>
-        </form>
-        
-        {/* Link back to login */}
-        <div className="text-center mt-4 text-sm">
-          Already have an account?{" "}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Log In
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+      // Redirect to login (or directly to dashboard)
+      navigate('/login');
+    } catch (err) {
+      console.error('REG ERROR:', err.code, err.message);
+      let msg = err.message;
+      if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered.';
+      else if (err.code === 'auth/weak-password') msg = 'Password must be ≥ 6 characters.';
+      else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+
+      Swal.fire({ icon: 'error', title: 'Registration Failed', text: msg });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+      <div className="w-full max-w-lg bg-white shadow-xl rounded-lg p-8">
+
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">CRAMS Account Registration</h2>
+          <p className="text-sm text-gray-500">Create your account for Course Registration & Advising.</p>
+        </div>
+
+        {/* Role Buttons */}
+        <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
+          {['Student', 'Advisor', 'Admin'].map((r) => (
+            <button
+              key={r}
+              type="button"
+              disabled={isLoading}
+              onClick={() => setRole(r)}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
+                role === r ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              <i
+                className={`mr-1 ${
+                  r === 'Student' ? 'fas fa-user' :
+                  r === 'Advisor' ? 'fas fa-user-tie' :
+                  'fas fa-user-shield'
+                }`}
+              ></i>
+              {r}
+            </button>
+          ))}
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleRegister} className="space-y-4">
+
+          {/* Full Name */}
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">Full Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Farez"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Student ID */}
+          {role === 'Student' && (
+            <div>
+              <label className="block text-gray-700 text-sm font-medium mb-1">Student ID</label>
+              <input
+                type="text"
+                placeholder="e.g. C231272"
+                pattern="[A-Z][0-9]{6}"
+                title="One uppercase letter + 6 digits"
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                className="uppercase w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                required
+              />
+            </div>
+          )}
+
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">University Email</label>
+            <input
+              type="email"
+              placeholder="c231272@ugrad.iiuc.ac.bd"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-gray-700 text-sm font-medium mb-1">Password</label>
+            <input
+              type="password"
+              placeholder="Min 6 characters"
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            style={{ backgroundColor: primaryBlue }}
+            className="w-full text-white py-2 rounded-md font-semibold hover:opacity-90 transition"
+          >
+            {isLoading ? 'Registering...' : `Register as ${role}`}
+          </button>
+        </form>
+
+        {/* Login Link */}
+        <div className="text-center mt-4 text-sm">
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            Log In
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Register;
