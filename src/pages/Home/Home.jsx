@@ -15,51 +15,55 @@ function Home() {
     <>
       {/* <Navbar></Navbar> */}
       <section>
-        <div className="h-[90vh] flex justify-between items-center px-18 bg-gray-50">
-          <div className="flex flex-col w-1/2">
-            <div className="text-blue-600 font-semibold text-lg bg-blue-100 w-fit px-4 py-1 rounded-full mb-4">
+        <div className="h-[90vh] flex   sm:justify-center sm:items-center  lg:justify-between md:justify-between lg:items-center lg:px-18 md:px-10 bg-gray-50">
+          <div className="lg:flex flex-col w-1/2">
+            <div className="text-blue-600 lg:font-semibold text-center bg-blue-100 lg:w-fit lg:px-4 lg:py-1 sm:w-3xs sm:px-2 sm:py-1 sm:text-sm rounded-full lg:mb-4">
               Streamline Your Academic Journey
             </div>
-            <h1 className="text-4xl font-bold pt-3 mb-4 leading-tight">
+            <h1 className="lg:text-4xl md:text-2xl font-bold pt-3 mb-4 leading-tight">
               Course Registration <br />
               Made Simple <br />
               and Efficient
             </h1>
-            <p className="text-gray-500 text-lg mb-6 w-[85%]">
+            <p className="text-gray-500 lg:text-lg mb-6 lg:w-[85%] md:w-[92%]">
               CRAMS eliminates registration headaches with real-time conflict
               detection, automated advisor approvals, and integlligent course
               planning tools designed for mordern universities.
             </p>
             <div className="flex gap-4">
-              <button className=" px-3 py-2 text-lg font-semibold rounded-lg bg-blue-700 text-white hover:bg-blue-600 cursor-pointer">
+              <button className=" lg:px-3 lg:py-2 lg:text-lg lg:font-semibold md:px-2 md:py-2 md:text-base md:font-medium rounded-lg bg-blue-700 text-white hover:bg-blue-600 cursor-pointer">
                 Start Registration
               </button>
-              <button className="px-3 py-2 font-medium border-2 border-gray-400 rounded-lg hover:bg-gray-100 cursor-pointer">
+              <button className="lg:px-3 lg:py-2 md:px-2 md:py-2 lg:font-medium border-2 border-gray-400 rounded-lg hover:bg-gray-100 cursor-pointer">
                 Learn More
               </button>
             </div>
           </div>
           {/* right part */}
-          <div className=" w-1/2 h-auto rounded-lg shadow-lg p-6 bg-white">
+          <div className=" lg:w-1/2 md:w-1/2 w-h-auto rounded-lg shadow-lg p-6 bg-white">
             <div className="flex justify-between">
-              <h2 className="text-xl font-bold">Course Selection</h2>
-              <p className="text-green-500 font-semibold">Spring 2025</p>
+              <h2 className="lg:text-xl md:text-lg font-bold">
+                Course Selection
+              </h2>
+              <p className="text-green-500 font-semibold md:text-sm">
+                Spring 2025
+              </p>
             </div>
             <hr className="w-full my-4 text-gray-300" />
             <div>
               {/* outer div for course name */}
-              <div className=" p-3 mb-4 rounded-lg flex justify-between items-center  bg-[#EDF2F8]">
+              <div className=" lg:p-3 md:p-2 mb-4 rounded-lg flex justify-between items-center  bg-[#EDF2F8]">
                 {/* inner course name div */}
                 <div>
                   {/* course name */}
-                  <p className="text-xl font-bold">CSE-3642</p>
-                  <p className="text-gray-500 text-lg">
+                  <p className="lg:text-xl md:text-lg font-bold">CSE-3642</p>
+                  <p className="text-gray-500 lg:text-lg ">
                     Software Engineering Lab
                   </p>
                 </div>
                 <div>
                   {/* icon */}
-                  <FiCheckCircle className="h-6 w-6 text-green-500" />
+                  <FiCheckCircle className="lg:h-6 lg:w-6 md:h-5 md:w-5 text-green-500" />
                 </div>
               </div>
               {/* ------ */}
@@ -67,12 +71,14 @@ function Home() {
                 {/* inner course name div */}
                 <div>
                   {/* course name */}
-                  <p className="text-xl font-bold">CSE-3641</p>
-                  <p className="text-gray-500 text-lg">Software Engineering</p>
+                  <p className="lg:text-xl md:text-lg font-bold">CSE-3641</p>
+                  <p className="text-gray-500 lg:text-lg">
+                    Software Engineering
+                  </p>
                 </div>
                 <div>
                   {/* icon */}
-                  <FiCheckCircle className="h-6 w-6 text-green-500" />
+                  <FiCheckCircle className="lg:h-6 lg:w-6 md:h-5 md:w-5 text-green-500" />
                 </div>
               </div>
               {/* ------- */}
@@ -80,12 +86,12 @@ function Home() {
                 {/* inner course name div */}
                 <div>
                   {/* course name */}
-                  <p className="text-xl font-bold">CSE-3631</p>
-                  <p className="text-gray-500 text-lg">Database Systems</p>
+                  <p className="lg:text-xl md:text-lg font-bold">CSE-3631</p>
+                  <p className="text-gray-500 lg:text-lg">Database Systems</p>
                 </div>
                 <div>
                   {/* icon */}
-                  <FiClock className="w-6 h-6 text-gray-400" />
+                  <FiClock className="lg:w-6 lg:h-6 md:h-5 md:w-5 text-gray-400" />
                 </div>
               </div>
               {/* ----------- */}
@@ -95,16 +101,16 @@ function Home() {
       </section>
       <section>
         <div className="mb-12">
-          <div className="mt-12 text-center mb-12">
+          <div className="lg:mt-12 md:mt-8 text-center mb-12">
             <h1 className="text-2xl font-bold text-center">
               Everything You Need
             </h1>
-            <p className="text-gray-500 mt-2 w-2/5 mx-auto">
+            <p className="text-gray-500 mt-2 lg:w-2/5 md:w-2/3 mx-auto">
               Comprehensive tools for students, advisors, and administrators to
               manage course registration efficiently
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-8 px-18 mb-20">
+          <div className="grid lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-8 px-18 mb-20">
             <div className="mb-8 border-2 border-gray-300 p-6 rounded-lg hover:shadow-lg transition-shadow">
               <FiCalendar className="h-7 w-7 text-blue-500 font-bold mb-2" />
               <h1 className="text-xl font-bold">
@@ -173,14 +179,14 @@ function Home() {
       </section>
       <section>
         <div className="bg-blue-700 text-white text-center py-12 px-6 rounded-lg mx-18 mt-12 mb-20">
-          <h1 className="text-3xl font-bold mb-3">
+          <h1 className="lg:text-3xl md:text-2xl font-bold mb-3">
             Ready to Transform Your Registration Experience?
           </h1>
-          <p className="text-gray-300">
+          <p className="text-gray-300 md:text-medium ">
             Join thousands of students and faculty using CRAMS for seamless
             course registration.
           </p>
-          <button className="bg-white text-black font-bold py-2 px-4 rounded-lg mt-4">
+          <button className="bg-white text-black font-bold lg:py-2 lg:px-4 md:py-2 md:px-2 rounded-lg mt-4 cursor-pointer">
             Get Started Today
           </button>
         </div>
