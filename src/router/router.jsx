@@ -33,7 +33,7 @@ export const router = createBrowserRouter([
   {
     path: "/admin/dashboard",
     element: (
-      <PrivateRoutes allowedRoles={["admin"]}>
+      <PrivateRoutes allowedRoles={["admin", "super admin"]}>
         <DashboardLayout />
       </PrivateRoutes>
     ),

@@ -55,15 +55,17 @@ const AuthProvider = ({ children }) => {
 
             if (response.data.success) {
                 const userData = response.data.data || response.data.user || {};
+                const derivedRole = role === 'Admin' ? (userData.privilege || role) : role;
+                const normalizedRole = derivedRole.toLowerCase();
                 const normalizedUser = {
                     ...userData,
-                    role,
+                    role: normalizedRole,
                     email: userData.email || email,
                     name: userData.name || userData.studentId || userData.email || '',
                     studentId: userData.studentId,
                 };
                 setUser(normalizedUser);
-                localStorage.setItem('userRole', role);
+                localStorage.setItem('userRole', normalizedRole);
                 localStorage.setItem('studentUser', JSON.stringify(normalizedUser));
                 return { success: true, data: response.data };
             }

@@ -50,4 +50,15 @@ export const updateTeacher = (id, payload) =>
   adminClient.put(`/user-management/teachers/${id}`, payload);
 export const updateStaff = (id, payload) =>
   adminClient.put(`/user-management/staff/${id}`, payload);
+export const listAdmins = () => adminClient.get('/');
+export const deleteStudent = (id) =>
+  adminClient.delete(`/user-management/students/${id}`);
+export const deleteTeacher = (id) =>
+  adminClient.delete(`/user-management/teachers/${id}`);
+export const deleteStaff = (id) =>
+  adminClient.delete(`/user-management/staff/${id}`);
+export const updateAdmin = (id, payload) =>
+  adminClient.put(`/${id}`, payload);
+export const deleteAdmin = (id) =>
+  adminClient.delete(`/${id}`);
 
