@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
+import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 
 
 // --- Dummy Section Data ---
@@ -260,7 +261,10 @@ const SectionManagementDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="flex h-screen bg-gray-50">
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Section Management</h2>
         <button
@@ -310,6 +314,8 @@ const SectionManagementDashboard = () => {
         onConfirm={handleDeleteSection}
         section={deleteConfirm}
       />
+        </div>
+      </div>
     </div>
   );
 };

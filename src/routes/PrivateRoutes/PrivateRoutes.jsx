@@ -2,20 +2,33 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router';
 import Loader from '../../components/shared/Loader/Loader';
 import useAuth from '../../hooks/useAuth/useAuth.jsx';
+import useUserRole from '../../hooks/useUserRole/useUserRole';
 
-const PrivateRoutes = ({ children }) => {
+const PrivateRoutes = ({ children, allowedRoles }) => {
     const { user, loading } = useAuth();
+    const { role, isLoading } = useUserRole();
     const location = useLocation();
 
-    if (loading) {
+    if (loading || isLoading) {
         return <Loader></Loader>;
     }
 
-    if (user && user?.email) {
-        return children;
+    if (!user || !user?.email) {
+        return <Navigate to="/login" state={location.pathname}></Navigate>;
     }
 
-    return <Navigate to="/login" state={location.pathname}></Navigate>;
+    // If allowedRoles is specified, check if user's role is allowed
+    if (allowedRoles && allowedRoles.length > 0) {
+        // Normalize role to lowercase for case-insensitive comparison
+        const normalizedRole = role?.toLowerCase();
+        const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
+        
+        if (!normalizedRole || !normalizedAllowedRoles.includes(normalizedRole)) {
+            return <Navigate to="/forbidden" state={location.pathname}></Navigate>;
+        }
+    }
+
+    return children;
 };
 
 export default PrivateRoutes;

@@ -6,11 +6,18 @@ import Home from "../pages/Home/Home.jsx";
 import DashboardLayout from "../layouts/DashboardLayout/DashboardLayout.jsx";
 import PrivateRoutes from "../routes/PrivateRoutes/PrivateRoutes.jsx";
 import Dashboard from "../pages/Dashboard/Dashboard.jsx";
+import Forbidden from "../pages/Forbidden/Forbidden.jsx";
 // Student Pages
 import StdDashboard from "../pages/Dashboard/Student/StdDashboard";
 import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
 import MySchedule from "../pages/Dashboard/Student/MySchedule";
 import RegistrationStatus from "../pages/Dashboard/Student/Registrationstatus";
+// Admin Pages
+import AdminDashboard from "../pages/Dashboard/Admin/Dashboard/AdminDasboard";
+import CourseManagement from "../pages/Dashboard/Admin/CourseManagement/CourseManagement";
+import SectionManagement from "../pages/Dashboard/Admin/SectionManagement/SectionManagement";
+import UserManagement from "../pages/Dashboard/Admin/UserManagement/UserManagement";
+import SystemSettings from "../pages/Dashboard/Admin/SystemSettings/SystemSettings";
 
 export const router = createBrowserRouter([
   {
@@ -20,23 +27,36 @@ export const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
+      { path: "forbidden", element: <Forbidden /> },
     ],
   },
   {
     path: "/admin/dashboard",
     element: (
-      <PrivateRoutes>
+      <PrivateRoutes allowedRoles={["admin"]}>
         <DashboardLayout />
       </PrivateRoutes>
     ),
     children: [
       {
         index: true,
-        element: (
-          <PrivateRoutes>
-            <Dashboard></Dashboard>
-          </PrivateRoutes>
-        ),
+        element: <AdminDashboard />,
+      },
+      {
+        path: "coursemanagement",
+        element: <CourseManagement />,
+      },
+      {
+        path: "sectionmanagement",
+        element: <SectionManagement />,
+      },
+      {
+        path: "usermanagement",
+        element: <UserManagement />,
+      },
+      {
+        path: "systemsettings",
+        element: <SystemSettings />,
       },
     ],
   },

@@ -28,14 +28,18 @@ import { useState, useEffect } from 'react';
 import useAuth from '../useAuth/useAuth.jsx'; 
 
 const useUserRole = () => {
-    const role = "Admin"; 
-    
-    const isLoading = false; 
+    const [role, setRole] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Optional: Log to ensure it's working
-    // useEffect(() => {
-    //     console.log("MOCK ROLE HOOK: Returning Admin role.");
-    // }, []);
+    useEffect(() => {
+        // Read role from localStorage (set by Login page)
+        const storedRole = localStorage.getItem("userRole");
+        if (storedRole) {
+            // Normalize to lowercase for consistency
+            setRole(storedRole.toLowerCase());
+        }
+        setIsLoading(false);
+    }, []);
 
     return { role, isLoading };
 };

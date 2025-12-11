@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Search, Edit, Trash2, X } from "lucide-react";
+import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 
 // Initial Course Data structure
 const emptyCourse = {
@@ -178,7 +179,10 @@ const CourseManagement = () => {
     };
 
     return (
-        <div className="p-6 md:p-10 space-y-8 bg-gray-50 min-h-screen font-sans">
+        <div className="flex h-screen bg-gray-50">
+            <AdminSidebar />
+            <div className="flex-1 overflow-auto">
+                <div className="p-6 md:p-10 space-y-8 font-sans">
             {/* Header & Add Button */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                 <div>
@@ -343,6 +347,8 @@ const CourseManagement = () => {
                     </div>
                 </div>
             )}
+                </div>
+            </div>
         </div>
     );
 };

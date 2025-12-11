@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 
 
 // Stat Card (unchanged)
@@ -164,7 +165,10 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="flex h-screen bg-gray-50">
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
@@ -265,6 +269,8 @@ const UserManagement = () => {
           onSave={handleSave}
         />
       )}
+        </div>
+      </div>
     </div>
   );
 };

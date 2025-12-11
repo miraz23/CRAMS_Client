@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 
 // NOTE: You would typically pass the active page and user info via props/context.
 // For this standalone component, we'll hardcode some data and state.
@@ -85,15 +86,8 @@ const SystemSettings = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* 1. Sidebar/Navigation (Left Column) */}
-      
-
-      {/* 2. Main Content Area (Right Column) */}
+      <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        {/* Header/Top Bar */}
-       
-
-        {/* Content Body */}
         <div className="p-8">
           <h1 className="text-2xl font-semibold text-gray-900">System Settings</h1>
           <p className="text-gray-500 mb-6">Configure system-wide settings and preferences</p>
