@@ -71,9 +71,9 @@ const Login = () => {
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="text"
-            placeholder="Username or Email"
+            placeholder={role === "Student" ? "Student ID (e.g., C231272)" : "Email"}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(role === "Student" ? e.target.value.toUpperCase().trim() : e.target.value.trim())}
             className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             required
           />

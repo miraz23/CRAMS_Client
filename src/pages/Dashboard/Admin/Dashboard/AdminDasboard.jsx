@@ -4,11 +4,10 @@ import { FaUserSecret } from "react-icons/fa";
 import { FaCircleDot } from "react-icons/fa6";
 import { FiAlertCircle } from "react-icons/fi";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import { getDashboardData } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 
 const AdminDashboard = () => {
-  const axiosSecure = useAxiosSecure();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([
     {
@@ -46,13 +45,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch courses, user management overview, and sections in parallel
-      const [coursesRes, userOverviewRes, sectionsRes] = await Promise.all([
-        axiosSecure.get('/admin/courses'),
-        axiosSecure.get('/admin/user-management/overview'),
-        axiosSecure.get('/admin/sections'),
-      ]);
+      const { coursesRes, userOverviewRes, sectionsRes } = await getDashboardData();
 
       const courses = coursesRes.data.data || [];
       const userOverview = userOverviewRes.data.data || {};

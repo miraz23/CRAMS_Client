@@ -14,17 +14,12 @@ const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         try {
-            // Try to get user info from backend
-            // The backend will verify the JWT token from cookies
+            const storedUser = localStorage.getItem('studentUser');
             const role = localStorage.getItem('userRole');
-            if (role) {
-                // If we have a role, try to verify with backend
-                // For now, we'll set a basic user object
-                // You may want to add an endpoint to get current user details
-                setUser({
-                    role: role,
-                    // Add other user properties as needed
-                });
+            if (storedUser && role) {
+                setUser(JSON.parse(storedUser));
+            } else if (role) {
+                setUser({ role });
             }
         } catch (error) {
             console.error('Auth check failed:', error);
@@ -60,12 +55,16 @@ const AuthProvider = ({ children }) => {
 
             if (response.data.success) {
                 const userData = response.data.data || response.data.user || {};
-                setUser({
+                const normalizedUser = {
                     ...userData,
-                    role: role,
-                    email: email,
-                });
+                    role,
+                    email: userData.email || email,
+                    name: userData.name || userData.studentId || userData.email || '',
+                    studentId: userData.studentId,
+                };
+                setUser(normalizedUser);
                 localStorage.setItem('userRole', role);
+                localStorage.setItem('studentUser', JSON.stringify(normalizedUser));
                 return { success: true, data: response.data };
             }
         } catch (error) {
@@ -153,12 +152,14 @@ const AuthProvider = ({ children }) => {
 
             setUser(null);
             localStorage.removeItem('userRole');
+            localStorage.removeItem('studentUser');
             return { success: true };
         } catch (error) {
             console.error('Logout error:', error);
             // Clear local state even if API call fails
             setUser(null);
             localStorage.removeItem('userRole');
+            localStorage.removeItem('studentUser');
             throw error;
         } finally {
             setLoading(false);

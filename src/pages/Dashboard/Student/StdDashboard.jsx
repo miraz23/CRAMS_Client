@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -11,70 +11,75 @@ import {
   Calendar,
   FileText,
   Menu,
-  GraduationCap,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import caplogo from "../../../assets/CAP.png";
+import { fetchRegistrationStatus, fetchSchedule } from "../../../api/studentApi";
 
 export default function StdDashboard() {
-  const stats = [
-    {
-      label: "Registered Courses",
-      value: "4",
-      icon: BookOpen,
-      color: "text-blue-600",
-    },
-    {
-      label: "Pending Approval",
-      value: "2",
-      icon: Clock,
-      color: "text-gray-600",
-    },
-    {
-      label: "Total Credits",
-      value: "12",
-      icon: TrendingUp,
-      color: "text-green-600",
-    },
-    {
-      label: "Completed",
-      value: "2",
-      icon: CheckCircle,
-      color: "text-green-600",
-    },
-  ];
+  const navigate = useNavigate();
+  const [regSummary, setRegSummary] = useState({});
+  const [recentRegs, setRecentRegs] = useState([]);
+  const [scheduleSummary, setScheduleSummary] = useState({});
 
-  const recentActivity = [
-    {
-      course: "CSE-3642 Software Engineering Lab",
-      advisor: "Dr. Akib",
-      time: "2 hours ago",
-      status: "approved",
-    },
-    {
-      course: "CSE-3641 Software Engineering",
-      advisor: "Dr. Akib",
-      time: "3 hours ago",
-      status: "approved",
-    },
-    {
-      course: "CSE-3631 Database Systems",
-      advisor: "Dr. Rahman",
-      time: "1 day ago",
-      status: "pending",
-    },
-  ];
+  const loadData = async () => {
+    try {
+      const [statusData, scheduleData] = await Promise.all([
+        fetchRegistrationStatus(),
+        fetchSchedule(),
+      ]);
+      setRegSummary(statusData?.summary || {});
+      setRecentRegs((statusData?.registrations || []).slice(0, 3));
+      setScheduleSummary(scheduleData?.summary || {});
+    } catch (error) {
+      const message = error.response?.data?.message || "Unable to load dashboard data.";
+      Swal.fire({ icon: "error", title: "Error", text: message });
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      {
+        label: "Registered Courses",
+        value: regSummary.total ?? 0,
+        icon: BookOpen,
+        color: "text-blue-600",
+      },
+      {
+        label: "Pending Approval",
+        value: regSummary.pending ?? 0,
+        icon: Clock,
+        color: "text-gray-600",
+      },
+      {
+        label: "Total Credits",
+        value: regSummary.totalCredits ?? 0,
+        icon: TrendingUp,
+        color: "text-green-600",
+      },
+      {
+        label: "Approved",
+        value: regSummary.approved ?? 0,
+        icon: CheckCircle,
+        color: "text-green-600",
+      },
+    ],
+    [regSummary]
+  );
 
   const deadlines = [
     {
       title: "Course Registration Deadline",
-      date: "March 15, 2025",
-      days: "5d",
+      date: "Check portal notice",
+      days: scheduleSummary.daysWithClasses?.length
+        ? `${scheduleSummary.daysWithClasses.length} active days`
+        : "N/A",
     },
-    { title: "Add/Drop Period Ends", date: "March 20, 2025", days: "10d" },
-    { title: "Advisor Meeting", date: "March 10, 2025", days: "2d" },
   ];
-
-  const navigate = useNavigate();
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -85,11 +90,7 @@ export default function StdDashboard() {
             onClick={() => navigate("/")}
             className="flex items-center gap-2 mb-10 cursor-pointer"
           >
-            <div>
-              {/* <BookOpen className="w-6 h-6 text-white" /> */}
-              {/* <GraduationCap className="w-10 h-10 text-blue-600" /> */}
-              <img src={caplogo} alt="" className="w-14 h-14" />
-            </div>
+            <img src={caplogo} alt="" className="w-14 h-14" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">CRAMS</h1>
               <p className="text-xs text-gray-500">Student</p>
@@ -97,46 +98,31 @@ export default function StdDashboard() {
           </div>
 
           <nav className="space-y-1">
-            <a
-              href=""
-              className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg"
-            >
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg">
               <Grid className="w-5 h-5" />
               <span className="font-medium">Dashboard</span>
-            </a>
-            <a
-              href=""
-              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
+            </div>
+            <button
+              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg w-full text-left"
+              onClick={() => navigate("/student/dashboard/courseselection")}
             >
               <BookOpen className="w-5 h-5" />
-              <span
-                onClick={() => navigate("/student/dashboard/courseselection")}
-              >
-                Course Selection
-              </span>
-            </a>
-            <a
-              href=""
-              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
+              <span>Course Selection</span>
+            </button>
+            <button
+              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg w-full text-left"
+              onClick={() => navigate("/student/dashboard/myschedule")}
             >
               <Calendar className="w-5 h-5" />
-              <span onClick={() => navigate("/student/dashboard/myschedule")}>
-                My Schedule
-              </span>
-            </a>
-            <a
-              href=""
-              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg"
+              <span>My Schedule</span>
+            </button>
+            <button
+              className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg w-full text-left"
+              onClick={() => navigate("/student/dashboard/registrationstatus")}
             >
               <FileText className="w-5 h-5" />
-              <span
-                onClick={() =>
-                  navigate("/student/dashboard/registrationstatus")
-                }
-              >
-                Registration Status
-              </span>
-            </a>
+              <span>Registration Status</span>
+            </button>
           </nav>
         </div>
       </div>
@@ -156,22 +142,11 @@ export default function StdDashboard() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    Md. Mohiul Islam Miraz
-                  </p>
-                  <p className="text-xs text-gray-500">Student</p>
+                  <p className="text-sm font-medium text-gray-900">Student</p>
+                  <p className="text-xs text-gray-500">Dashboard</p>
                 </div>
-                {/* <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" /> */}
                 <button className="relative group p-2 flex items-center justify-center">
                   <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
-                  <span
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 
-                               bg-gray-800 text-white text-sm font-semibold py-1 px-2 rounded 
-                               opacity-0 group-hover:opacity-100 
-                               transition-opacity duration-200 whitespace-nowrap"
-                  >
-                    Logout
-                  </span>
                 </button>
               </div>
             </div>
@@ -181,12 +156,8 @@ export default function StdDashboard() {
         <div className="p-8">
           {/* Welcome Section */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, Mohiul
-            </h2>
-            <p className="text-gray-600">
-              Here's your academic overview for Spring 2025
-            </p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
+            <p className="text-gray-600">Overview synced from backend data.</p>
           </div>
 
           {/* Stats Cards */}
@@ -199,9 +170,7 @@ export default function StdDashboard() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-gray-500 text-sm mb-2">{stat.label}</p>
-                    <p className="text-4xl font-bold text-gray-900">
-                      {stat.value}
-                    </p>
+                    <p className="text-4xl font-bold text-gray-900">{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-lg bg-gray-50 ${stat.color}`}>
                     <stat.icon className="w-6 h-6" />
@@ -215,59 +184,55 @@ export default function StdDashboard() {
             {/* Recent Activity */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Recent Activity
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Your latest course registration updates
-                </p>
+                <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
+                <p className="text-sm text-gray-500">Latest course registration updates</p>
               </div>
 
               <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
+                {recentRegs.map((reg) => (
                   <div
-                    key={index}
+                    key={reg.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                   >
                     <div className="flex-1">
                       <h4 className="font-semibold text-gray-900 mb-1">
-                        {activity.course}
+                        {reg.course?.courseCode} • {reg.course?.courseName}
                       </h4>
                       <p className="text-sm text-gray-500">
-                        Advisor: {activity.advisor} • {activity.time}
+                        Status: {reg.status} • Semester: {reg.semester || "N/A"}
                       </p>
                     </div>
                     <div>
-                      {activity.status === "approved" ? (
+                      {reg.status === "approved" ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                           <CheckCircle className="w-4 h-4" />
                           approved
                         </span>
-                      ) : (
+                      ) : reg.status === "pending" ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
                           <Clock className="w-4 h-4" />
                           pending
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                          <Clock className="w-4 h-4" />
+                          {reg.status}
                         </span>
                       )}
                     </div>
                   </div>
                 ))}
+                {recentRegs.length === 0 && (
+                  <p className="text-gray-500">No recent activity.</p>
+                )}
               </div>
-
-              <button className="w-full mt-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium">
-                View All Activity
-              </button>
             </div>
 
             {/* Upcoming Deadlines */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Upcoming Deadlines
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Important dates to remember
-                </p>
+                <h3 className="text-lg font-bold text-gray-900">Schedule Summary</h3>
+                <p className="text-sm text-gray-500">Days with active classes</p>
               </div>
 
               <div className="space-y-4">
@@ -291,51 +256,26 @@ export default function StdDashboard() {
             </div>
           </div>
 
-          {/* Registration Progress */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-gray-900">
-                Registration Progress
-              </h3>
-              <p className="text-sm text-gray-500">
-                Track your course registration for Spring 2025
-              </p>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-900">
-                  12 of 15 credits registered
-                </span>
-                <span className="text-sm font-bold text-gray-900">80%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: "80%" }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-              <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>You need 3 more credits to reach full-time status</span>
-            </div>
-          </div>
-
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
-              Quick Actions
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+              <button
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                onClick={() => navigate("/student/dashboard/courseselection")}
+              >
                 Browse Courses
               </button>
-              <button className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+              <button
+                className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                onClick={() => navigate("/student/dashboard/myschedule")}
+              >
                 View Schedule
               </button>
-              <button className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+              <button
+                className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                onClick={() => navigate("/student/dashboard/registrationstatus")}
+              >
                 Check Status
               </button>
             </div>

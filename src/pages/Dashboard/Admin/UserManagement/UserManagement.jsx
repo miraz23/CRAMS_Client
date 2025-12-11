@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import {
+  getUserOverview,
+  listStudents,
+  listTeachers,
+  listStaff,
+  updateStudent,
+  updateTeacher,
+  updateStaff,
+} from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 
 // Stat Card Component
@@ -208,7 +216,6 @@ const EditModal = ({ user, userType, onClose, onSave }) => {
 
 // Main User Management Component
 const UserManagement = () => {
-  const axiosSecure = useAxiosSecure();
   const [activeTab, setActiveTab] = useState('Students');
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
@@ -223,7 +230,7 @@ const UserManagement = () => {
   });
 
   useEffect(() => {
-    fetchUserOverview();
+    fetchUserOverviewData();
   }, []);
 
   useEffect(() => {
@@ -236,9 +243,9 @@ const UserManagement = () => {
     }
   }, [activeTab]);
 
-  const fetchUserOverview = async () => {
+  const fetchUserOverviewData = async () => {
     try {
-      const response = await axiosSecure.get('/admin/user-management/overview');
+      const response = await getUserOverview();
       if (response.data.success) {
         const data = response.data.data;
         setStats({
@@ -255,7 +262,7 @@ const UserManagement = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axiosSecure.get('/admin/user-management/students');
+      const response = await listStudents();
       if (response.data.success) {
         setStudents(response.data.data || []);
       }
@@ -274,7 +281,7 @@ const UserManagement = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const response = await axiosSecure.get('/admin/user-management/teachers');
+      const response = await listTeachers();
       if (response.data.success) {
         setTeachers(response.data.data || []);
       }
@@ -293,7 +300,7 @@ const UserManagement = () => {
   const fetchStaffs = async () => {
     try {
       setLoading(true);
-      const response = await axiosSecure.get('/admin/user-management/staff');
+      const response = await listStaff();
       if (response.data.success) {
         setStaffs(response.data.data || []);
       }
@@ -315,16 +322,14 @@ const UserManagement = () => {
 
   const handleSave = async (updatedUser) => {
     try {
-      let endpoint = '';
+      let response;
       if (activeTab === 'Students') {
-        endpoint = `/admin/user-management/students/${updatedUser.id}`;
+        response = await updateStudent(updatedUser.id, updatedUser);
       } else if (activeTab === 'Teachers') {
-        endpoint = `/admin/user-management/teachers/${updatedUser.id}`;
+        response = await updateTeacher(updatedUser.id, updatedUser);
       } else if (activeTab === 'Staff') {
-        endpoint = `/admin/user-management/staff/${updatedUser.id}`;
+        response = await updateStaff(updatedUser.id, updatedUser);
       }
-
-      const response = await axiosSecure.put(endpoint, updatedUser);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
