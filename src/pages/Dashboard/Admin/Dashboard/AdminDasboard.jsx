@@ -1,76 +1,137 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BiBookOpen, BiTrendingUp, BiUserCheck } from "react-icons/bi";
 import { FaUserSecret } from "react-icons/fa";
 import { FaCircleDot } from "react-icons/fa6";
 import { FiAlertCircle } from "react-icons/fi";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import Swal from "sweetalert2";
 
 const AdminDashboard = () => {
-
-  const stats = [
+  const axiosSecure = useAxiosSecure();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState([
     {
       label: "Total Courses",
-      value: "156",
+      value: "0",
       icon: BiBookOpen,
       color: "text-blue-600",
     },
     {
-      label: "Active Students",
-      value: "1,234",
+      label: "Total Students",
+      value: "0",
       icon: FaUserSecret,
       color: "text-green-600",
     },
     {
-      label: "Total Advisors",
-      value: "28",
+      label: "Total Teachers",
+      value: "0",
       icon: BiUserCheck,
       color: "text-purple-600",
     },
     {
-      label: "Registrations",
-      value: "892",
+      label: "Total Sections",
+      value: "0",
       icon: BiTrendingUp,
       color: "text-teal-600",
     },
-  ];
+  ]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [systemAlerts, setSystemAlerts] = useState([]);
 
-  const recentActivity = [
-    {
-      type: "New course added",
-      details: "CSE-4641 Machine Learning",
-      time: "5 minutes ago",
-    },
-    {
-      type: "User registered",
-      details: "Student C231300",
-      time: "12 minutes ago",
-    },
-    {
-      type: "Course updated",
-      details: "CSE-3631 seat capacity changed",
-      time: "1 hour ago",
-    },
-    {
-      type: "Advisor assigned",
-      details: "Ahsanul Kalam Akib assigned to 15 students",
-      time: "2 hours ago",
-    },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const systemAlerts = [
-    {
-      message: "CSE-3661 AI course has only 3 seats remaining",
-      type: "info",
-    },
-    {
-      message: "Registration deadline is in 5 days",
-      type: "warning",
-    },
-    {
-      message: "12 students pending advisor assignment",
-      type: "error",
-    },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch courses, user management overview, and sections in parallel
+      const [coursesRes, userOverviewRes, sectionsRes] = await Promise.all([
+        axiosSecure.get('/admin/courses'),
+        axiosSecure.get('/admin/user-management/overview'),
+        axiosSecure.get('/admin/sections'),
+      ]);
+
+      const courses = coursesRes.data.data || [];
+      const userOverview = userOverviewRes.data.data || {};
+      const sections = sectionsRes.data.data || [];
+
+      // Update stats
+      setStats([
+        {
+          label: "Total Courses",
+          value: coursesRes.data.statistics?.totalCourses || courses.length,
+          icon: BiBookOpen,
+          color: "text-blue-600",
+        },
+        {
+          label: "Total Students",
+          value: userOverview.totals?.totalStudents || 0,
+          icon: FaUserSecret,
+          color: "text-green-600",
+        },
+        {
+          label: "Total Teachers",
+          value: userOverview.totals?.totalTeachers || 0,
+          icon: BiUserCheck,
+          color: "text-purple-600",
+        },
+        {
+          label: "Total Sections",
+          value: sectionsRes.data.statistics?.totalSections || sections.length,
+          icon: BiTrendingUp,
+          color: "text-teal-600",
+        },
+      ]);
+
+      // Generate recent activity from courses (last 4 courses)
+      const recentCourses = courses.slice(0, 4).map((course, index) => ({
+        type: index === 0 ? "New course added" : "Course available",
+        details: `${course.courseCode} ${course.courseName}`,
+        time: "Recently",
+      }));
+      setRecentActivity(recentCourses);
+
+      // Generate system alerts based on course availability
+      const alerts = [];
+      courses.forEach((course) => {
+        const availableSeats = course.availableSeats || 0;
+        if (availableSeats > 0 && availableSeats <= 5) {
+          alerts.push({
+            message: `${course.courseCode} has only ${availableSeats} seats remaining`,
+            type: "info",
+          });
+        }
+      });
+      setSystemAlerts(alerts.slice(0, 3));
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load dashboard data",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <AdminSidebar />
+        <div className="flex-1 overflow-auto flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">

@@ -1,21 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import Swal from "sweetalert2";
 
-
-// --- Dummy Section Data ---
-const initialSections = [
-  { id: 1, name: "6EM", semester: 6, shift: "Male", advisor: "Jamil Asad", regCap: 42, regEnroll: 40, irregCap: 8, irregEnroll: 5, status: "Active" },
-  { id: 2, name: "6CM", semester: 6, shift: "Male", advisor: "Bodiuzzaman Biplop", regCap: 45, regEnroll: 43, irregCap: 5, irregEnroll: 4, status: "Active" },
-  { id: 3, name: "5DM", semester: 5, shift: "Male", advisor: "Dr. Rahman", regCap: 42, regEnroll: 38, irregCap: 8, irregEnroll: 6, status: "Inactive" },
-  { id: 4, name: "1AM", semester: 1, shift: "Female", advisor: "Dr. Ahmed", regCap: 46, regEnroll: 45, irregCap: 2, irregEnroll: 0, status: "Active" },
-];
-
-// --- Enrollment Bar ---
+// Enrollment Bar Component
 const EnrollmentBar = ({ enrolled, capacity, label }) => {
   const available = capacity - enrolled;
-  const percentage = (enrolled / capacity) * 100;
+  const percentage = capacity > 0 ? (enrolled / capacity) * 100 : 0;
 
   let barColor;
   if (available <= 2) {
@@ -49,20 +42,22 @@ const EnrollmentBar = ({ enrolled, capacity, label }) => {
   );
 };
 
-// --- Add/Edit Modal ---
+// Add/Edit Modal Component
 const SectionModal = ({ isOpen, onClose, onSave, section }) => {
   const isEditing = !!section;
   const [formData, setFormData] = useState(
     section || {
-      name: "",
-      advisor: "",
-      semester: 1,
-      regCap: 40,
-      irregCap: 5,
-      regEnroll: 0,
-      irregEnroll: 0,
+      sectionName: "",
+      semester: "Spring 2025",
       shift: "Male",
-      status: "Active",
+      assignedAdvisor: "",
+      totalCapacity: 40,
+      enrolledStudents: 0,
+      crName: "",
+      crContact: "",
+      acrName: "",
+      acrContact: "",
+      status: "active",
     }
   );
 
@@ -96,8 +91,8 @@ const SectionModal = ({ isOpen, onClose, onSave, section }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="sectionName"
+            value={formData.sectionName}
             onChange={handleChange}
             placeholder="Section Name (e.g., 6EM)"
             className="w-full border p-3 rounded-lg"
@@ -105,61 +100,97 @@ const SectionModal = ({ isOpen, onClose, onSave, section }) => {
           />
           <input
             type="text"
-            name="advisor"
-            value={formData.advisor}
+            name="semester"
+            value={formData.semester}
             onChange={handleChange}
-            placeholder="Advisor Name"
+            placeholder="Semester (e.g., Spring 2025)"
             className="w-full border p-3 rounded-lg"
             required
           />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              name="regCap"
-              value={formData.regCap}
-              onChange={handleChange}
-              placeholder="Regular Capacity"
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-            <input
-              type="number"
-              name="regEnroll"
-              value={formData.regEnroll}
-              onChange={handleChange}
-              placeholder="Regular Enrolled"
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              name="irregCap"
-              value={formData.irregCap}
-              onChange={handleChange}
-              placeholder="Irregular Capacity"
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-            <input
-              type="number"
-              name="irregEnroll"
-              value={formData.irregEnroll}
-              onChange={handleChange}
-              placeholder="Irregular Enrolled"
-              className="w-full border p-3 rounded-lg"
-              required
-            />
-          </div>
+          <select
+            name="shift"
+            value={formData.shift}
+            onChange={handleChange}
+            className="w-full border p-3 rounded-lg"
+            required
+          >
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+          <input
+            type="text"
+            name="assignedAdvisor"
+            value={formData.assignedAdvisor}
+            onChange={handleChange}
+            placeholder="Assigned Advisor Name"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="number"
+            name="totalCapacity"
+            value={formData.totalCapacity}
+            onChange={handleChange}
+            placeholder="Total Capacity (1-50)"
+            min="1"
+            max="50"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="number"
+            name="enrolledStudents"
+            value={formData.enrolledStudents}
+            onChange={handleChange}
+            placeholder="Enrolled Students"
+            min="0"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="crName"
+            value={formData.crName}
+            onChange={handleChange}
+            placeholder="CR Name"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="crContact"
+            value={formData.crContact}
+            onChange={handleChange}
+            placeholder="CR Contact"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="acrName"
+            value={formData.acrName}
+            onChange={handleChange}
+            placeholder="ACR Name"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
+          <input
+            type="text"
+            name="acrContact"
+            value={formData.acrContact}
+            onChange={handleChange}
+            placeholder="ACR Contact"
+            className="w-full border p-3 rounded-lg"
+            required
+          />
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
             className="w-full border p-3 rounded-lg"
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
@@ -183,7 +214,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section }) => {
   );
 };
 
-// --- Delete Confirmation Modal ---
+// Delete Confirmation Modal
 const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
   if (!isOpen) return null;
   return (
@@ -194,7 +225,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
         </h3>
         <p className="text-gray-600 mb-4">
           Are you sure you want to delete section{" "}
-          <span className="font-semibold">{section?.name}</span>? This action
+          <span className="font-semibold">{section?.sectionName}</span>? This action
           cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
@@ -219,108 +250,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
   );
 };
 
-// --- Section Management Dashboard ---
-const SectionManagementDashboard = () => {
-  const [sections, setSections] = useState(initialSections);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editSection, setEditSection] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-
-  const metrics = useMemo(() => {
-    const totalCapacity = sections.reduce(
-      (sum, s) => sum + s.regCap + s.irregCap,
-      0
-    );
-    const totalEnrolled = sections.reduce(
-      (sum, s) => sum + s.regEnroll + s.irregEnroll,
-      0
-    );
-    return {
-      totalSections: sections.length,
-      totalCapacity,
-      totalEnrolled,
-      availableSeats: totalCapacity - totalEnrolled,
-    };
-  }, [sections]);
-
-  const handleSaveSection = (sectionData) => {
-    if (sectionData.id) {
-      setSections((prev) =>
-        prev.map((s) => (s.id === sectionData.id ? sectionData : s))
-      );
-    } else {
-      setSections((prev) => [
-        ...prev,
-        { ...sectionData, id: Date.now(), semester: 1 },
-      ]);
-    }
-  };
-
-  const handleDeleteSection = (id) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Section Management</h2>
-        <button
-          onClick={() => {
-            setEditSection(null);
-            setIsModalOpen(true);
-          }}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-        >
-          + Add Section
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <MetricCard title="Total Sections" value={metrics.totalSections} />
-        <MetricCard title="Total Capacity" value={metrics.totalCapacity} />
-        <MetricCard title="Enrolled" value={metrics.totalEnrolled} />
-        <MetricCard title="Available Seats" value={metrics.availableSeats} />
-      </div>
-
-      <div className="space-y-4">
-        {sections.map((section) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            onEdit={() => {
-              setEditSection(section);
-              setIsModalOpen(true);
-            }}
-            onDelete={() => setDeleteConfirm(section)}
-          />
-        ))}
-      </div>
-
-      {/* Add/Edit Modal */}
-      <SectionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveSection}
-        section={editSection}
-      />
-
-      {/* Delete Modal */}
-      <DeleteModal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={handleDeleteSection}
-        section={deleteConfirm}
-      />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- Subcomponents ---
+// Metric Card Component
 const MetricCard = ({ title, value }) => (
   <div className="bg-white p-5 rounded-xl shadow-md">
     <h4 className="text-sm text-gray-500">{title}</h4>
@@ -328,50 +258,263 @@ const MetricCard = ({ title, value }) => (
   </div>
 );
 
+// Section Card Component
 const SectionCard = ({ section, onEdit, onDelete }) => {
-  const totalCap = section.regCap + section.irregCap;
-  const totalEnrolled = section.regEnroll + section.irregEnroll;
+  const totalCap = section.totalCapacity || 0;
+  const totalEnrolled = section.enrolledStudents || 0;
   const available = totalCap - totalEnrolled;
 
   return (
     <div className="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500">
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-xl font-bold">{section.name}</h3>
+        <div>
+          <h3 className="text-xl font-bold">{section.sectionName}</h3>
+          <p className="text-sm text-gray-600">
+            Semester: {section.semester} | Shift: {section.shift}
+          </p>
+        </div>
         <div className="flex gap-3">
           <button
             onClick={onEdit}
             className="text-blue-600 hover:text-blue-800"
             title="Edit"
           >
-            <MdOutlineModeEditOutline />
-
+            <MdOutlineModeEditOutline size={20} />
           </button>
           <button
             onClick={onDelete}
             className="text-red-600 hover:text-red-800"
             title="Delete"
           >
-            <RiDeleteBin5Line />
-
+            <RiDeleteBin5Line size={20} />
           </button>
         </div>
       </div>
       <p className="text-gray-600 mb-2">
-        Advisor: <span className="font-medium">{section.advisor}</span>
+        Advisor: <span className="font-medium">{section.assignedAdvisor}</span>
       </p>
       <EnrollmentBar
-        label="Regular"
-        enrolled={section.regEnroll}
-        capacity={section.regCap}
+        label="Total"
+        enrolled={totalEnrolled}
+        capacity={totalCap}
       />
-      <EnrollmentBar
-        label="Irregular"
-        enrolled={section.irregEnroll}
-        capacity={section.irregCap}
-      />
+      <div className="mt-2 text-sm text-gray-600">
+        <p>CR: {section.crName} ({section.crContact})</p>
+        <p>ACR: {section.acrName} ({section.acrContact})</p>
+      </div>
       <p className="text-sm text-gray-600 mt-2">
-        <span className="font-semibold">{available}</span> seats available
+        <span className="font-semibold">{available}</span> seats available | Status:{" "}
+        <span className={`font-semibold ${section.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>
+          {section.status}
+        </span>
       </p>
+    </div>
+  );
+};
+
+// Main Section Management Component
+const SectionManagementDashboard = () => {
+  const axiosSecure = useAxiosSecure();
+  const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editSection, setEditSection] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [filterSemester, setFilterSemester] = useState('');
+
+  useEffect(() => {
+    fetchSections();
+  }, [filterSemester]);
+
+  const fetchSections = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filterSemester && filterSemester !== 'All Semesters') {
+        params.append('semester', filterSemester);
+      }
+
+      const response = await axiosSecure.get(`/admin/sections?${params.toString()}`);
+      if (response.data.success) {
+        setSections(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching sections:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load sections",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const metrics = useMemo(() => {
+    const stats = sections.reduce(
+      (acc, s) => {
+        acc.totalCapacity += s.totalCapacity || 0;
+        acc.enrolledStudents += s.enrolledStudents || 0;
+        return acc;
+      },
+      { totalCapacity: 0, enrolledStudents: 0 }
+    );
+    return {
+      totalSections: sections.length,
+      totalCapacity: stats.totalCapacity,
+      totalEnrolled: stats.enrolledStudents,
+      availableSeats: stats.totalCapacity - stats.enrolledStudents,
+    };
+  }, [sections]);
+
+  const handleSaveSection = async (sectionData) => {
+    try {
+      if (sectionData.id) {
+        // Update existing section
+        const response = await axiosSecure.put(`/admin/sections/${sectionData.id}`, sectionData);
+        if (response.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Section updated successfully",
+            timer: 1500,
+          });
+          fetchSections();
+        }
+      } else {
+        // Create new section
+        const response = await axiosSecure.post('/admin/sections', sectionData);
+        if (response.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: "Section created successfully",
+            timer: 1500,
+          });
+          fetchSections();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving section:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to save section",
+      });
+    }
+  };
+
+  const handleDeleteSection = async (id) => {
+    try {
+      const response = await axiosSecure.delete(`/admin/sections/${id}`);
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Deleted",
+          text: "Section deleted successfully",
+          timer: 1500,
+        });
+        fetchSections();
+      }
+    } catch (error) {
+      console.error('Error deleting section:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to delete section",
+      });
+    }
+  };
+
+  // Get unique semesters from sections
+  const semesters = useMemo(() => {
+    const semSet = new Set(sections.map(s => s.semester).filter(Boolean));
+    return ['All Semesters', ...Array.from(semSet)];
+  }, [sections]);
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Section Management</h2>
+            <button
+              onClick={() => {
+                setEditSection(null);
+                setIsModalOpen(true);
+              }}
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+            >
+              + Add Section
+            </button>
+          </div>
+
+          {/* Filter */}
+          <div className="mb-6">
+            <select
+              value={filterSemester}
+              onChange={(e) => setFilterSemester(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 bg-white"
+            >
+              {semesters.map(sem => (
+                <option key={sem} value={sem}>{sem}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+            <MetricCard title="Total Sections" value={metrics.totalSections} />
+            <MetricCard title="Total Capacity" value={metrics.totalCapacity} />
+            <MetricCard title="Enrolled" value={metrics.totalEnrolled} />
+            <MetricCard title="Available Seats" value={metrics.availableSeats} />
+          </div>
+
+          {loading ? (
+            <div className="bg-white rounded-xl p-8 text-center text-gray-500 shadow-md border border-gray-100">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4">Loading sections...</p>
+            </div>
+          ) : sections.length > 0 ? (
+            <div className="space-y-4">
+              {sections.map((section) => (
+                <SectionCard
+                  key={section.id}
+                  section={section}
+                  onEdit={() => {
+                    setEditSection(section);
+                    setIsModalOpen(true);
+                  }}
+                  onDelete={() => setDeleteConfirm(section)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl p-8 text-center text-gray-500 shadow-md border border-gray-100">
+              No sections found.
+            </div>
+          )}
+
+          {/* Add/Edit Modal */}
+          <SectionModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setEditSection(null);
+            }}
+            onSave={handleSaveSection}
+            section={editSection}
+          />
+
+          {/* Delete Modal */}
+          <DeleteModal
+            isOpen={!!deleteConfirm}
+            onClose={() => setDeleteConfirm(null)}
+            onConfirm={handleDeleteSection}
+            section={deleteConfirm}
+          />
+        </div>
+      </div>
     </div>
   );
 };

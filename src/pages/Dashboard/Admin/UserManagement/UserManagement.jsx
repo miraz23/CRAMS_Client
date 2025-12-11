@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import Swal from "sweetalert2";
 
-
-// Stat Card (unchanged)
+// Stat Card Component
 const StatCard = ({ title, count, icon }) => (
   <div className="flex justify-between items-center bg-white p-6 rounded-lg shadow-sm border border-gray-200">
     <div>
@@ -15,7 +16,7 @@ const StatCard = ({ title, count, icon }) => (
   </div>
 );
 
-// Status Tag
+// Status Tag Component
 const StatusTag = ({ children, type }) => {
   const baseClasses = "text-xs font-semibold px-2 py-0.5 rounded-full mr-2";
   let colorClasses = "";
@@ -28,92 +29,162 @@ const StatusTag = ({ children, type }) => {
   return <span className={`${baseClasses} ${colorClasses}`}>{children}</span>;
 };
 
-// Mock Data
-const mockStudents = [
-  { name: 'Md. Mohiul Islam Miraz', id: 'C231197', email: 'miraz@student.iiuc.ac.bd', status: 'active', sem: '6EM', type: 'Regular', cgpa: '3.75' },
-  { name: 'Mohammad Moaz', id: 'C231187', email: 'moaz@student.iiuc.ac.bd', status: 'active', sem: '6EM', type: 'Regular', cgpa: '3.45' },
-  { name: 'Junaid Mahmud', id: 'C231189', email: 'junaid@student.iiuc.ac.bd', status: 'active', sem: '6CM', type: 'Regular', cgpa: '3.62' },
-  { name: 'MD. Ashfaqur Rashid', id: 'C231261', email: 'ashfaq@student.iiuc.ac.bd', status: 'active', sem: '5DM', type: 'Irregular', cgpa: '3.58' },
-  { name: 'S.M. Asfaqur Rahman', id: 'C231272', email: 'asfaq@student.iiuc.ac.bd', status: 'active', sem: '6EM', type: 'Regular', cgpa: '3.71' },
-];
-
-// --- Edit Modal Component ---
-const EditModal = ({ user, onClose, onSave }) => {
+// Edit Modal Component
+const EditModal = ({ user, userType, onClose, onSave }) => {
   const [formData, setFormData] = useState(user);
+
+  useEffect(() => {
+    if (user) {
+      setFormData(user);
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    await onSave(formData);
   };
 
   if (!user) return null;
 
   return (
-    // Background changed: no black, just blur
     <div className="fixed inset-0 backdrop-blur-md flex justify-center items-center z-50">
-      {/* Modal Card */}
       <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Edit Student Info</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">Edit {userType} Info</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name (readonly) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               type="text"
               name="name"
-              value={formData.name}
-              disabled
-              className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 text-gray-500"
+              value={formData.name || ''}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
-          {/* Semester */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
-              type="text"
-              name="sem"
-              value={formData.sem}
+              type="email"
+              name="email"
+              value={formData.email || ''}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g. 6EM, 5DM"
             />
           </div>
 
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+          {userType === 'Student' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
+                <input
+                  type="text"
+                  name="studentId"
+                  value={formData.studentId || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </>
+          )}
 
-          {/* Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="Regular">Regular</option>
-              <option value="Irregular">Irregular</option>
-            </select>
-          </div>
+          {userType === 'Teacher' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teacher ID</label>
+                <input
+                  type="text"
+                  name="teacherId"
+                  value={formData.teacherId || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                <input
+                  type="text"
+                  name="designation"
+                  value={formData.designation || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
+                <select
+                  name="privilege"
+                  value={formData.privilege || 'Teacher'}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Teacher">Teacher</option>
+                  <option value="Advisor">Advisor</option>
+                </select>
+              </div>
+            </>
+          )}
 
-          {/* Buttons */}
+          {userType === 'Staff' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
+                <input
+                  type="text"
+                  name="staffId"
+                  value={formData.staffId || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <input
+                  type="text"
+                  name="department"
+                  value={formData.department || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                <input
+                  type="text"
+                  name="designation"
+                  value={formData.designation || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </>
+          )}
+
           <div className="flex justify-end space-x-2 pt-4">
             <button
               type="button"
@@ -135,140 +206,295 @@ const EditModal = ({ user, onClose, onSave }) => {
   );
 };
 
-
-// --- Main Component ---
+// Main User Management Component
 const UserManagement = () => {
+  const axiosSecure = useAxiosSecure();
   const [activeTab, setActiveTab] = useState('Students');
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState(mockStudents);
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [staffs, setStaffs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalStaffs: 0,
+  });
 
-  const handleSearch = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    const filtered = mockStudents.filter(user =>
-      user.name.toLowerCase().includes(term.toLowerCase()) ||
-      user.id.toLowerCase().includes(term.toLowerCase()) ||
-      user.email.toLowerCase().includes(term.toLowerCase())
-    );
-    setUsers(filtered);
+  useEffect(() => {
+    fetchUserOverview();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'Students') {
+      fetchStudents();
+    } else if (activeTab === 'Teachers') {
+      fetchTeachers();
+    } else if (activeTab === 'Staff') {
+      fetchStaffs();
+    }
+  }, [activeTab]);
+
+  const fetchUserOverview = async () => {
+    try {
+      const response = await axiosSecure.get('/admin/user-management/overview');
+      if (response.data.success) {
+        const data = response.data.data;
+        setStats({
+          totalStudents: data.totals?.totalStudents || 0,
+          totalTeachers: data.totals?.totalTeachers || 0,
+          totalStaffs: data.totals?.totalStaffs || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user overview:', error);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosSecure.get('/admin/user-management/students');
+      if (response.data.success) {
+        setStudents(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load students",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosSecure.get('/admin/user-management/teachers');
+      if (response.data.success) {
+        setTeachers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load teachers",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStaffs = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosSecure.get('/admin/user-management/staff');
+      if (response.data.success) {
+        setStaffs(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching staffs:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load staff",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (user) => {
     setEditingUser(user);
   };
 
-  const handleSave = (updatedUser) => {
-    const updatedList = users.map((u) => (u.id === updatedUser.id ? updatedUser : u));
-    setUsers(updatedList);
-    setEditingUser(null);
+  const handleSave = async (updatedUser) => {
+    try {
+      let endpoint = '';
+      if (activeTab === 'Students') {
+        endpoint = `/admin/user-management/students/${updatedUser.id}`;
+      } else if (activeTab === 'Teachers') {
+        endpoint = `/admin/user-management/teachers/${updatedUser.id}`;
+      } else if (activeTab === 'Staff') {
+        endpoint = `/admin/user-management/staff/${updatedUser.id}`;
+      }
+
+      const response = await axiosSecure.put(endpoint, updatedUser);
+      if (response.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `${activeTab.slice(0, -1)} updated successfully`,
+          timer: 1500,
+        });
+        
+        // Refresh the current tab
+        if (activeTab === 'Students') {
+          fetchStudents();
+        } else if (activeTab === 'Teachers') {
+          fetchTeachers();
+        } else if (activeTab === 'Staff') {
+          fetchStaffs();
+        }
+        
+        setEditingUser(null);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to update user",
+      });
+    }
   };
+
+  const getFilteredUsers = () => {
+    let users = [];
+    if (activeTab === 'Students') {
+      users = students;
+    } else if (activeTab === 'Teachers') {
+      users = teachers;
+    } else if (activeTab === 'Staff') {
+      users = staffs;
+    }
+
+    if (searchTerm.trim()) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      return users.filter(user =>
+        (user.name || '').toLowerCase().includes(lowerSearchTerm) ||
+        (user.studentId || user.teacherId || user.staffId || '').toLowerCase().includes(lowerSearchTerm) ||
+        (user.email || '').toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+    return users;
+  };
+
+  const filteredUsers = getFilteredUsers();
 
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-        <button className="flex items-center bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md hover:bg-blue-700 transition-colors">
-          <span className="text-xl mr-2">+</span> Add User
-        </button>
-      </div>
-      <p className="text-gray-500 mb-6">Manage students, advisors, and administrators</p>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+          </div>
+          <p className="text-gray-500 mb-6">Manage students, teachers, and staff</p>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard title="Total Students" count="5" icon="Users" />
-        <StatCard title="Total Advisors" count="4" icon="Advisors" />
-        <StatCard title="Active Users" count="9" icon="Users" />
-      </div>
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatCard title="Total Students" count={stats.totalStudents} icon="Users" />
+            <StatCard title="Total Teachers" count={stats.totalTeachers} icon="Advisors" />
+            <StatCard title="Total Staff" count={stats.totalStaffs} icon="Users" />
+          </div>
 
-      {/* Search */}
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">Search Users</h3>
-        <input
-          type="text"
-          placeholder="🔎 Search by name, ID, or email..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+          {/* Search */}
+          <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Search Users</h3>
+            <input
+              type="text"
+              placeholder="🔎 Search by name, ID, or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
-        {['Students (5)', 'Advisors (4)'].map((tab) => {
-          const tabName = tab.split(' ')[0];
-          return (
-            <button
-              key={tabName}
-              onClick={() => setActiveTab(tabName)}
-              className={`py-2 px-4 text-sm font-medium transition-colors ${
-                activeTab === tabName
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab}
-            </button>
-          );
-        })}
-      </div>
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 mb-6">
+            {[
+              `Students (${stats.totalStudents})`,
+              `Teachers (${stats.totalTeachers})`,
+              `Staff (${stats.totalStaffs})`
+            ].map((tab) => {
+              const tabName = tab.split(' ')[0];
+              return (
+                <button
+                  key={tabName}
+                  onClick={() => setActiveTab(tabName)}
+                  className={`py-2 px-4 text-sm font-medium transition-colors ${
+                    activeTab === tabName
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* User List */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-800">Student Accounts</h3>
-        <p className="text-gray-500 mb-6 text-sm">Manage student user accounts and permissions</p>
+          {/* User List */}
+          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {activeTab} Accounts
+            </h3>
+            <p className="text-gray-500 mb-6 text-sm">
+              Manage {activeTab.toLowerCase()} user accounts and permissions
+            </p>
 
-        <div className="space-y-4">
-          {users.length > 0 ? (
-            users.map((user) => (
-              <div key={user.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center">
-                    <p className="text-base font-medium text-gray-900 mr-3">{user.name}</p>
-                    <StatusTag type="active">{user.status}</StatusTag>
-                    <StatusTag type="sem">{user.sem}</StatusTag>
-                    <StatusTag type="type">{user.type}</StatusTag>
-                  </div>
-                  <div className="text-sm text-gray-500 space-x-4 mt-1">
-                    <span className="inline-block">ID: {user.id}</span>
-                    <span className="inline-block text-blue-600">{user.email}</span>
-                    <span className="inline-block">CGPA: {user.cgpa}</span>
-                  </div>
-                </div>
-                <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="text-sm text-gray-700 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => alert(`Viewing details for ${user.name}`)}
-                    className="text-sm text-gray-700 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    View
-                  </button>
-                </div>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading...</p>
               </div>
-            ))
-          ) : (
-            <p className="text-gray-500 p-4">No users found matching your search term.</p>
-          )}
-        </div>
-      </div>
+            ) : filteredUsers.length > 0 ? (
+              <div className="space-y-4">
+                {filteredUsers.map((user) => (
+                  <div key={user.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center">
+                        <p className="text-base font-medium text-gray-900 mr-3">{user.name}</p>
+                        <StatusTag type="active">Active</StatusTag>
+                        {user.department && <StatusTag type="type">{user.department}</StatusTag>}
+                      </div>
+                      <div className="text-sm text-gray-500 space-x-4 mt-1">
+                        <span className="inline-block">
+                          ID: {user.studentId || user.teacherId || user.staffId}
+                        </span>
+                        <span className="inline-block text-blue-600">{user.email}</span>
+                        {user.designation && (
+                          <span className="inline-block">Designation: {user.designation}</span>
+                        )}
+                        {user.privilege && (
+                          <span className="inline-block">Privilege: {user.privilege}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2 ml-4">
+                      <button
+                        onClick={() => handleEdit(user)}
+                        className="text-sm text-gray-700 px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 p-4">
+                No {activeTab.toLowerCase()} found matching your search term.
+              </p>
+            )}
+          </div>
 
-      {/* Edit Modal */}
-      {editingUser && (
-        <EditModal
-          user={editingUser}
-          onClose={() => setEditingUser(null)}
-          onSave={handleSave}
-        />
-      )}
+          {/* Edit Modal */}
+          {editingUser && (
+            <EditModal
+              user={editingUser}
+              userType={activeTab.slice(0, -1)}
+              onClose={() => setEditingUser(null)}
+              onSave={handleSave}
+            />
+          )}
         </div>
       </div>
     </div>

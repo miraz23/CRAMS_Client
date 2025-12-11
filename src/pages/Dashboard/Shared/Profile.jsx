@@ -87,7 +87,7 @@ const Profile = () => {
         const updatedData = {
             name: data.name,
             photoURL: preview,
-            lastLogin: user?.metadata?.lastSignInTime || new Date().toISOString(),
+            lastLogin: new Date().toISOString(),
         };
         updateProfile.mutate(updatedData);
     };
@@ -161,8 +161,8 @@ const Profile = () => {
                         <div>
                             <label className="text-sm text-gray-600">Last Login</label>
                             <div className="mt-1 px-4 py-2 border rounded-lg bg-gray-100 text-gray-700">
-                                {user?.metadata?.lastSignInTime
-                                    ? new Date(user.metadata.lastSignInTime).toLocaleString()
+                                {userDetails?.lastLogin
+                                    ? new Date(userDetails.lastLogin).toLocaleString()
                                     : "No login data available"}
                             </div>
                         </div>

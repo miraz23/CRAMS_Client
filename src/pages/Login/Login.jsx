@@ -1,24 +1,22 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import { auth } from "../../service/firebase.config.js";
 import Swal from "sweetalert2";
+import useAuth from "../../hooks/useAuth/useAuth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Student");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { loginUser } = useAuth();
   const primaryBlue = "rgb(19, 102, 194)";
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem("userRole", role);
+      await loginUser(email, password, role);
 
       Swal.fire({
         icon: "success",
@@ -31,11 +29,14 @@ const Login = () => {
       else if (role === "Advisor") navigate("/advisor/dashboard");
       else navigate("/student/dashboard");
     } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Login failed. Please check your credentials.";
       Swal.fire({
         icon: "error",
         title: "Login Failed",
-        text: error.message,
+        text: errorMessage,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,20 +50,12 @@ const Login = () => {
       return;
     }
 
-    try {
-      await sendPasswordResetEmail(auth, email);
-      Swal.fire({
-        icon: "success",
-        title: "Password Reset Email Sent!",
-        text: "Check your inbox to reset your password.",
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.message,
-      });
-    }
+    // TODO: Implement password reset via backend API
+    Swal.fire({
+      icon: "info",
+      title: "Password Reset",
+      text: "Please contact your administrator to reset your password.",
+    });
   };
 
   return (
@@ -125,10 +118,11 @@ const Login = () => {
 
           <button
             type="submit"
+            disabled={isLoading}
             style={{ backgroundColor: primaryBlue }}
-            className="w-full text-white py-2.5 rounded-md font-semibold text-lg hover:opacity-90 transition-all"
+            className="w-full text-white py-2.5 rounded-md font-semibold text-lg hover:opacity-90 transition-all disabled:opacity-50"
           >
-            Login
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
