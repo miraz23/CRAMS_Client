@@ -4,15 +4,12 @@ import {
   getUserOverview,
   listStudents,
   listTeachers,
-  listStaff,
   listAdmins,
   updateStudent,
   updateTeacher,
-  updateStaff,
   updateAdmin,
   deleteStudent,
   deleteTeacher,
-  deleteStaff,
   deleteAdmin,
 } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
@@ -212,120 +209,19 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
             </>
           )}
 
-          {userType === 'Staff' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-                <input
-                  type="text"
-                  name="staffId"
-                  value={formData.staffId || ''}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department || ''}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                <input
-                  type="text"
-                  name="designation"
-                  value={formData.designation || ''}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              {isSuperAdmin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
-                  <select
-                    name="privilege"
-                    value={formData.privilege || 'Staff'}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="Staff">Staff</option>
-                    <option value="Admin">Admin</option>
-                  </select>
-                </div>
-              )}
-            </>
-          )}
-
           {userType === 'Admin' && isSuperAdmin && (
-            <>
-              {formData.staffId && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-                    <input
-                      type="text"
-                      name="staffId"
-                      value={formData.staffId || ''}
-                      disabled
-                      className="w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                    <input
-                      type="text"
-                      name="department"
-                      value={formData.department || ''}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                    <input
-                      type="text"
-                      name="designation"
-                      value={formData.designation || ''}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
-                    <select
-                      name="privilege"
-                      value={formData.privilege || 'Admin'}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="Admin">Admin</option>
-                      <option value="Staff">Staff</option>
-                    </select>
-                  </div>
-                </>
-              )}
-              {!formData.staffId && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
-                    <select
-                      name="privilege"
-                      value={formData.privilege || 'Admin'}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="Admin">Admin</option>
-                      <option value="Super Admin">Super Admin</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
+              <select
+                name="privilege"
+                value={formData.privilege || 'Admin'}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Admin">Admin</option>
+                <option value="Super Admin">Super Admin</option>
+              </select>
+            </div>
           )}
 
           <div className="flex justify-end space-x-2 pt-4">
@@ -355,20 +251,17 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
-  const [staffs, setStaffs] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
-    totalStaffs: 0,
   });
   const { role } = useUserRole();
   const isSuperAdmin = role === 'super admin';
   const isAdmin = role === 'admin' || role === 'super admin';
   const getEntityLabel = () => {
-    if (activeTab === 'Staff') return 'Staff';
     if (activeTab === 'Admins') return 'Admin';
     return activeTab.slice(0, -1);
   };
@@ -384,8 +277,6 @@ const UserManagement = () => {
       fetchTeachers();
     } else if (activeTab === 'Advisors') {
       fetchTeachers();
-    } else if (activeTab === 'Staff') {
-      fetchStaffs();
     } else if (activeTab === 'Admins' && isSuperAdmin) {
       fetchAdmins();
     }
@@ -399,7 +290,6 @@ const UserManagement = () => {
         setStats({
           totalStudents: data.totals?.totalStudents || 0,
           totalTeachers: data.totals?.totalTeachers || 0,
-          totalStaffs: data.totals?.totalStaffs || 0,
         });
       }
     } catch (error) {
@@ -464,25 +354,6 @@ const UserManagement = () => {
     }
   };
 
-  const fetchStaffs = async () => {
-    try {
-      setLoading(true);
-      const response = await listStaff();
-      if (response.data.success) {
-        setStaffs(response.data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching staffs:', error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || "Failed to load staff",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleEdit = (user) => {
     if (!isSuperAdmin) return;
     setEditingUser(user);
@@ -503,19 +374,10 @@ const UserManagement = () => {
         response = await updateStudent(updatedUser.id, updatedUser);
       } else if (activeTab === 'Teachers') {
         response = await updateTeacher(updatedUser.id, updatedUser);
-      } else if (activeTab === 'Staff') {
-        response = await updateStaff(updatedUser.id, updatedUser);
       } else if (activeTab === 'Advisors') {
         response = await updateTeacher(updatedUser.id, { ...updatedUser, privilege: 'Advisor' });
       } else if (activeTab === 'Admins') {
-        // Check if it's a staff-admin or regular admin
-        if (updatedUser.source === 'Staff') {
-          // Update via staff endpoint
-          response = await updateStaff(updatedUser.id, updatedUser);
-        } else {
-          // Update via admin endpoint
-          response = await updateAdmin(updatedUser.id, updatedUser);
-        }
+        response = await updateAdmin(updatedUser.id, updatedUser);
       }
       if (response.data.success) {
         Swal.fire({
@@ -530,20 +392,10 @@ const UserManagement = () => {
           fetchStudents();
         } else if (activeTab === 'Teachers') {
           fetchTeachers();
-        } else if (activeTab === 'Staff') {
-          fetchStaffs();
-          // If updating staff privilege to Admin, refresh admins list
-          if (updatedUser.privilege === 'Admin') {
-            fetchAdmins();
-          }
         } else if (activeTab === 'Advisors') {
           fetchTeachers();
         } else if (activeTab === 'Admins') {
           fetchAdmins();
-          // Also refresh staff list if the admin was converted from staff
-          if (updatedUser.source === 'Staff') {
-            fetchStaffs();
-          }
         }
         
         setEditingUser(null);
@@ -559,18 +411,12 @@ const UserManagement = () => {
   };
 
   const handleRemove = async (user) => {
-    // Check permissions
-    if (activeTab === 'Advisors' && !isAdmin) {
-      // Only Admin or Super Admin can remove advisors
-      return;
-    }
-    if (activeTab === 'Admins' && !isSuperAdmin) {
-      // Only Super Admin can remove admins
+    if (activeTab !== 'Advisors' || !isAdmin) {
       return;
     }
 
-    const entity = activeTab === 'Advisors' ? 'Advisor' : 'Admin';
-    const newPrivilege = activeTab === 'Advisors' ? 'Teacher' : 'Staff';
+    const entity = 'Advisor';
+    const newPrivilege = 'Teacher';
     const confirmation = await Swal.fire({
       icon: "warning",
       title: `Remove ${entity} Privilege?`,
@@ -584,24 +430,8 @@ const UserManagement = () => {
 
     try {
       let response;
-      if (activeTab === 'Advisors') {
-        // Change Advisor back to Teacher
-        response = await updateTeacher(user.id, { ...user, privilege: 'Teacher' });
-      } else if (activeTab === 'Admins') {
-        // Change Admin back to Staff
-        if (user.source === 'Staff') {
-          // Update via staff endpoint
-          response = await updateStaff(user.id, { ...user, privilege: 'Staff' });
-        } else {
-          // Regular admin - cannot be removed (only staff-admins can be removed)
-          Swal.fire({
-            icon: "info",
-            title: "Cannot Remove",
-            text: "Only staff members promoted to Admin can be removed.",
-          });
-          return;
-        }
-      }
+      // Change Advisor back to Teacher
+      response = await updateTeacher(user.id, { ...user, privilege: 'Teacher' });
 
       if (response?.data?.success) {
         Swal.fire({
@@ -612,12 +442,7 @@ const UserManagement = () => {
         });
 
         // Refresh the lists
-        if (activeTab === 'Advisors') {
-          fetchTeachers();
-        } else if (activeTab === 'Admins') {
-          fetchAdmins();
-          fetchStaffs(); // Refresh staff list since admin was converted back
-        }
+        fetchTeachers();
       }
     } catch (error) {
       console.error('Error removing privilege:', error);
@@ -652,17 +477,8 @@ const UserManagement = () => {
         response = await deleteTeacher(user.id);
       } else if (activeTab === 'Advisors') {
         response = await deleteTeacher(user.id);
-      } else if (activeTab === 'Staff') {
-        response = await deleteStaff(user.id);
       } else if (activeTab === 'Admins') {
-        // Check if it's a staff-admin or regular admin
-        if (user.source === 'Staff') {
-          // Delete via staff endpoint
-          response = await deleteStaff(user.id);
-        } else {
-          // Delete via admin endpoint
-          response = await deleteAdmin(user.id);
-        }
+        response = await deleteAdmin(user.id);
       } else {
         response = { data: { success: false } };
       }
@@ -681,14 +497,8 @@ const UserManagement = () => {
           fetchTeachers();
         } else if (activeTab === 'Advisors') {
           fetchTeachers();
-        } else if (activeTab === 'Staff') {
-          fetchStaffs();
         } else if (activeTab === 'Admins') {
           fetchAdmins();
-          // Also refresh staff list if the deleted admin was from staff
-          if (user.source === 'Staff') {
-            fetchStaffs();
-          }
         }
       }
     } catch (error) {
@@ -710,8 +520,6 @@ const UserManagement = () => {
       users = teachers;
     } else if (activeTab === 'Advisors') {
       users = teachers.filter(t => (t.privilege || '').toLowerCase() === 'advisor');
-    } else if (activeTab === 'Staff') {
-      users = staffs;
     } else if (activeTab === 'Admins') {
       users = admins;
     }
@@ -720,7 +528,7 @@ const UserManagement = () => {
       const lowerSearchTerm = searchTerm.toLowerCase();
       return users.filter(user =>
         (user.name || '').toLowerCase().includes(lowerSearchTerm) ||
-        (user.studentId || user.teacherId || user.staffId || '').toLowerCase().includes(lowerSearchTerm) ||
+        (user.studentId || user.teacherId || '').toLowerCase().includes(lowerSearchTerm) ||
         (user.email || '').toLowerCase().includes(lowerSearchTerm)
       );
     }
@@ -740,14 +548,13 @@ const UserManagement = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
           </div>
-          <p className="text-gray-500 mb-6">Manage students, teachers, and staff</p>
+          <p className="text-gray-500 mb-6">Manage students and teachers</p>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <StatCard title="Total Students" count={stats.totalStudents} icon="Users" />
             <StatCard title="Total Teachers" count={teacherCount} icon="Advisors" />
             <StatCard title="Total Advisors" count={advisorsCount} icon="Users" />
-            <StatCard title="Total Staff" count={stats.totalStaffs} icon="Users" />
             {isSuperAdmin && (
               <StatCard title="Total Admins" count={admins.length} icon="Users" />
             )}
@@ -772,7 +579,6 @@ const UserManagement = () => {
                 { label: `Students (${stats.totalStudents})`, value: 'Students' },
                 { label: `Teachers (${teacherCount})`, value: 'Teachers' },
                 { label: `Advisors (${advisorsCount})`, value: 'Advisors' },
-                { label: `Staff (${stats.totalStaffs})`, value: 'Staff' },
               ];
               const tabs = isSuperAdmin
                 ? [...baseTabs, { label: `Admins (${admins.length})`, value: 'Admins' }]
@@ -819,7 +625,7 @@ const UserManagement = () => {
                       </div>
                       <div className="text-sm text-gray-500 space-x-4 mt-1">
                         <span className="inline-block">
-                          ID: {user.studentId || user.teacherId || user.staffId || 'N/A'}
+                          ID: {user.studentId || user.teacherId || 'N/A'}
                         </span>
                         <span className="inline-block text-blue-600">{user.email}</span>
                         {user.designation && (
@@ -832,8 +638,7 @@ const UserManagement = () => {
                     </div>
                     <div className="flex space-x-2 ml-4">
                       {/* Remove button for Advisors and Admins */}
-                      {((activeTab === 'Advisors' && isAdmin) || 
-                        (activeTab === 'Admins' && isSuperAdmin && user.source === 'Staff')) && (
+                      {activeTab === 'Advisors' && isAdmin && (
                         <button
                           onClick={() => handleRemove(user)}
                           className="text-sm text-orange-700 px-3 py-1 border border-orange-300 rounded-md hover:bg-orange-50 transition-colors"

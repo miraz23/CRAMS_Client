@@ -43,20 +43,15 @@ export const deleteSection = (id) => adminClient.delete(`/sections/${id}`);
 export const getUserOverview = () => adminClient.get('/user-management/overview');
 export const listStudents = () => adminClient.get('/user-management/students');
 export const listTeachers = () => adminClient.get('/user-management/teachers');
-export const listStaff = () => adminClient.get('/user-management/staff');
 export const updateStudent = (id, payload) =>
   adminClient.put(`/user-management/students/${id}`, payload);
 export const updateTeacher = (id, payload) =>
   adminClient.put(`/user-management/teachers/${id}`, payload);
-export const updateStaff = (id, payload) =>
-  adminClient.put(`/user-management/staff/${id}`, payload);
 export const listAdmins = () => adminClient.get('/');
 export const deleteStudent = (id) =>
   adminClient.delete(`/user-management/students/${id}`);
 export const deleteTeacher = (id) =>
   adminClient.delete(`/user-management/teachers/${id}`);
-export const deleteStaff = (id) =>
-  adminClient.delete(`/user-management/staff/${id}`);
 export const updateAdmin = (id, payload) =>
   adminClient.put(`/${id}`, payload);
 export const deleteAdmin = (id) =>

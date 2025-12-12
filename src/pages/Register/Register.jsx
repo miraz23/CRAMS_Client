@@ -19,7 +19,7 @@ const Register = () => {
 
   // ---------- VALIDATION ----------
   const isValidEmail = (e) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e);
-  const isIIUCEmail = (e) => e.toLowerCase().endsWith('@ugrad.iiuc.ac.bd');
+  const isIIUCEmail = (e) => e.toLowerCase().endsWith('@iiuc.ac.bd');
   const isValidStudentId = (id) => /^[A-Z][0-9]{6}$/.test(id);
 
   // ---------- SUBMIT ----------
@@ -34,7 +34,7 @@ const Register = () => {
       return;
     }
     if (!isIIUCEmail(email)) {
-      Swal.fire({ icon: 'error', title: 'Wrong Domain', text: 'Use *@ugrad.iiuc.ac.bd' });
+      Swal.fire({ icon: 'error', title: 'Wrong Domain', text: 'Use *@iiuc.ac.bd' });
       setIsLoading(false);
       return;
     }
