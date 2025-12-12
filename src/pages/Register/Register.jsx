@@ -9,10 +9,9 @@ const Register = () => {
   const { createUser } = useAuth();
 
   const [fullName, setFullName] = useState('');
-  const [studentId, setStudentId] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Student');
+  const [role, setRole] = useState('Advisor');
   const [isLoading, setIsLoading] = useState(false);
 
   const primaryBlue = 'rgb(19, 102, 194)';
@@ -39,20 +38,12 @@ const Register = () => {
       return;
     }
 
-    // 2. Student ID (only for Student)
-    if (role === 'Student' && !isValidStudentId(studentId)) {
-      Swal.fire({ icon: 'error', title: 'Invalid Student ID', text: 'Format: C231272' });
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const userData = {
         email,
         password,
         role,
         fullName,
-        studentId: role === 'Student' ? studentId : undefined,
       };
 
       await createUser(userData);
@@ -96,7 +87,7 @@ const Register = () => {
 
         {/* Role Buttons */}
         <div className="flex bg-gray-100 p-1 rounded-lg mb-6">
-          {['Student', 'Advisor', 'Admin'].map((r) => (
+          {['Advisor'].map((r) => (
             <button
               key={r}
               type="button"
@@ -106,13 +97,7 @@ const Register = () => {
                 role === r ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:bg-gray-200'
               }`}
             >
-              <i
-                className={`mr-1 ${
-                  r === 'Student' ? 'fas fa-user' :
-                  r === 'Advisor' ? 'fas fa-user-tie' :
-                  'fas fa-user-shield'
-                }`}
-              ></i>
+              <i className="mr-1 fas fa-user-tie"></i>
               {r}
             </button>
           ))}
@@ -133,23 +118,6 @@ const Register = () => {
               required
             />
           </div>
-
-          {/* Student ID */}
-          {role === 'Student' && (
-            <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1">Student ID</label>
-              <input
-                type="text"
-                placeholder="e.g. C231272"
-                pattern="[A-Z][0-9]{6}"
-                title="One uppercase letter + 6 digits"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                className="uppercase w-full border border-gray-300 rounded-md px-4 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                required
-              />
-            </div>
-          )}
 
           {/* Email */}
           <div>

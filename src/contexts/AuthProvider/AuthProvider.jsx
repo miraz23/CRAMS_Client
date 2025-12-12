@@ -83,28 +83,11 @@ const AuthProvider = ({ children }) => {
             let endpoint = '';
             let registrationData = {};
 
-            const { email, password, role, fullName, studentId } = userData;
+            const { email, password, role, fullName } = userData;
 
-            if (role === 'Admin') {
-                endpoint = `${API_BASE_URL}/admin/register`;
-                registrationData = { name: fullName, email, password };
-            } else if (role === 'Student') {
-                endpoint = `${API_BASE_URL}/student/register`;
-                // Student registration requires more fields - adjust as needed
-                registrationData = {
-                    name: fullName,
-                    studentId,
-                    email,
-                    password,
-                    // Add required fields based on your backend
-                    mobileNumber: '',
-                    department: '',
-                };
-            } else {
-                // Advisor/Teacher registration
-                endpoint = `${API_BASE_URL}/teacher/register`;
-                registrationData = { name: fullName, email, password };
-            }
+            // Advisor/Teacher registration
+            endpoint = `${API_BASE_URL}/teacher/register`;
+            registrationData = { name: fullName, email, password };
 
             const response = await axios.post(endpoint, registrationData, {
                 withCredentials: true,

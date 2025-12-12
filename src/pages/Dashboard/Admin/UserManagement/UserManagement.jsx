@@ -11,6 +11,8 @@ import {
   deleteStudent,
   deleteTeacher,
   deleteAdmin,
+  uploadAdminCSV,
+  uploadStudentCSV,
 } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
@@ -162,6 +164,33 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
             </>
           )}
 
+          {userType === 'Admin' && isSuperAdmin && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admin ID</label>
+                <input
+                  type="text"
+                  name="adminId"
+                  value={formData.adminId || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
+                <select
+                  name="privilege"
+                  value={formData.privilege || 'Admin'}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Admin">Admin</option>
+                  <option value="Super Admin">Super Admin</option>
+                </select>
+              </div>
+            </>
+          )}
+
           {userType === 'Advisor' && isSuperAdmin && (
             <>
               <div>
@@ -210,18 +239,30 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
           )}
 
           {userType === 'Admin' && isSuperAdmin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
-              <select
-                name="privilege"
-                value={formData.privilege || 'Admin'}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="Admin">Admin</option>
-                <option value="Super Admin">Super Admin</option>
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admin ID</label>
+                <input
+                  type="text"
+                  name="adminId"
+                  value={formData.adminId || ''}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Privilege</label>
+                <select
+                  name="privilege"
+                  value={formData.privilege || 'Admin'}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Admin">Admin</option>
+                  <option value="Super Admin">Super Admin</option>
+                </select>
+              </div>
+            </>
           )}
 
           <div className="flex justify-end space-x-2 pt-4">
@@ -254,6 +295,10 @@ const UserManagement = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
+  const [uploadingCSV, setUploadingCSV] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [uploadingStudentCSV, setUploadingStudentCSV] = useState(false);
+  const [studentCsvFile, setStudentCsvFile] = useState(null);
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
@@ -511,6 +556,134 @@ const UserManagement = () => {
     }
   };
 
+  const handleCSVUpload = async () => {
+    if (!csvFile) {
+      Swal.fire({
+        icon: "warning",
+        title: "No File Selected",
+        text: "Please select a CSV file to upload.",
+      });
+      return;
+    }
+
+    if (!csvFile.name.toLowerCase().endsWith('.csv')) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File Type",
+        text: "Please upload a CSV file.",
+      });
+      return;
+    }
+
+    setUploadingCSV(true);
+    try {
+      const formData = new FormData();
+      formData.append('csvFile', csvFile);
+
+      const response = await uploadAdminCSV(formData);
+
+      if (response.data.success) {
+        const { created, skipped, errors } = response.data.data;
+        let message = `CSV processed successfully!\n\n`;
+        message += `✅ Created: ${created.length} admin(s)\n`;
+        message += `⏭️ Skipped: ${skipped.length} admin(s)\n`;
+        message += `❌ Errors: ${errors.length} admin(s)`;
+
+        if (errors.length > 0) {
+          message += `\n\nErrors:\n${errors.map((e, i) => `${i + 1}. ${e.error}`).join('\n')}`;
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Upload Successful",
+          html: message.replace(/\n/g, '<br>'),
+          width: '600px',
+        });
+
+        // Refresh admin list
+        fetchAdmins();
+        setCsvFile(null);
+        
+        // Reset file input
+        const fileInput = document.getElementById('csvFileInput');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: error.response?.data?.message || "Failed to upload CSV file. Please check the file format.",
+      });
+    } finally {
+      setUploadingCSV(false);
+    }
+  };
+
+  const handleStudentCSVUpload = async () => {
+    if (!studentCsvFile) {
+      Swal.fire({
+        icon: "warning",
+        title: "No File Selected",
+        text: "Please select a CSV file to upload.",
+      });
+      return;
+    }
+
+    if (!studentCsvFile.name.toLowerCase().endsWith('.csv')) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File Type",
+        text: "Please upload a CSV file.",
+      });
+      return;
+    }
+
+    setUploadingStudentCSV(true);
+    try {
+      const formData = new FormData();
+      formData.append('csvFile', studentCsvFile);
+
+      const response = await uploadStudentCSV(formData);
+
+      if (response.data.success) {
+        const { created, skipped, errors } = response.data.data;
+        let message = `CSV processed successfully!\n\n`;
+        message += `✅ Created: ${created.length} student(s)\n`;
+        message += `⏭️ Skipped: ${skipped.length} student(s)\n`;
+        message += `❌ Errors: ${errors.length} student(s)`;
+
+        if (errors.length > 0) {
+          message += `\n\nErrors:\n${errors.map((e, i) => `${i + 1}. ${e.error}`).join('\n')}`;
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Upload Successful",
+          html: message.replace(/\n/g, '<br>'),
+          width: '600px',
+        });
+
+        // Refresh student list
+        fetchStudents();
+        setStudentCsvFile(null);
+        
+        // Reset file input
+        const fileInput = document.getElementById('studentCsvFileInput');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: error.response?.data?.message || "Failed to upload CSV file. Please check the file format.",
+      });
+    } finally {
+      setUploadingStudentCSV(false);
+    }
+  };
+
   const getFilteredUsers = () => {
     let users = [];
     if (activeTab === 'Students') {
@@ -559,6 +732,62 @@ const UserManagement = () => {
               <StatCard title="Total Admins" count={admins.length} icon="Users" />
             )}
           </div>
+
+          {/* CSV Upload Section for Students - Available to both Super Admin and Admin */}
+          {isAdmin && activeTab === 'Students' && (
+            <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Upload Student Data (CSV)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload a CSV file with student data. CSV format: SL, Session, Department, Semester, Section, Student Id, Student Name, Email, Password
+              </p>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <input
+                    id="studentCsvFileInput"
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setStudentCsvFile(e.target.files[0])}
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={handleStudentCSVUpload}
+                  disabled={uploadingStudentCSV || !studentCsvFile}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {uploadingStudentCSV ? 'Uploading...' : 'Upload CSV'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CSV Upload Section - Only for Super Admin on Admins tab */}
+          {isSuperAdmin && activeTab === 'Admins' && (
+            <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Upload Admin Data (CSV)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload a CSV file with admin data. CSV format: SL, Department, Admin Id, Admin Name, Email, Password
+              </p>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <input
+                    id="csvFileInput"
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setCsvFile(e.target.files[0])}
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={handleCSVUpload}
+                  disabled={uploadingCSV || !csvFile}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {uploadingCSV ? 'Uploading...' : 'Upload CSV'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Search */}
           <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
@@ -625,7 +854,7 @@ const UserManagement = () => {
                       </div>
                       <div className="text-sm text-gray-500 space-x-4 mt-1">
                         <span className="inline-block">
-                          ID: {user.studentId || user.teacherId || 'N/A'}
+                          ID: {user.studentId || user.teacherId || user.adminId || 'N/A'}
                         </span>
                         <span className="inline-block text-blue-600">{user.email}</span>
                         {user.designation && (

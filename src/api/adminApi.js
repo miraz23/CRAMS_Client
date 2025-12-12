@@ -57,3 +57,19 @@ export const updateAdmin = (id, payload) =>
 export const deleteAdmin = (id) =>
   adminClient.delete(`/${id}`);
 
+// CSV Upload for Admin Creation
+export const uploadAdminCSV = (formData) =>
+  adminClient.post('/upload-csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+// CSV Upload for Student Creation
+export const uploadStudentCSV = (formData) =>
+  adminClient.post('/upload-student-csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
