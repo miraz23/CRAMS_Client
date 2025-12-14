@@ -73,3 +73,11 @@ export const uploadStudentCSV = (formData) =>
     },
   });
 
+// CSV Upload for Teacher Creation
+export const uploadTeacherCSV = (formData) =>
+  adminClient.post('/upload-teacher-csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+

@@ -13,6 +13,7 @@ import {
   deleteAdmin,
   uploadAdminCSV,
   uploadStudentCSV,
+  uploadTeacherCSV,
 } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
@@ -299,6 +300,8 @@ const UserManagement = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [uploadingStudentCSV, setUploadingStudentCSV] = useState(false);
   const [studentCsvFile, setStudentCsvFile] = useState(null);
+  const [uploadingTeacherCSV, setUploadingTeacherCSV] = useState(false);
+  const [teacherCsvFile, setTeacherCsvFile] = useState(null);
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
@@ -684,6 +687,70 @@ const UserManagement = () => {
     }
   };
 
+  const handleTeacherCSVUpload = async () => {
+    if (!teacherCsvFile) {
+      Swal.fire({
+        icon: "warning",
+        title: "No File Selected",
+        text: "Please select a CSV file to upload.",
+      });
+      return;
+    }
+
+    if (!teacherCsvFile.name.toLowerCase().endsWith('.csv')) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File Type",
+        text: "Please upload a CSV file.",
+      });
+      return;
+    }
+
+    setUploadingTeacherCSV(true);
+    try {
+      const formData = new FormData();
+      formData.append('csvFile', teacherCsvFile);
+
+      const response = await uploadTeacherCSV(formData);
+
+      if (response.data.success) {
+        const { created, skipped, errors } = response.data.data;
+        let message = `CSV processed successfully!\n\n`;
+        message += `✅ Created: ${created.length} teacher(s)\n`;
+        message += `⏭️ Skipped: ${skipped.length} teacher(s)\n`;
+        message += `❌ Errors: ${errors.length} teacher(s)`;
+
+        if (errors.length > 0) {
+          message += `\n\nErrors:\n${errors.map((e, i) => `${i + 1}. ${e.error}`).join('\n')}`;
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Upload Successful",
+          html: message.replace(/\n/g, '<br>'),
+          width: '600px',
+        });
+
+        // Refresh teacher list
+        fetchTeachers();
+        setTeacherCsvFile(null);
+        
+        // Reset file input
+        const fileInput = document.getElementById('teacherCsvFileInput');
+        if (fileInput) fileInput.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading CSV:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: error.response?.data?.message || "Failed to upload CSV file. Please check the file format.",
+      });
+    } finally {
+      setUploadingTeacherCSV(false);
+    }
+  };
+
   const getFilteredUsers = () => {
     let users = [];
     if (activeTab === 'Students') {
@@ -756,6 +823,34 @@ const UserManagement = () => {
                   className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
                   {uploadingStudentCSV ? 'Uploading...' : 'Upload CSV'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CSV Upload Section for Teachers - Only for Super Admin on Teachers tab */}
+          {isSuperAdmin && activeTab === 'Teachers' && (
+            <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Upload Teacher Data (CSV)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload a CSV file with teacher data. CSV format: SL, Department, Teacher Id, Teacher Name, Designation, Email, Contact, Password
+              </p>
+              <div className="flex gap-4 items-end">
+                <div className="flex-1">
+                  <input
+                    id="teacherCsvFileInput"
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setTeacherCsvFile(e.target.files[0])}
+                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={handleTeacherCSVUpload}
+                  disabled={uploadingTeacherCSV || !teacherCsvFile}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {uploadingTeacherCSV ? 'Uploading...' : 'Upload CSV'}
                 </button>
               </div>
             </div>
