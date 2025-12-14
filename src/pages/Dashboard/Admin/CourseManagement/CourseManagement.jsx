@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Search, Edit, Trash2, X } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import { listCourses, createCourse, updateCourse, deleteCourse } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 
 // Initial Course Data structure matching backend API
@@ -18,7 +18,6 @@ const emptyCourse = {
 };
 
 const CourseManagement = () => {
-    const axiosSecure = useAxiosSecure();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,12 +35,12 @@ const CourseManagement = () => {
     const fetchCourses = async () => {
         try {
             setLoading(true);
-            const params = new URLSearchParams();
-            if (searchTerm) params.append('search', searchTerm);
-            if (filterDept !== 'All Departments') params.append('department', filterDept);
-            if (filterStatus) params.append('status', filterStatus);
+            const params = {};
+            if (searchTerm) params.search = searchTerm;
+            if (filterDept !== 'All Departments') params.department = filterDept;
+            if (filterStatus) params.status = filterStatus;
 
-            const response = await axiosSecure.get(`/admin/courses?${params.toString()}`);
+            const response = await listCourses(params);
             if (response.data.success) {
                 setCourses(response.data.data || []);
             }
@@ -101,7 +100,7 @@ const CourseManagement = () => {
                     return;
                 }
 
-                const response = await axiosSecure.put(`/admin/courses/${courseToUpdate.id}`, newCourseData);
+                const response = await updateCourse(courseToUpdate.id, newCourseData);
                 if (response.data.success) {
                     Swal.fire({
                         icon: "success",
@@ -113,7 +112,7 @@ const CourseManagement = () => {
                     setIsModalOpen(false);
                 }
             } else {
-                const response = await axiosSecure.post('/admin/courses', newCourseData);
+                const response = await createCourse(newCourseData);
                 if (response.data.success) {
                     Swal.fire({
                         icon: "success",
@@ -148,7 +147,7 @@ const CourseManagement = () => {
 
         if (result.isConfirmed) {
             try {
-                const response = await axiosSecure.delete(`/admin/courses/${courseId}`);
+                const response = await deleteCourse(courseId);
                 if (response.data.success) {
                     Swal.fire({
                         icon: "success",

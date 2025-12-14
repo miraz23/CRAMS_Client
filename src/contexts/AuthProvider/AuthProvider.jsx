@@ -14,17 +14,12 @@ const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         try {
-            // Try to get user info from backend
-            // The backend will verify the JWT token from cookies
+            const storedUser = localStorage.getItem('studentUser');
             const role = localStorage.getItem('userRole');
-            if (role) {
-                // If we have a role, try to verify with backend
-                // For now, we'll set a basic user object
-                // You may want to add an endpoint to get current user details
-                setUser({
-                    role: role,
-                    // Add other user properties as needed
-                });
+            if (storedUser && role) {
+                setUser(JSON.parse(storedUser));
+            } else if (role) {
+                setUser({ role });
             }
         } catch (error) {
             console.error('Auth check failed:', error);
@@ -60,12 +55,18 @@ const AuthProvider = ({ children }) => {
 
             if (response.data.success) {
                 const userData = response.data.data || response.data.user || {};
-                setUser({
+                const derivedRole = role === 'Admin' ? (userData.privilege || role) : role;
+                const normalizedRole = derivedRole.toLowerCase();
+                const normalizedUser = {
                     ...userData,
-                    role: role,
-                    email: email,
-                });
-                localStorage.setItem('userRole', role);
+                    role: normalizedRole,
+                    email: userData.email || email,
+                    name: userData.name || userData.studentId || userData.email || '',
+                    studentId: userData.studentId,
+                };
+                setUser(normalizedUser);
+                localStorage.setItem('userRole', normalizedRole);
+                localStorage.setItem('studentUser', JSON.stringify(normalizedUser));
                 return { success: true, data: response.data };
             }
         } catch (error) {
@@ -82,28 +83,11 @@ const AuthProvider = ({ children }) => {
             let endpoint = '';
             let registrationData = {};
 
-            const { email, password, role, fullName, studentId } = userData;
+            const { email, password, role, fullName } = userData;
 
-            if (role === 'Admin') {
-                endpoint = `${API_BASE_URL}/admin/register`;
-                registrationData = { name: fullName, email, password };
-            } else if (role === 'Student') {
-                endpoint = `${API_BASE_URL}/student/register`;
-                // Student registration requires more fields - adjust as needed
-                registrationData = {
-                    name: fullName,
-                    studentId,
-                    email,
-                    password,
-                    // Add required fields based on your backend
-                    mobileNumber: '',
-                    department: '',
-                };
-            } else {
-                // Advisor/Teacher registration
-                endpoint = `${API_BASE_URL}/teacher/register`;
-                registrationData = { name: fullName, email, password };
-            }
+            // Advisor/Teacher registration
+            endpoint = `${API_BASE_URL}/teacher/register`;
+            registrationData = { name: fullName, email, password };
 
             const response = await axios.post(endpoint, registrationData, {
                 withCredentials: true,
@@ -153,12 +137,14 @@ const AuthProvider = ({ children }) => {
 
             setUser(null);
             localStorage.removeItem('userRole');
+            localStorage.removeItem('studentUser');
             return { success: true };
         } catch (error) {
             console.error('Logout error:', error);
             // Clear local state even if API call fails
             setUser(null);
             localStorage.removeItem('userRole');
+            localStorage.removeItem('studentUser');
             throw error;
         } finally {
             setLoading(false);

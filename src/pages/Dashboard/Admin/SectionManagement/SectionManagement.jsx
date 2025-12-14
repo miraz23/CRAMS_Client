@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import useAxiosSecure from "../../../../hooks/useAxiosSecure/useAxiosSecure";
+import { listSections, createSection, updateSection, deleteSection } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 
 // Enrollment Bar Component
@@ -314,7 +314,6 @@ const SectionCard = ({ section, onEdit, onDelete }) => {
 
 // Main Section Management Component
 const SectionManagementDashboard = () => {
-  const axiosSecure = useAxiosSecure();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -329,12 +328,12 @@ const SectionManagementDashboard = () => {
   const fetchSections = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
+      const params = {};
       if (filterSemester && filterSemester !== 'All Semesters') {
-        params.append('semester', filterSemester);
+        params.semester = filterSemester;
       }
 
-      const response = await axiosSecure.get(`/admin/sections?${params.toString()}`);
+      const response = await listSections(params);
       if (response.data.success) {
         setSections(response.data.data || []);
       }
@@ -371,7 +370,7 @@ const SectionManagementDashboard = () => {
     try {
       if (sectionData.id) {
         // Update existing section
-        const response = await axiosSecure.put(`/admin/sections/${sectionData.id}`, sectionData);
+        const response = await updateSection(sectionData.id, sectionData);
         if (response.data.success) {
           Swal.fire({
             icon: "success",
@@ -383,7 +382,7 @@ const SectionManagementDashboard = () => {
         }
       } else {
         // Create new section
-        const response = await axiosSecure.post('/admin/sections', sectionData);
+        const response = await createSection(sectionData);
         if (response.data.success) {
           Swal.fire({
             icon: "success",
@@ -406,7 +405,7 @@ const SectionManagementDashboard = () => {
 
   const handleDeleteSection = async (id) => {
     try {
-      const response = await axiosSecure.delete(`/admin/sections/${id}`);
+      const response = await deleteSection(id);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
