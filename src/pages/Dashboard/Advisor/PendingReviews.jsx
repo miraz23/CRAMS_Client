@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -15,79 +15,192 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import useAuth from "../../../hooks/useAuth/useAuth";
+import { 
+  getPendingReviews, 
+  bulkApproveRegistrations, 
+  bulkRejectRegistrations 
+} from "../../../api/teacherApi";
+import Swal from "sweetalert2";
 
 export default function PendingReviews() {
+  const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
+  const [summary, setSummary] = useState({ totalPending: 0, withIssues: 0 });
 
-  const reviews = [
-    {
-      id: 1,
-      name: "Md. Mohiul Islam Miraz",
-      studentId: "C231197",
-      email: "miraz@student.iiuc.ac.bd",
-      cgpa: "3.75",
-      currentCredits: 95,
-      requestedCredits: 7,
-      totalCourses: 3,
-      submittedDate: "Mar 3, 2025 10:30 AM",
-      hasIssues: false,
-      courses: [
-        {
-          code: "CSE-3642",
-          name: "Software Engineering Lab",
-          credits: 1,
-          schedule: "Sun 10:00 AM - 12:00 PM",
-          issues: [],
-        },
-        {
-          code: "CSE-3641",
-          name: "Software Engineering",
-          credits: 3,
-          schedule: "Mon, Wed 2:00 PM - 3:30 PM",
-          issues: [],
-        },
-        {
-          code: "CSE-3631",
-          name: "Database Systems",
-          credits: 3,
-          schedule: "Tue, Thu 10:00 AM - 11:30 AM",
-          issues: [],
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Mohammad Moaz",
-      studentId: "C231187",
-      email: "moaz@student.iiuc.ac.bd",
-      cgpa: "3.45",
-      currentCredits: 88,
-      requestedCredits: 6,
-      totalCourses: 2,
-      submittedDate: "Mar 3, 2025 7:15 AM",
-      hasIssues: true,
-      courses: [
-        {
-          code: "CSE-3651",
-          name: "Computer Networks",
-          credits: 3,
-          schedule: "Sun, Tue 1:00 PM - 2:30 PM",
-          issues: ["Prerequisites Not Met"],
-        },
-        {
-          code: "CSE-3661",
-          name: "Artificial Intelligence",
-          credits: 3,
-          schedule: "Mon, Wed 10:00 AM - 11:30 AM",
-          issues: [],
-          seatsInfo: "Only 3 seats left",
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    fetchPendingReviews();
+  }, []);
 
-  const navigate = useNavigate();
+  const fetchPendingReviews = async () => {
+    try {
+      setLoading(true);
+      const data = await getPendingReviews();
+      setSummary(data.summary || { totalPending: 0, withIssues: 0 });
+      
+      // Format reviews for display
+      const formattedReviews = (data.reviews || []).map((review, index) => ({
+        id: index + 1,
+        name: review.studentName || "Unknown Student",
+        studentId: review.studentIdNumber || "",
+        email: review.email || "",
+        cgpa: review.cgpa ? review.cgpa.toFixed(2) : "N/A",
+        currentCredits: review.currentCredits || 0,
+        requestedCredits: review.requestedCredits || 0,
+        totalCourses: review.totalCourses || 0,
+        submittedDate: review.submittedAtFormatted || "N/A",
+        hasIssues: review.hasIssues || false,
+        courses: (review.courses || []).map((course) => ({
+          code: course.courseCode || "",
+          name: course.courseName || "",
+          credits: course.credits || 0,
+          schedule: course.schedule || "TBA",
+          issues: course.issues || [],
+          registrationId: course.registrationId, // Store registration ID for approve/reject
+        })),
+        studentMongoId: review.studentId, // MongoDB ObjectId
+        registrationIds: (review.courses || []).map(course => course.registrationId).filter(Boolean), // All registration IDs for this student
+      }));
+      setReviews(formattedReviews);
+    } catch (error) {
+      console.error("Error fetching pending reviews:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load pending reviews",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveAll = async (review) => {
+    if (!review.studentMongoId || !review.registrationIds || review.registrationIds.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Unable to approve: Missing registration information",
+      });
+      return;
+    }
+
+    // Debug: Log registration IDs
+    console.log("Approving registrations:", {
+      studentId: review.studentMongoId,
+      registrationIds: review.registrationIds,
+      totalCourses: review.totalCourses,
+      registrationIdsCount: review.registrationIds.length
+    });
+
+    const result = await Swal.fire({
+      title: "Approve All Courses?",
+      html: `Approve all <b>${review.totalCourses}</b> course(s) for <b>${review.name}</b>?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, Approve All",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const response = await bulkApproveRegistrations(
+        review.studentMongoId,
+        review.registrationIds,
+        "Approved by advisor"
+      );
+
+      if (response.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Approved!",
+          text: `${response.data?.approvedCount || review.totalCourses} course(s) for ${review.name} have been approved.`,
+          timer: 2000,
+        });
+        // Refresh the reviews list
+        fetchPendingReviews();
+      }
+    } catch (error) {
+      console.error("Error approving registrations:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Approval Failed",
+        text: error.response?.data?.message || "Failed to approve courses",
+      });
+    }
+  };
+
+  const handleRejectAll = async (review) => {
+    if (!review.studentMongoId || !review.registrationIds || review.registrationIds.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Unable to reject: Missing registration information",
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Reject All Courses?",
+      html: `Reject all <b>${review.totalCourses}</b> course(s) for <b>${review.name}</b>?`,
+      icon: "warning",
+      input: "textarea",
+      inputLabel: "Rejection Reason (optional)",
+      inputPlaceholder: "Enter reason for rejection...",
+      inputAttributes: {
+        "aria-label": "Rejection reason"
+      },
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Reject All",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return; // User cancelled
+
+    try {
+      const response = await bulkRejectRegistrations(
+        review.studentMongoId,
+        review.registrationIds,
+        result.value || "Rejected by advisor"
+      );
+
+      if (response.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Rejected!",
+          text: `All courses for ${review.name} have been rejected.`,
+          timer: 2000,
+        });
+        // Refresh the reviews list
+        fetchPendingReviews();
+      }
+    } catch (error) {
+      console.error("Error rejecting registrations:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Rejection Failed",
+        text: error.response?.data?.message || "Failed to reject courses",
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,7 +254,10 @@ export default function PendingReviews() {
                       </p>
                       <p className="text-xs text-gray-500">Academic Advisor</p>
                     </div>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2"
+                    >
                       <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
                       <span>Logout</span>
                     </button>
@@ -188,7 +304,10 @@ export default function PendingReviews() {
                           Academic Advisor
                         </p>
                       </div> */}
-                      <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
+                      >
                         <span>Logout</span>
                       </button>
                     </div>
@@ -287,18 +406,32 @@ export default function PendingReviews() {
             <div className="flex items-center space-x-8 ">
               <div className="lg:border-r-2 lg:border-gray-200 lg:pr-4 md:border-r-2 md:border-gray-200 md:pr-6">
                 <p className="text-sm text-gray-600 mb-1">Total Pending</p>
-                <p className="text-3xl font-bold text-gray-900">2</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {loading ? "..." : summary.totalPending || 0}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">With Issues</p>
-                <p className="text-3xl font-bold text-red-600">1</p>
+                <p className="text-3xl font-bold text-red-600">
+                  {loading ? "..." : summary.withIssues || 0}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Reviews List */}
-          <div className="space-y-6">
-            {reviews.map((review) => (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-500">Loading pending reviews...</p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
+              <p className="text-gray-500 text-lg">No pending reviews at the moment</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((review) => (
               <div
                 key={review.id}
                 className={`bg-white rounded-lg shadow border ${
@@ -404,18 +537,25 @@ export default function PendingReviews() {
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button className="flex items-center justify-center space-x-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 cursor-pointer">
+                  <button 
+                    onClick={() => handleApproveAll(review)}
+                    className="flex items-center justify-center space-x-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 cursor-pointer"
+                  >
                     <ThumbsUp className="w-4 h-4" />
                     <span>Approve All</span>
                   </button>
-                  <button className="flex items-center justify-center space-x-2 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 cursor-pointer">
+                  <button 
+                    onClick={() => handleRejectAll(review)}
+                    className="flex items-center justify-center space-x-2 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 cursor-pointer"
+                  >
                     <ThumbsDown className="w-4 h-4" />
-                    <span>Reject</span>
+                    <span>Reject All</span>
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>

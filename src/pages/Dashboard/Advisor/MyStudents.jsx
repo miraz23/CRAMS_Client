@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -15,91 +15,70 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import useAuth from "../../../hooks/useAuth/useAuth";
+import { getMyStudents } from "../../../api/teacherApi";
+import Swal from "sweetalert2";
 
 export default function MyStudents() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [summary, setSummary] = useState({ totalStudents: 0, pendingReviews: 0, averageCGPA: null });
 
-  const students = [
-    {
-      id: 1,
-      name: "Md. Mohiul Islam Miraz",
-      studentId: "C231197",
-      cgpa: "3.75",
-      credits: 95,
-      semester: "7th",
-      status: "Active",
-      email: "miraz@student.iiuc.ac.bd",
-      phone: "+880 1234-567890",
-      pendingReviews: 3,
-    },
-    {
-      id: 2,
-      name: "Mohammad Moaz",
-      studentId: "C231187",
-      cgpa: "3.45",
-      credits: 88,
-      semester: "7th",
-      status: "Active",
-      email: "moaz@student.iiuc.ac.bd",
-      phone: "+880 1234-567891",
-      pendingReviews: 2,
-    },
-    {
-      id: 3,
-      name: "Junaid Mahmud",
-      studentId: "C231189",
-      cgpa: "3.62",
-      credits: 92,
-      semester: "7th",
-      status: "Active",
-      email: "junaid@student.iiuc.ac.bd",
-      phone: "+880 1234-567892",
-      pendingReviews: 0,
-    },
-    {
-      id: 4,
-      name: "MD. Ashfaqur Rashid",
-      studentId: "C231261",
-      cgpa: "3.58",
-      credits: 90,
-      semester: "7th",
-      status: "Active",
-      email: "ashfaq@student.iiuc.ac.bd",
-      phone: "+880 1234-567893",
-      pendingReviews: 1,
-    },
-    {
-      id: 5,
-      name: "S.M. Asfaqur Rahman",
-      studentId: "C231272",
-      cgpa: "3.71",
-      credits: 94,
-      semester: "7th",
-      status: "Active",
-      email: "asfaq@student.iiuc.ac.bd",
-      phone: "+880 1234-567894",
-      pendingReviews: 0,
-    },
-  ];
+  useEffect(() => {
+    fetchMyStudents();
+  }, [searchQuery]);
 
-  const filteredStudents = students.filter(
-    (student) =>
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const fetchMyStudents = async () => {
+    try {
+      setLoading(true);
+      const params = searchQuery ? { search: searchQuery } : {};
+      const data = await getMyStudents(params);
+      
+      setSummary(data.summary || { totalStudents: 0, pendingReviews: 0, averageCGPA: null });
+      
+      // Format students for display
+      const formattedStudents = (data.students || []).map((student, index) => ({
+        id: index + 1,
+        name: student.name || "Unknown Student",
+        studentId: student.studentId || "",
+        cgpa: student.cgpa ? student.cgpa.toFixed(2) : "N/A",
+        credits: student.credits || 0,
+        semester: student.semester || "N/A",
+        status: student.status || "Active",
+        email: student.email || "",
+        phone: student.mobileNumber || "N/A",
+        pendingReviews: 0, // This can be calculated if needed
+        studentMongoId: student._id,
+      }));
+      setStudents(formattedStudents);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load students",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const totalPending = students.reduce(
-    (sum, student) => sum + student.pendingReviews,
-    0
-  );
-  const averageCGPA = (
-    students.reduce((sum, student) => sum + parseFloat(student.cgpa), 0) /
-    students.length
-  ).toFixed(2);
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
+
+  const filteredStudents = students; // Already filtered by backend
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,7 +132,10 @@ export default function MyStudents() {
                       </p>
                       <p className="text-xs text-gray-500">Academic Advisor</p>
                     </div>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
+                    >
                       <LogOut className="w-4 h-4" />
                       <span>Logout</span>
                     </button>
@@ -178,8 +160,10 @@ export default function MyStudents() {
 
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-20 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
-                        {/* <LogOut className="w-4 h-4" /> */}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
+                      >
                         <span>Logout</span>
                       </button>
                     </div>
@@ -274,43 +258,54 @@ export default function MyStudents() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Students</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {students.length}
-                  </p>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-lg shadow border border-gray-200 p-6 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
+                  <div className="h-8 bg-gray-200 rounded w-16"></div>
                 </div>
-                <Users className="w-8 h-8 text-blue-600" />
-              </div>
+              ))}
             </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Students</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {summary.totalStudents || 0}
+                    </p>
+                  </div>
+                  <Users className="w-8 h-8 text-blue-600" />
+                </div>
+              </div>
 
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Pending Reviews</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {totalPending}
-                  </p>
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Pending Reviews</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {summary.pendingReviews || 0}
+                    </p>
+                  </div>
+                  <Clock className="w-8 h-8 text-blue-600" />
                 </div>
-                <Clock className="w-8 h-8 text-blue-600" />
               </div>
-            </div>
 
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Average CGPA</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {averageCGPA}
-                  </p>
+              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Average CGPA</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {summary.averageCGPA ? summary.averageCGPA.toFixed(2) : "N/A"}
+                    </p>
+                  </div>
+                  <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
             </div>
-          </div>
+          )}
 
           {/* Search Section */}
           <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
@@ -330,8 +325,18 @@ export default function MyStudents() {
           </div>
 
           {/* Students Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredStudents.map((student) => (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-500">Loading students...</p>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
+              <p className="text-gray-500 text-lg">No students found</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {filteredStudents.map((student) => (
               <div
                 key={student.id}
                 className="bg-white rounded-lg shadow border border-gray-200 p-6"
@@ -399,18 +404,7 @@ export default function MyStudents() {
                   View Details
                 </button>
               </div>
-            ))}
-          </div>
-
-          {filteredStudents.length === 0 && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-12 text-center">
-              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No students found
-              </h3>
-              <p className="text-gray-600">
-                Try adjusting your search criteria
-              </p>
+              ))}
             </div>
           )}
         </main>

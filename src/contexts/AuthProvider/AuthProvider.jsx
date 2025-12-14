@@ -55,7 +55,22 @@ const AuthProvider = ({ children }) => {
 
             if (response.data.success) {
                 const userData = response.data.data || response.data.user || {};
-                const derivedRole = role === 'Admin' ? (userData.privilege || role) : role;
+                let derivedRole = role;
+                
+                // For Admin, use privilege from response
+                if (role === 'Admin') {
+                    derivedRole = userData.privilege || role;
+                } 
+                // For Teacher, check if privilege is "Advisor" to set role as "Advisor"
+                else if (role === 'Teacher' || role === 'Advisor') {
+                    // Check if the teacher has "Advisor" privilege
+                    if (userData.privilege === 'Advisor') {
+                        derivedRole = 'Advisor';
+                    } else {
+                        derivedRole = 'Teacher';
+                    }
+                }
+                
                 const normalizedRole = derivedRole.toLowerCase();
                 const normalizedUser = {
                     ...userData,

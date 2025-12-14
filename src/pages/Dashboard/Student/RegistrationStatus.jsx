@@ -14,9 +14,11 @@ import {
   CircleX,
 } from "lucide-react";
 import { fetchRegistrationStatus } from "../../../api/studentApi";
+import useAuth from "../../../hooks/useAuth/useAuth";
 
 function RegistrationStatus() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [statusData, setStatusData] = useState({ registrations: [], summary: {} });
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +63,19 @@ function RegistrationStatus() {
             <p className="text-sm font-medium text-gray-900">Student Portal</p>
             <p className="text-xs text-gray-500">Registration Status</p>
           </div>
-          <button className="relative group p-2 flex items-center justify-center">
+          <button
+            onClick={async () => {
+              try {
+                await logoutUser();
+                navigate("/login");
+              } catch (error) {
+                console.error("Logout error:", error);
+                navigate("/login");
+              }
+            }}
+            className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+            title="Logout"
+          >
             <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
           </button>
         </div>

@@ -15,9 +15,11 @@ import {
 import Swal from "sweetalert2";
 import caplogo from "../../../assets/CAP.png";
 import { fetchRegistrationStatus, fetchSchedule } from "../../../api/studentApi";
+import useAuth from "../../../hooks/useAuth/useAuth";
 
 export default function StdDashboard() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [regSummary, setRegSummary] = useState({});
   const [recentRegs, setRecentRegs] = useState([]);
   const [scheduleSummary, setScheduleSummary] = useState({});
@@ -40,6 +42,16 @@ export default function StdDashboard() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
 
   const stats = useMemo(
     () => [
@@ -145,7 +157,11 @@ export default function StdDashboard() {
                   <p className="text-sm font-medium text-gray-900">Student</p>
                   <p className="text-xs text-gray-500">Dashboard</p>
                 </div>
-                <button className="relative group p-2 flex items-center justify-center">
+                <button
+                  onClick={handleLogout}
+                  className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  title="Logout"
+                >
                   <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
                 </button>
               </div>

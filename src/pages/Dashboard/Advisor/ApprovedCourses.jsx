@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -13,57 +13,82 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import useAuth from "../../../hooks/useAuth/useAuth";
+import { getApprovedCourses } from "../../../api/teacherApi";
+import Swal from "sweetalert2";
 
 export default function ApprovedCourses() {
+  const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [approvedCourses, setApprovedCourses] = useState([]);
+  const [summary, setSummary] = useState({ totalApproved: 0, approvedThisWeek: 0, totalCredits: 0 });
 
-  const approvedCourses = [
-    {
-      id: 1,
-      code: "CSE-3641",
-      name: "Software Engineering",
-      credits: 3,
-      student: "Md. Mohiul Islam Miraz (C231197)",
-      approvedDate: "Mar 1, 2025",
-      feedback: "Approved. Good luck!",
-    },
-    {
-      id: 2,
-      code: "CSE-3642",
-      name: "Software Engineering Lab",
-      credits: 1,
-      student: "MD. Ashfaqur Rashid (C231261)",
-      approvedDate: "Mar 1, 2025",
-      feedback: "Approved.",
-    },
-    {
-      id: 3,
-      code: "CSE-3631",
-      name: "Database Systems",
-      credits: 3,
-      student: "S.M. Asfaqur Rahman (C231272)",
-      approvedDate: "Feb 28, 2025",
-      feedback: "Approved. Make sure to attend all labs.",
-    },
-    {
-      id: 4,
-      code: "CSE-3661",
-      name: "Artificial Intelligence",
-      credits: 3,
-      student: "Junaid Mahmud (C231189)",
-      approvedDate: "Feb 28, 2025",
-      feedback: "Approved.",
-    },
-  ];
+  useEffect(() => {
+    fetchApprovedCourses();
+  }, []);
 
-  const totalApproved = approvedCourses.length;
-  const thisWeek = 8;
-  const totalCredits = approvedCourses.reduce(
-    (sum, course) => sum + course.credits,
-    0
-  );
+  const fetchApprovedCourses = async () => {
+    try {
+      setLoading(true);
+      const data = await getApprovedCourses();
+      
+      setSummary(data.summary || { totalApproved: 0, approvedThisWeek: 0, totalCredits: 0 });
+      
+      // Format approved courses for display
+      const formattedCourses = (data.recentApprovals || []).map((course, index) => ({
+        id: index + 1,
+        code: course.courseCode || "",
+        name: course.courseName || "",
+        credits: course.credits || 0,
+        student: `${course.studentName || "Unknown"} (${course.studentId || ""})`,
+        approvedDate: course.approvalDateFormatted || "N/A",
+        feedback: course.advisorFeedback || "",
+      }));
+      setApprovedCourses(formattedCourses);
+    } catch (error) {
+      console.error("Error fetching approved courses:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load approved courses",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const data = await getApprovedCourses({ format: 'csv' });
+      // The backend should return CSV data, but if it returns JSON, we need to handle it
+      // For now, just show a message
+      Swal.fire({
+        icon: "info",
+        title: "Export",
+        text: "CSV export functionality will be implemented",
+      });
+    } catch (error) {
+      console.error("Error exporting:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Export Failed",
+        text: error.response?.data?.message || "Failed to export data",
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -117,7 +142,10 @@ export default function ApprovedCourses() {
                       </p>
                       <p className="text-xs text-gray-500">Academic Advisor</p>
                     </div>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2"
+                    >
                       <LogOut className="w-4 h-4" />
                       <span>Logout</span>
                     </button>
@@ -150,8 +178,10 @@ export default function ApprovedCourses() {
                           Academic Advisor
                         </p>
                       </div> */}
-                      <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
-                        {/* <LogOut className="w-4 h-4" /> */}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
+                      >
                         <span>Logout</span>
                       </button>
                     </div>
@@ -245,33 +275,51 @@ export default function ApprovedCourses() {
                 View your recently approved course registrations
               </p>
             </div>
-            <button className=" flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 font-medium cursor-pointer">
+            <button 
+              onClick={handleExport}
+              className=" flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 font-medium cursor-pointer"
+            >
               <Download className="w-4 h-4" />
               <span>Export Report</span>
             </button>
           </div>
 
           {/* Stats Cards */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
-            <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-6">
-              <div className="lg:border-r-2 lg:border-gray-200 md:border-r-2 md:border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">Total Approved</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {totalApproved}
-                </p>
-              </div>
-              <div className="lg:border-r-2 lg:border-gray-200 md:border-r-2 md:border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">This Week</p>
-                <p className="text-3xl font-bold text-teal-600">{thisWeek}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Credits</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {totalCredits}
-                </p>
+          {loading ? (
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8 animate-pulse">
+              <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i}>
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16"></div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8">
+              <div className="grid sm:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div className="lg:border-r-2 lg:border-gray-200 md:border-r-2 md:border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Total Approved</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {summary.totalApproved || 0}
+                  </p>
+                </div>
+                <div className="lg:border-r-2 lg:border-gray-200 md:border-r-2 md:border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">This Week</p>
+                  <p className="text-3xl font-bold text-teal-600">
+                    {summary.approvedThisWeek || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Credits</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {summary.totalCredits || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recent Approvals */}
           <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
@@ -284,8 +332,18 @@ export default function ApprovedCourses() {
               </p>
             </div>
 
-            <div className="space-y-6">
-              {approvedCourses.map((course) => (
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Loading approved courses...</p>
+              </div>
+            ) : approvedCourses.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-200">
+                <p className="text-gray-500 text-lg">No approved courses found</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {approvedCourses.map((course) => (
                 <div
                   key={course.id}
                   className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0"
@@ -325,8 +383,9 @@ export default function ApprovedCourses() {
                     <p className="text-sm text-gray-700">{course.feedback}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </main>
       </div>

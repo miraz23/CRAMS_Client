@@ -25,8 +25,10 @@ const Login = () => {
         timer: 1500,
       });
 
-      if (role === "Admin") navigate("/admin/dashboard");
-      else if (role === "Advisor") navigate("/advisor/dashboard");
+      // Get the actual role from localStorage (may have been updated based on privilege)
+      const actualRole = localStorage.getItem('userRole');
+      if (actualRole === "admin" || actualRole === "super admin") navigate("/admin/dashboard");
+      else if (actualRole === "advisor") navigate("/advisor/dashboard");
       else navigate("/student/dashboard");
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Login failed. Please check your credentials.";

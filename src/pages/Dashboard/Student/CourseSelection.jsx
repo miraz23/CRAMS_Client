@@ -23,9 +23,11 @@ import {
   removeCourseSelection,
   submitCoursesForApproval,
 } from "../../../api/studentApi";
+import useAuth from "../../../hooks/useAuth/useAuth";
 
 function CourseSelection() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All Departments");
   const [availableCourses, setAvailableCourses] = useState([]);
@@ -126,7 +128,19 @@ function CourseSelection() {
             <p className="text-sm font-medium text-gray-900">Student Portal</p>
             <p className="text-xs text-gray-500">Course Selection</p>
           </div>
-          <button className="relative group p-2 flex items-center justify-center">
+          <button
+            onClick={async () => {
+              try {
+                await logoutUser();
+                navigate("/login");
+              } catch (error) {
+                console.error("Logout error:", error);
+                navigate("/login");
+              }
+            }}
+            className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+            title="Logout"
+          >
             <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
           </button>
         </div>
@@ -241,10 +255,31 @@ function CourseSelection() {
 
             {filteredCourses.map((course) => {
               const hasSeats = course.seats?.available > 0;
+              const isRegistered = course.isRegistered && !course.isSelected;
+              const registrationStatus = course.registrationStatus;
+              
+              // Determine status badge color and text
+              const getStatusBadge = () => {
+                if (registrationStatus === 'approved') {
+                  return { text: 'Approved', color: 'bg-green-600' };
+                }
+                if (registrationStatus === 'pending') {
+                  return { text: 'Pending', color: 'bg-yellow-600' };
+                }
+                if (registrationStatus === 'rejected') {
+                  return { text: 'Rejected', color: 'bg-red-600' };
+                }
+                return null;
+              };
+              
+              const statusBadge = getStatusBadge();
+              
               return (
                 <div
                   key={course.id}
-                  className="border border-gray-200 bg-white rounded-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                  className={`border rounded-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${
+                    isRegistered ? 'border-gray-300 bg-gray-50 opacity-75' : 'border-gray-200 bg-white'
+                  }`}
                 >
                   <div className="py-0.5">
                     <div className="flex flex-wrap gap-3 items-center">
@@ -252,6 +287,11 @@ function CourseSelection() {
                       <p className="border px-2 py-1 font-medium border-gray-300 rounded-lg">
                         {course.credits || 0} Credits
                       </p>
+                      {statusBadge && (
+                        <span className={`text-white ${statusBadge.color} p-1 rounded-lg px-2 flex items-center gap-1`}>
+                          {statusBadge.text}
+                        </span>
+                      )}
                       {course.hasConflict && (
                         <span className="text-white bg-red-600 p-1 rounded-lg px-2 flex items-center gap-1">
                           <AlertTriangle className="w-4 h-4" />
@@ -300,16 +340,30 @@ function CourseSelection() {
                   </div>
                   <div>
                     <button
-                      className={`flex py-2 px-4 rounded-lg gap-2 items-center cursor-pointer ${
-                        course.isSelected
-                          ? "bg-blue-600 text-white"
-                          : "border border-gray-400 text-gray-700"
+                      className={`flex py-2 px-4 rounded-lg gap-2 items-center ${
+                        isRegistered
+                          ? "bg-gray-400 text-white cursor-not-allowed"
+                          : course.isSelected
+                          ? "bg-blue-600 text-white cursor-pointer"
+                          : "border border-gray-400 text-gray-700 cursor-pointer"
                       }`}
-                      onClick={() => handleCourseToggle(course)}
+                      onClick={() => !isRegistered && handleCourseToggle(course)}
+                      disabled={isRegistered}
+                      title={isRegistered ? `Course is already ${registrationStatus}` : ""}
                     >
-                      {course.isSelected ? <Check className="w-5" /> : <Plus className="w-5" />}
+                      {course.isSelected ? (
+                        <Check className="w-5" />
+                      ) : isRegistered ? (
+                        <Check className="w-5" />
+                      ) : (
+                        <Plus className="w-5" />
+                      )}
                       <p className="font-semibold">
-                        {course.isSelected ? "Selected" : "Add"}
+                        {course.isSelected
+                          ? "Selected"
+                          : isRegistered
+                          ? statusBadge?.text || "Registered"
+                          : "Add"}
                       </p>
                     </button>
                   </div>

@@ -12,9 +12,11 @@ import {
   FileText,
 } from "lucide-react";
 import { fetchSchedule } from "../../../api/studentApi";
+import useAuth from "../../../hooks/useAuth/useAuth";
 
 function MySchedule() {
   const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [schedule, setSchedule] = useState({ weeklySchedule: {}, summary: {}, courses: [] });
   const [loading, setLoading] = useState(false);
 
@@ -34,6 +36,16 @@ function MySchedule() {
   useEffect(() => {
     loadSchedule();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -57,7 +69,11 @@ function MySchedule() {
             <p className="text-sm font-medium text-gray-900">Student Portal</p>
             <p className="text-xs text-gray-500">My Schedule</p>
           </div>
-          <button className="relative group p-2 flex items-center justify-center">
+          <button
+            onClick={handleLogout}
+            className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+            title="Logout"
+          >
             <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
           </button>
         </div>

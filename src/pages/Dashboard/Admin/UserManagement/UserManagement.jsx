@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 import {
   getUserOverview,
@@ -17,6 +19,7 @@ import {
 } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
+import useAuth from "../../../../hooks/useAuth/useAuth";
 
 // Stat Card Component
 const StatCard = ({ title, count, icon }) => (
@@ -289,6 +292,8 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
 
 // Main User Management Component
 const UserManagement = () => {
+  const navigate = useNavigate();
+  const { logoutUser } = useAuth();
   const [activeTab, setActiveTab] = useState('Students');
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
@@ -779,10 +784,50 @@ const UserManagement = () => {
   const advisorsCount = teachers.filter(t => (t.privilege || '').toLowerCase() === 'advisor').length;
   const teacherCount = teachers.length; // include advisors in teacher bucket
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Menu className="w-6 h-6 text-gray-600 lg:hidden" />
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="relative p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {isSuperAdmin ? "Super Admin" : "Admin"}
+                  </p>
+                  <p className="text-xs text-gray-500">User Management</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="p-8">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">

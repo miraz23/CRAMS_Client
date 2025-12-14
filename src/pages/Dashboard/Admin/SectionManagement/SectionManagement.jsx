@@ -1,9 +1,13 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
+import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 import { listSections, createSection, updateSection, deleteSection } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
+import useAuth from "../../../../hooks/useAuth/useAuth";
+import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 
 // Enrollment Bar Component
 const EnrollmentBar = ({ enrolled, capacity, label }) => {
@@ -314,6 +318,9 @@ const SectionCard = ({ section, onEdit, onDelete }) => {
 
 // Main Section Management Component
 const SectionManagementDashboard = () => {
+  const navigate = useNavigate();
+  const { logoutUser } = useAuth();
+  const { role } = useUserRole();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -431,10 +438,50 @@ const SectionManagementDashboard = () => {
     return ['All Semesters', ...Array.from(semSet)];
   }, [sections]);
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Menu className="w-6 h-6 text-gray-600 lg:hidden" />
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="relative p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {role === "super admin" ? "Super Admin" : "Admin"}
+                  </p>
+                  <p className="text-xs text-gray-500">Section Management</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold">Section Management</h2>
