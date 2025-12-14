@@ -19,6 +19,11 @@ import SectionManagement from "../pages/Dashboard/Admin/SectionManagement/Sectio
 import UserManagement from "../pages/Dashboard/Admin/UserManagement/UserManagement";
 import SystemSettings from "../pages/Dashboard/Admin/SystemSettings/SystemSettings";
 
+import AdvisorDashboard from "../pages/Dashboard/Advisor/AdvisorDashboard";
+import PendingReviews from "../pages/Dashboard/Advisor/PendingReviews";
+import MyStudents from "../pages/Dashboard/Advisor/MyStudents";
+import ApprovedCourses from "../pages/Dashboard/Advisor/ApprovedCourses";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -86,5 +91,30 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/advisor/dashboard",
+    element: (
+      <PrivateRoutes allowedRoles={["advisor"]}>
+        <DashboardLayout />
+      </PrivateRoutes>
+    ),
+    children: [
+      {
+        index: true,
+        element: <AdvisorDashboard />, // Default dashboard page
+      },
+      {
+        path: "pendingreviews",
+        element: <PendingReviews />,
+      },
+      {
+        path: "mystudents",
+        element: <MyStudents />,
+      },
+      {
+        path: "approvedcourses",
+        element: <ApprovedCourses />,
+      },
+    ],
+  },
 ]);
-
