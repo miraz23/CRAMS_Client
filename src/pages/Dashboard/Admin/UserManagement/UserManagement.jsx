@@ -1023,12 +1023,6 @@ const UserManagement = () => {
                           >
                             Edit
                           </button>
-                          <button
-                            onClick={() => handleDelete(user)}
-                            className="text-sm text-red-700 px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
-                          >
-                            Delete
-                          </button>
                         </>
                       )}
                     </div>

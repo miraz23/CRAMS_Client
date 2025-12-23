@@ -43,6 +43,7 @@ export const deleteSection = (id) => adminClient.delete(`/sections/${id}`);
 export const getUserOverview = () => adminClient.get('/user-management/overview');
 export const listStudents = () => adminClient.get('/user-management/students');
 export const listTeachers = () => adminClient.get('/user-management/teachers');
+export const listAdvisors = () => adminClient.get('/user-management/advisors');
 export const updateStudent = (id, payload) =>
   adminClient.put(`/user-management/students/${id}`, payload);
 export const updateTeacher = (id, payload) =>

@@ -253,123 +253,93 @@ function CourseSelection() {
               <p className="text-gray-500">No courses found for the current filters.</p>
             )}
 
-            {filteredCourses.map((course) => {
-              const hasSeats = course.seats?.available > 0;
-              const isRegistered = course.isRegistered && !course.isSelected;
-              const registrationStatus = course.registrationStatus;
-              
-              // Determine status badge color and text
-              const getStatusBadge = () => {
-                if (registrationStatus === 'approved') {
-                  return { text: 'Approved', color: 'bg-green-600' };
-                }
-                if (registrationStatus === 'pending') {
-                  return { text: 'Pending', color: 'bg-yellow-600' };
-                }
-                if (registrationStatus === 'rejected') {
-                  return { text: 'Rejected', color: 'bg-red-600' };
-                }
-                return null;
-              };
-              
-              const statusBadge = getStatusBadge();
-              
-              return (
-                <div
-                  key={course.id}
-                  className={`border rounded-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${
-                    isRegistered ? 'border-gray-300 bg-gray-50 opacity-75' : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <div className="py-0.5">
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <p className="font-bold text-xl">{course.courseCode}</p>
-                      <p className="border px-2 py-1 font-medium border-gray-300 rounded-lg">
-                        {course.credits || 0} Credits
-                      </p>
-                      {statusBadge && (
-                        <span className={`text-white ${statusBadge.color} p-1 rounded-lg px-2 flex items-center gap-1`}>
-                          {statusBadge.text}
-                        </span>
-                      )}
-                      {course.hasConflict && (
-                        <span className="text-white bg-red-600 p-1 rounded-lg px-2 flex items-center gap-1">
-                          <AlertTriangle className="w-4 h-4" />
-                          Conflict
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-semibold mb-1.5">{course.courseName}</p>
-                    <div className="flex gap-2 items-center text-gray-500 text-sm mb-1.5">
-                      <Users className="w-4" />
-                      <span>{course.instructor || "TBA"}</span>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">
-                        Seats :
-                        <span
-                          className={`font-semibold ${
-                            hasSeats ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {" "}
-                          {course.seats?.available ?? 0}/{course.seats?.total ?? 0} available
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-gray-500 flex md:flex-col">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Clock className="w-5 h-5" />
-                      <p>
-                        {(course.schedule?.days || []).join(", ")}{" "}
-                        {course.schedule?.startTime
-                          ? `${course.schedule.startTime} - ${course.schedule.endTime}`
-                          : ""}
-                      </p>
-                    </div>
-                    {course.prerequisite && (
-                      <p>
-                        Prerequisite:
-                        <span className="text-black font-semibold">
-                          {" "}
-                          {course.prerequisite}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <button
-                      className={`flex py-2 px-4 rounded-lg gap-2 items-center ${
-                        isRegistered
-                          ? "bg-gray-400 text-white cursor-not-allowed"
-                          : course.isSelected
-                          ? "bg-blue-600 text-white cursor-pointer"
-                          : "border border-gray-400 text-gray-700 cursor-pointer"
-                      }`}
-                      onClick={() => !isRegistered && handleCourseToggle(course)}
-                      disabled={isRegistered}
-                      title={isRegistered ? `Course is already ${registrationStatus}` : ""}
-                    >
-                      {course.isSelected ? (
-                        <Check className="w-5" />
-                      ) : isRegistered ? (
-                        <Check className="w-5" />
-                      ) : (
-                        <Plus className="w-5" />
-                      )}
-                      <p className="font-semibold">
-                        {course.isSelected
-                          ? "Selected"
-                          : isRegistered
-                          ? statusBadge?.text || "Registered"
-                          : "Add"}
-                      </p>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {!loading && filteredCourses.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Credits</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Instructor</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Schedule</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Prerequisite</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Seats</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredCourses.map((course) => {
+                      const hasSeats = course.seats?.available > 0;
+                      const isRegistered = course.isRegistered && !course.isSelected;
+                      const registrationStatus = course.registrationStatus;
+
+                      const getStatusBadge = () => {
+                        if (registrationStatus === "approved") return { text: "Approved", color: "bg-green-600" };
+                        if (registrationStatus === "pending") return { text: "Pending", color: "bg-yellow-600" };
+                        if (registrationStatus === "rejected") return { text: "Rejected", color: "bg-red-600" };
+                        return null;
+                      };
+                      const statusBadge = getStatusBadge();
+
+                      return (
+                        <tr key={course.id} className={isRegistered ? "bg-gray-50 opacity-75" : "bg-white"}>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {Array.isArray(course.instructors) && course.instructors.length > 0
+                              ? course.instructors.join(", ")
+                              : course.instructor || "TBA"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {(course.schedule?.days || []).join(", ")}{" "}
+                            {course.schedule?.startTime ? `${course.schedule.startTime} - ${course.schedule.endTime}` : ""}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <span className={`font-semibold ${hasSeats ? "text-green-600" : "text-red-600"}`}>
+                              {course.seats?.available ?? 0}/{course.seats?.total ?? 0}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <button
+                              className={`flex py-1.5 px-3 rounded-lg gap-2 items-center ${
+                                isRegistered
+                                  ? "bg-gray-400 text-white cursor-not-allowed"
+                                  : course.isSelected
+                                  ? "bg-blue-600 text-white cursor-pointer"
+                                  : "border border-gray-400 text-gray-700 cursor-pointer"
+                              }`}
+                              onClick={() => !isRegistered && handleCourseToggle(course)}
+                              disabled={isRegistered}
+                              title={isRegistered ? `Course is already ${registrationStatus}` : ""}
+                            >
+                              {course.isSelected ? (
+                                <Check className="w-4" />
+                              ) : isRegistered ? (
+                                <Check className="w-4" />
+                              ) : (
+                                <Plus className="w-4" />
+                              )}
+                              <span className="font-semibold text-sm">
+                                {course.isSelected
+                                  ? "Selected"
+                                  : isRegistered
+                                  ? statusBadge?.text || "Registered"
+                                  : "Add"}
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </main>
       </div>

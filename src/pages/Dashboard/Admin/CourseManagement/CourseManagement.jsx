@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Edit, Trash2, X, Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import { listCourses, createCourse, updateCourse, deleteCourse } from "../../../../api/adminApi";
+import { listCourses, createCourse, updateCourse, deleteCourse, listTeachers, listSections } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
@@ -14,10 +14,9 @@ const emptyCourse = {
     credits: 3,
     department: "Computer Science",
     prerequisite: "",
-    regularSeats: 40,
-    irregularSeats: 10,
-    semester: "Spring 2025",
-    status: "active",
+    semester: "",
+    instructors: [],
+    instructorSections: {},
 };
 
 const CourseManagement = () => {
@@ -32,11 +31,37 @@ const CourseManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterDept, setFilterDept] = useState('All Departments');
     const [filterStatus, setFilterStatus] = useState('');
+    const [teachers, setTeachers] = useState([]);
+    const [sections, setSections] = useState([]);
 
     // Fetch courses from API
     useEffect(() => {
         fetchCourses();
+        fetchTeachers();
+        fetchSectionsList();
     }, [filterDept, filterStatus, searchTerm]);
+
+    const fetchTeachers = async () => {
+        try {
+            const response = await listTeachers();
+            if (response.data.success) {
+                setTeachers(response.data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+        }
+    };
+
+    const fetchSectionsList = async () => {
+        try {
+            const response = await listSections();
+            if (response.data.success) {
+                setSections(response.data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching sections:', error);
+        }
+    };
 
     const fetchCourses = async () => {
         try {
@@ -68,12 +93,17 @@ const CourseManagement = () => {
                 courseCode: course.courseCode || "",
                 courseName: course.courseName || "",
                 credits: course.credits || 3,
-                department: course.department || "Computer Science",
+                department: course.department || "CSE",
                 prerequisite: course.prerequisite || "",
-                regularSeats: course.regularSeats || 40,
-                irregularSeats: course.irregularSeats || 10,
-                semester: course.semester || "Spring 2025",
+                semester: course.semester || "",
                 status: course.status || "active",
+                instructors: course.instructors || [],
+                instructorSections: (course.instructorSections || []).reduce((acc, item) => {
+                    if (item?.instructorId) {
+                        acc[item.instructorId] = item.sections || [];
+                    }
+                    return acc;
+                }, {}),
             });
             setIsEditing(true);
         } else {
@@ -84,10 +114,32 @@ const CourseManagement = () => {
     };
 
     const handleFormChange = (e) => {
-        const { name, value, type } = e.target;
+        const { name, value, type, selectedOptions } = e.target;
+        if (name === 'instructors') {
+            const values = Array.from(selectedOptions || []).map((opt) => opt.value);
+            setNewCourseData((prev) => ({
+                ...prev,
+                instructors: values,
+                // prune instructorSections for removed instructors
+                instructorSections: Object.fromEntries(
+                    Object.entries(prev.instructorSections || {}).filter(([key]) => values.includes(key))
+                ),
+            }));
+            return;
+        }
         setNewCourseData((prev) => ({
             ...prev,
             [name]: type === 'number' ? parseInt(value) || 0 : value,
+        }));
+    };
+
+    const handleInstructorSectionsChange = (instructorId, selectedSections) => {
+        setNewCourseData((prev) => ({
+            ...prev,
+            instructorSections: {
+                ...(prev.instructorSections || {}),
+                [instructorId]: selectedSections,
+            },
         }));
     };
 
@@ -106,7 +158,16 @@ const CourseManagement = () => {
                     return;
                 }
 
-                const response = await updateCourse(courseToUpdate.id, newCourseData);
+                const payload = {
+                    ...newCourseData,
+                    instructorSections: Object.entries(newCourseData.instructorSections || {}).map(
+                        ([instructorId, sections]) => ({
+                            instructorId,
+                            sections: sections || [],
+                        })
+                    ),
+                };
+                const response = await updateCourse(courseToUpdate.id, payload);
                 if (response.data.success) {
                     Swal.fire({
                         icon: "success",
@@ -118,7 +179,16 @@ const CourseManagement = () => {
                     setIsModalOpen(false);
                 }
             } else {
-                const response = await createCourse(newCourseData);
+                const payload = {
+                    ...newCourseData,
+                    instructorSections: Object.entries(newCourseData.instructorSections || {}).map(
+                        ([instructorId, sections]) => ({
+                            instructorId,
+                            sections: sections || [],
+                        })
+                    ),
+                };
+                const response = await createCourse(payload);
                 if (response.data.success) {
                     Swal.fire({
                         icon: "success",
@@ -182,15 +252,10 @@ const CourseManagement = () => {
 
     // Calculate statistics from API response or courses
     const stats = useMemo(() => {
-        const totalSeats = courses.reduce((sum, c) => sum + (c.regularSeats || 0) + (c.irregularSeats || 0), 0);
-        const availableSeats = courses.reduce((sum, c) => sum + (c.availableSeats || 0), 0);
         const activeCourses = courses.filter(c => c.status === 'active').length;
-
         return {
             total: courses.length,
             active: activeCourses,
-            totalSeats: totalSeats,
-            availableSeats: availableSeats,
         };
     }, [courses]);
 
@@ -209,63 +274,6 @@ const CourseManagement = () => {
 
         return result.sort((a, b) => (a.courseCode || '').localeCompare(b.courseCode || ''));
     }, [courses, searchTerm]);
-
-    // Course Card Component
-    const CourseCard = ({ course }) => {
-        const available = course.availableSeats || 0;
-        const totalSeats = (course.regularSeats || 0) + (course.irregularSeats || 0);
-        const isFull = available <= 0;
-        const isLowSeats = available > 0 && available <= 10;
-
-        const statusText = isFull ? 'Full' : (isLowSeats ? 'Low Seats' : course.status === 'active' ? 'Active' : 'Inactive');
-        const statusBg = isFull ? 'bg-red-500' : (isLowSeats ? 'bg-yellow-100 text-yellow-700' : course.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700');
-        const availableColor = isFull ? 'text-red-500' : (isLowSeats ? 'text-yellow-600' : 'text-green-600');
-        const lowSeatsBadge = isLowSeats ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 ml-2">Low Seats</span> : null;
-        
-        return (
-            <div className="flex justify-between items-start bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex-grow space-y-1">
-                    <div className="flex items-center space-x-2">
-                        <span className="text-base font-semibold text-gray-800">{course.courseCode}</span>
-                        <span className="text-sm text-gray-500">• {course.credits} Credits</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBg}`}>
-                            {statusText}
-                        </span>
-                        {lowSeatsBadge}
-                    </div>
-                    <p className="text-sm font-medium text-gray-800">{course.courseName}</p>
-                    <div className="text-xs text-gray-500 grid grid-cols-2 mt-2">
-                        <div>Department: <span className="font-medium text-gray-700">{course.department}</span></div>
-                        <div>Semester: <span className="font-medium text-gray-700">{course.semester}</span></div>
-                        {course.prerequisite && (
-                            <div className="col-span-2">Prerequisite: <span className="font-medium text-gray-700">{course.prerequisite}</span></div>
-                        )}
-                    </div>
-                </div>
-                <div className="text-right space-y-1 min-w-[200px]">
-                    <p className={`text-sm font-semibold ${availableColor}`}>
-                        Seats: {available}/{totalSeats} available
-                    </p>
-                    <div className="flex space-x-2 justify-end pt-2">
-                        <button
-                            onClick={() => openModal(course)}
-                            title="Edit Course"
-                            className="text-gray-400 hover:text-blue-500 transition p-1 rounded-full hover:bg-gray-100"
-                        >
-                            <Edit size={16} />
-                        </button>
-                        <button
-                            onClick={() => handleDeleteCourse(course.id)}
-                            title="Delete Course"
-                            className="text-gray-400 hover:text-red-500 transition p-1 rounded-full hover:bg-gray-100"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     const handleLogout = async () => {
         try {
@@ -327,7 +335,7 @@ const CourseManagement = () => {
                     </div>
 
                     {/* Stats Section */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
                         <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                             <h3 className="text-sm text-gray-500 font-medium">Total Courses</h3>
                             <p className="text-2xl font-bold mt-1 text-gray-800">{stats.total}</p>
@@ -335,14 +343,6 @@ const CourseManagement = () => {
                         <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                             <h3 className="text-sm text-gray-500 font-medium">Active Courses</h3>
                             <p className="text-2xl font-bold mt-1 text-blue-600">{stats.active}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
-                            <h3 className="text-sm text-gray-500 font-medium">Total Seats</h3>
-                            <p className="text-2xl font-bold mt-1 text-gray-800">{stats.totalSeats}</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
-                            <h3 className="text-sm text-gray-500 font-medium">Available Seats</h3>
-                            <p className="text-2xl font-bold mt-1 text-green-600">{stats.availableSeats}</p>
                         </div>
                     </div>
 
@@ -369,32 +369,72 @@ const CourseManagement = () => {
                                     <option key={dept} value={dept}>{dept}</option>
                                 ))}
                             </select>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="border border-gray-200 rounded-lg py-2.5 px-4 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none md:w-1/4 w-full appearance-none bg-white"
-                            >
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
                         </div>
                     </div>
 
-                    {/* Course List */}
+                    {/* Course List - Table */}
                     <div className="space-y-4">
                         <h2 className="text-xl font-semibold text-gray-800">All Courses ({filteredCourses.length})</h2>
-                        <p className="text-gray-500 text-sm">Manage course details, schedules, and seat allocation</p>
+                        <p className="text-gray-500 text-sm">Manage course details, schedules, and instructors</p>
                         {loading ? (
                             <div className="bg-white rounded-xl p-8 text-center text-gray-500 shadow-md border border-gray-100">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                                 <p className="mt-4">Loading courses...</p>
                             </div>
                         ) : filteredCourses.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-3">
-                                {filteredCourses.map(course => (
-                                    <CourseCard key={course.id} course={course} />
-                                ))}
+                            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Semester</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Name</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Credits</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Instructors</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Prerequisite</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {filteredCourses.map((course) => {
+                                            const instructorNames =
+                                                (course.instructors || [])
+                                                    .map((id) => teachers.find((t) => t.teacherId === id)?.name || id)
+                                                    .filter(Boolean)
+                                                    .join(', ');
+                                            return (
+                                                <tr key={course.id} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{course.department}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{course.semester}</td>
+                                                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{course.credits}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{instructorNames || 'N/A'}</td>
+                                                    <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || '—'}</td>
+                                                    <td className="px-4 py-3 text-sm">
+                                                        <div className="flex gap-3">
+                                                            <button
+                                                                onClick={() => openModal(course)}
+                                                                className="text-blue-600 hover:text-blue-800"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteCourse(course.id)}
+                                                                className="text-red-600 hover:text-red-800"
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl p-8 text-center text-gray-500 shadow-md border border-gray-100">
@@ -468,7 +508,7 @@ const CourseManagement = () => {
                                                 name="department" 
                                                 value={newCourseData.department} 
                                                 onChange={handleFormChange} 
-                                                placeholder="Computer Science" 
+                                                placeholder="CSE" 
                                                 required 
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
                                             />
@@ -491,50 +531,55 @@ const CourseManagement = () => {
                                                 name="semester" 
                                                 value={newCourseData.semester} 
                                                 onChange={handleFormChange} 
-                                                placeholder="Spring 2025" 
+                                                placeholder="1" 
                                                 required 
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
                                             />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 mb-1">Regular Seats</label>
-                                            <input 
-                                                type="number" 
-                                                name="regularSeats" 
-                                                value={newCourseData.regularSeats} 
-                                                onChange={handleFormChange} 
-                                                placeholder="40" 
-                                                min="1" 
-                                                required 
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-600 mb-1">Irregular Seats</label>
-                                            <input 
-                                                type="number" 
-                                                name="irregularSeats" 
-                                                value={newCourseData.irregularSeats} 
-                                                onChange={handleFormChange} 
-                                                placeholder="10" 
-                                                min="0" 
-                                                required 
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
-                                            />
-                                        </div>
+                                        
                                         <div className="col-span-1 sm:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
-                                            <select 
-                                                name="status" 
-                                                value={newCourseData.status} 
-                                                onChange={handleFormChange} 
-                                                required 
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none appearance-none bg-white"
+                                            <label className="block text-sm font-medium text-gray-600 mb-1">Instructors</label>
+                                            <select
+                                                name="instructors"
+                                                multiple
+                                                value={newCourseData.instructors}
+                                                onChange={handleFormChange}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                                             >
-                                                <option value="active">Active</option>
-                                                <option value="inactive">Inactive</option>
+                                                {teachers.map((t) => (
+                                                    <option key={t.id} value={t.teacherId}>
+                                                        {t.name} ({t.teacherId})
+                                                    </option>
+                                                ))}
                                             </select>
+                                            <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
                                         </div>
+                                        {newCourseData.instructors.map((instId) => {
+                                            const selectedSections = newCourseData.instructorSections?.[instId] || [];
+                                            return (
+                                                <div key={instId} className="col-span-1 sm:col-span-2 border rounded-lg p-3 bg-gray-50">
+                                                    <p className="text-sm font-semibold text-gray-700 mb-2">
+                                                        Sections for {teachers.find((t) => t.teacherId === instId)?.name || instId}
+                                                    </p>
+                                                    <select
+                                                        multiple
+                                                        value={selectedSections}
+                                                        onChange={(e) => {
+                                                            const vals = Array.from(e.target.selectedOptions || []).map((opt) => opt.value);
+                                                            handleInstructorSectionsChange(instId, vals);
+                                                        }}
+                                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                                    >
+                                                        {sections.map((s) => (
+                                                            <option key={s.id} value={s.sectionName}>
+                                                                {s.sectionName} ({s.semester})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <p className="text-xs text-gray-500 mt-1">Assign this instructor to sections (multi-select).</p>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
 
                                     {/* Buttons */}

@@ -4,66 +4,45 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import { listSections, createSection, updateSection, deleteSection } from "../../../../api/adminApi";
+import { listSections, createSection, updateSection, deleteSection, listAdvisors } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 
-// Enrollment Bar Component
-const EnrollmentBar = ({ enrolled, capacity, label }) => {
-  const available = capacity - enrolled;
-  const percentage = capacity > 0 ? (enrolled / capacity) * 100 : 0;
-
-  let barColor;
-  if (available <= 2) {
-    barColor = "bg-red-500";
-  } else {
-    barColor = label === "Regular" ? "bg-blue-500" : "bg-green-500";
-  }
-
-  return (
-    <div className="flex flex-col mb-3">
-      <div className="flex justify-between text-sm text-gray-700">
-        <span className="font-semibold">{label} Students</span>
-        <span className="font-mono">
-          {enrolled} / {capacity} seats
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-        <div
-          className={`h-2.5 rounded-full transition-all duration-500 ${barColor}`}
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-      <span
-        className={`text-xs mt-1 font-medium ${
-          available <= 2 ? "text-red-600 font-bold" : "text-green-600"
-        }`}
-      >
-        {available} seats available
-      </span>
-    </div>
-  );
-};
-
 // Add/Edit Modal Component
-const SectionModal = ({ isOpen, onClose, onSave, section }) => {
+const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
   const isEditing = !!section;
-  const [formData, setFormData] = useState(
-    section || {
-      sectionName: "",
-      semester: "Spring 2025",
-      shift: "Male",
-      assignedAdvisor: "",
-      totalCapacity: 40,
-      enrolledStudents: 0,
-      crName: "",
-      crContact: "",
-      acrName: "",
-      acrContact: "",
-      status: "active",
+  const [formData, setFormData] = useState({
+    sectionName: "",
+    semester: "",
+    assignedAdvisor: "",
+    totalCapacity: 0,
+    // enrolledStudents is managed automatically from student data after CSV upload
+    crName: "",
+    crContact: "",
+    acrName: "",
+    acrContact: "",
+  });
+
+  // Keep local form state in sync with the passed-in section when editing
+  useEffect(() => {
+    if (section) {
+      setFormData({
+        ...section,
+      });
+    } else {
+      setFormData({
+        sectionName: "",
+        semester: "",
+        assignedAdvisor: "",
+        totalCapacity: 0,
+        crName: "",
+        crContact: "",
+        acrName: "",
+        acrContact: ""
+      });
     }
-  );
+  }, [section, isOpen]);
 
   if (!isOpen) return null;
 
@@ -87,117 +66,125 @@ const SectionModal = ({ isOpen, onClose, onSave, section }) => {
   };
 
   return (
-    <div className="fixed inset-0 backdrop-brightness-50 bg-opacity-50 flex justify-center items-center z-50 p-4">
+    <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 p-4">
       <div className="bg-white p-6 rounded-lg w-full max-w-lg shadow-2xl">
         <h2 className="text-2xl font-bold mb-4">
           {isEditing ? "Edit Section" : "Add New Section"}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="sectionName"
-            value={formData.sectionName}
-            onChange={handleChange}
-            placeholder="Section Name (e.g., 6EM)"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="semester"
-            value={formData.semester}
-            onChange={handleChange}
-            placeholder="Semester (e.g., Spring 2025)"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <select
-            name="shift"
-            value={formData.shift}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg"
-            required
-          >
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-          <input
-            type="text"
-            name="assignedAdvisor"
-            value={formData.assignedAdvisor}
-            onChange={handleChange}
-            placeholder="Assigned Advisor Name"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="number"
-            name="totalCapacity"
-            value={formData.totalCapacity}
-            onChange={handleChange}
-            placeholder="Total Capacity (1-50)"
-            min="1"
-            max="50"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="number"
-            name="enrolledStudents"
-            value={formData.enrolledStudents}
-            onChange={handleChange}
-            placeholder="Enrolled Students"
-            min="0"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="crName"
-            value={formData.crName}
-            onChange={handleChange}
-            placeholder="CR Name"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="crContact"
-            value={formData.crContact}
-            onChange={handleChange}
-            placeholder="CR Contact"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="acrName"
-            value={formData.acrName}
-            onChange={handleChange}
-            placeholder="ACR Name"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <input
-            type="text"
-            name="acrContact"
-            value={formData.acrContact}
-            onChange={handleChange}
-            placeholder="ACR Contact"
-            className="w-full border p-3 rounded-lg"
-            required
-          />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+          <div className="w-full flex gap-2">
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+              <input
+                type="text"
+                name="semester"
+                value={formData.semester}
+                onChange={handleChange}
+                placeholder="Semester"
+                className="w-full border p-3 rounded-lg"
+                required
+              />
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Section Name</label>
+              <input
+                type="text"
+                name="sectionName"
+                value={formData.sectionName}
+                onChange={handleChange}
+                placeholder="Section Name"
+                className="w-full border p-3 rounded-lg"
+                required
+              />
+            </div>
+          </div>
+          <div className="w-full flex gap-2">
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Advisor</label>
+                <select
+                  name="assignedAdvisor"
+                  value={formData.assignedAdvisor}
+                  onChange={handleChange}
+                  className="w-full border p-3 rounded-lg"
+                  required
+                >
+                  <option value="">Select Advisor</option>
+                  {advisors.map((advisor) => (
+                    <option key={advisor.id} value={advisor.teacherId}>
+                      {advisor.name} ({advisor.teacherId})
+                    </option>
+                  ))}
+                </select>
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Students</label>
+                <input
+                  type="number"
+                  name="totalCapacity"
+                  value={formData.totalCapacity}
+                  onChange={handleChange}
+                  placeholder="Total Capacity (1-50)"
+                  min="1"
+                  max="50"
+                  className="w-full border p-3 rounded-lg"
+                  required
+                />
+            </div>
+          </div>
+          <div className="w-full flex gap-2">
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">CR Name</label>
+            <input
+              type="text"
+              name="crName"
+              value={formData.crName}
+              onChange={handleChange}
+              placeholder="CR Name"
+              className="w-full border p-3 rounded-lg"
+              required
+            />
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">CR Contact</label>
+            <input
+              type="text"
+              name="crContact"
+              value={formData.crContact}
+              onChange={handleChange}
+              placeholder="CR Contact"
+              className="w-full border p-3 rounded-lg"
+              required
+            />
+            </div>
+          </div>
+          <div className="w-full flex gap-2">
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ACR Name</label>
+            <input
+              type="text"
+              name="acrName"
+              value={formData.acrName}
+              onChange={handleChange}
+              placeholder="ACR Name"
+              className="w-full border p-3 rounded-lg"
+              required
+            />
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">ACR Contact</label>
+            <input
+              type="text"
+              name="acrContact"
+              value={formData.acrContact}
+              onChange={handleChange}
+              placeholder="ACR Contact"
+              className="w-full border p-3 rounded-lg"
+              required
+            />
+            </div>
+          </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
@@ -262,60 +249,6 @@ const MetricCard = ({ title, value }) => (
   </div>
 );
 
-// Section Card Component
-const SectionCard = ({ section, onEdit, onDelete }) => {
-  const totalCap = section.totalCapacity || 0;
-  const totalEnrolled = section.enrolledStudents || 0;
-  const available = totalCap - totalEnrolled;
-
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="text-xl font-bold">{section.sectionName}</h3>
-          <p className="text-sm text-gray-600">
-            Semester: {section.semester} | Shift: {section.shift}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={onEdit}
-            className="text-blue-600 hover:text-blue-800"
-            title="Edit"
-          >
-            <MdOutlineModeEditOutline size={20} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-red-600 hover:text-red-800"
-            title="Delete"
-          >
-            <RiDeleteBin5Line size={20} />
-          </button>
-        </div>
-      </div>
-      <p className="text-gray-600 mb-2">
-        Advisor: <span className="font-medium">{section.assignedAdvisor}</span>
-      </p>
-      <EnrollmentBar
-        label="Total"
-        enrolled={totalEnrolled}
-        capacity={totalCap}
-      />
-      <div className="mt-2 text-sm text-gray-600">
-        <p>CR: {section.crName} ({section.crContact})</p>
-        <p>ACR: {section.acrName} ({section.acrContact})</p>
-      </div>
-      <p className="text-sm text-gray-600 mt-2">
-        <span className="font-semibold">{available}</span> seats available | Status:{" "}
-        <span className={`font-semibold ${section.status === 'active' ? 'text-green-600' : 'text-gray-600'}`}>
-          {section.status}
-        </span>
-      </p>
-    </div>
-  );
-};
-
 // Main Section Management Component
 const SectionManagementDashboard = () => {
   const navigate = useNavigate();
@@ -327,10 +260,28 @@ const SectionManagementDashboard = () => {
   const [editSection, setEditSection] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [filterSemester, setFilterSemester] = useState('');
+  const [advisors, setAdvisors] = useState([]);
 
   useEffect(() => {
     fetchSections();
+    fetchAdvisors();
   }, [filterSemester]);
+
+  const fetchAdvisors = async () => {
+    try {
+      const response = await listAdvisors();
+      if (response.data.success) {
+        setAdvisors(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching advisors:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load advisors",
+      });
+    }
+  };
 
   const fetchSections = async () => {
     try {
@@ -342,7 +293,16 @@ const SectionManagementDashboard = () => {
 
       const response = await listSections(params);
       if (response.data.success) {
-        setSections(response.data.data || []);
+        const sorted = [...(response.data.data || [])].sort((a, b) => {
+          const aSem = (a.semester || '').toString();
+          const bSem = (b.semester || '').toString();
+          const semCompare = aSem.localeCompare(bSem, undefined, { sensitivity: 'base' });
+          if (semCompare !== 0) return semCompare;
+          const aSec = (a.sectionName || '').toString();
+          const bSec = (b.sectionName || '').toString();
+          return aSec.localeCompare(bSec, undefined, { sensitivity: 'base' });
+        });
+        setSections(sorted);
       }
     } catch (error) {
       console.error('Error fetching sections:', error);
@@ -357,19 +317,13 @@ const SectionManagementDashboard = () => {
   };
 
   const metrics = useMemo(() => {
-    const stats = sections.reduce(
-      (acc, s) => {
-        acc.totalCapacity += s.totalCapacity || 0;
-        acc.enrolledStudents += s.enrolledStudents || 0;
-        return acc;
-      },
-      { totalCapacity: 0, enrolledStudents: 0 }
+    const totalStudents = sections.reduce(
+      (acc, s) => acc + (s.enrolledStudents || 0),
+      0
     );
     return {
       totalSections: sections.length,
-      totalCapacity: stats.totalCapacity,
-      totalEnrolled: stats.enrolledStudents,
-      availableSeats: stats.totalCapacity - stats.enrolledStudents,
+      totalStudents,
     };
   }, [sections]);
 
@@ -509,11 +463,9 @@ const SectionManagementDashboard = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <MetricCard title="Total Sections" value={metrics.totalSections} />
-            <MetricCard title="Total Capacity" value={metrics.totalCapacity} />
-            <MetricCard title="Enrolled" value={metrics.totalEnrolled} />
-            <MetricCard title="Available Seats" value={metrics.availableSeats} />
+            <MetricCard title="Total Students" value={metrics.totalStudents} />
           </div>
 
           {loading ? (
@@ -522,18 +474,75 @@ const SectionManagementDashboard = () => {
               <p className="mt-4">Loading sections...</p>
             </div>
           ) : sections.length > 0 ? (
-            <div className="space-y-4">
-              {sections.map((section) => (
-                <SectionCard
-                  key={section.id}
-                  section={section}
-                  onEdit={() => {
-                    setEditSection(section);
-                    setIsModalOpen(true);
-                  }}
-                  onDelete={() => setDeleteConfirm(section)}
-                />
-              ))}
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Section</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Semester</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Advisor</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Total Students</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">CR</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">ACR</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {sections.map((section) => {
+                    const advisorName =
+                      advisors.find((advisor) => advisor.teacherId === section.assignedAdvisor)?.name ||
+                      section.assignedAdvisor ||
+                      "N/A";
+                    return (
+                      <tr key={section.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-900">{section.sectionName}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{section.semester || "—"}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{advisorName}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">{section.enrolledStudents ?? 0}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {section.crName ? `${section.crName} (${section.crContact || "N/A"})` : "N/A"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {section.acrName ? `${section.acrName} (${section.acrContact || "N/A"})` : "N/A"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              section.status === "active"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {section.status || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => {
+                                setEditSection(section);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Edit"
+                            >
+                              <MdOutlineModeEditOutline size={18} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(section)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Delete"
+                            >
+                              <RiDeleteBin5Line size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ) : (
             <div className="bg-white rounded-xl p-8 text-center text-gray-500 shadow-md border border-gray-100">
@@ -550,6 +559,7 @@ const SectionManagementDashboard = () => {
             }}
             onSave={handleSaveSection}
             section={editSection}
+            advisors={advisors}
           />
 
           {/* Delete Modal */}
