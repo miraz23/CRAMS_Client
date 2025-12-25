@@ -39,3 +39,8 @@ export const fetchSchedule = async (params = {}) => {
   return data?.data || { weeklySchedule: {}, courses: [], summary: {} };
 };
 
+export const fetchRoutine = async (params = {}) => {
+  const { data } = await studentClient.get('/routine', { params });
+  return data?.data || { weeklySchedule: {}, courses: [], summary: {} };
+};
+

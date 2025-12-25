@@ -11,6 +11,7 @@ import Forbidden from "../pages/Forbidden/Forbidden.jsx";
 import StdDashboard from "../pages/Dashboard/Student/StdDashboard";
 import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
 import MySchedule from "../pages/Dashboard/Student/MySchedule";
+import Routine from "../pages/Dashboard/Student/Routine";
 import RegistrationStatus from "../pages/Dashboard/Student/Registrationstatus";
 // Admin Pages
 import AdminDashboard from "../pages/Dashboard/Admin/Dashboard/AdminDasboard";
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
       {
         path: "myschedule",
         element: <MySchedule />,
+      },
+      {
+        path: "routine",
+        element: <Routine />,
       },
       {
         path: "registrationstatus",

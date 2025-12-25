@@ -12,6 +12,7 @@ import {
   Calendar,
   FileText,
   CircleX,
+  List,
 } from "lucide-react";
 import { fetchRegistrationStatus } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
@@ -94,11 +95,22 @@ function RegistrationStatus() {
             </button>
             <button
               className="flex items-center gap-3 p-4 w-full text-left"
+              onClick={() => navigate("/student/dashboard/routine")}
+            >
+              <List className="w-5 h-5" />
+              <span>Routine</span>
+            </button>
+            <button
+              className="flex items-center gap-3 p-4 w-full text-left"
               onClick={() => navigate("/student/dashboard/courseselection")}
             >
               <BookOpen className="w-5 h-5" />
               <span> Course Selection</span>
             </button>
+            <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-lg">
+              <FileText className="w-5 h-5" />
+              <span>Registration Status</span>
+            </div>
             <button
               className="flex items-center gap-3 p-4 w-full text-left"
               onClick={() => {
@@ -108,10 +120,6 @@ function RegistrationStatus() {
               <Calendar className="w-5 h-5" />
               <span>My Schedule</span>
             </button>
-            <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-lg">
-              <FileText className="w-5 h-5" />
-              <span>Registration Status</span>
-            </div>
           </nav>
         </aside>
         <main className="ml-64 p-4 md:p-8 lg:p-8 mt-16 flex flex-col gap-6 md:gap-8 lg:gap-6 flex-1 overflow-y-auto bg-gray-50">

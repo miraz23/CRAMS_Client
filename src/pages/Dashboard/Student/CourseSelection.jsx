@@ -15,6 +15,7 @@ import {
   Check,
   AlertTriangle,
   Plus,
+  List,
 } from "lucide-react";
 import {
   addCourseSelection,
@@ -219,23 +220,30 @@ function CourseSelection() {
               <Grid className="w-5 h-5" />
               <span>Dashboard</span>
             </button>
+            <button
+              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => navigate("/student/dashboard/routine")}
+            >
+              <List className="w-5 h-5" />
+              <span>Routine</span>
+            </button>
             <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-lg">
               <BookOpen className="w-5 h-5" />
               <span>Course Selection</span>
             </div>
             <button
               className="flex w-full items-center gap-3 p-4 text-left"
-              onClick={() => navigate("/student/dashboard/myschedule")}
-            >
-              <Calendar className="w-5 h-5" />
-              <span>My Schedule</span>
-            </button>
-            <button
-              className="flex w-full items-center gap-3 p-4 text-left"
               onClick={() => navigate("/student/dashboard/registrationstatus")}
             >
               <FileText className="w-5 h-5" />
               <span>Registration Status</span>
+            </button>
+            <button
+              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => navigate("/student/dashboard/myschedule")}
+            >
+              <Calendar className="w-5 h-5" />
+              <span>My Schedule</span>
             </button>
           </nav>
         </aside>

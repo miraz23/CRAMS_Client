@@ -13,7 +13,7 @@ import {
   X,
   List,
 } from "lucide-react";
-import { fetchSchedule } from "../../../api/studentApi";
+import { fetchRoutine } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
 
 // Helper function to parse time string to minutes
@@ -58,9 +58,6 @@ const CourseDetailsModal = ({ course, isOpen, onClose }) => {
           <div className="border-b pb-3">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-2xl font-bold text-gray-900">{course.courseCode}</h3>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold">
-                {course.status || 'N/A'}
-              </span>
             </div>
             <p className="text-lg text-gray-700 font-medium">{course.courseName}</p>
           </div>
@@ -225,21 +222,21 @@ const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
   );
 };
 
-function MySchedule() {
+function Routine() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-  const [schedule, setSchedule] = useState({ weeklySchedule: {}, summary: {}, courses: [] });
+  const [routine, setRoutine] = useState({ weeklySchedule: {}, summary: {}, courses: [] });
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const loadSchedule = async () => {
+  const loadRoutine = async () => {
     setLoading(true);
     try {
-      const data = await fetchSchedule();
-      setSchedule(data);
+      const data = await fetchRoutine();
+      setRoutine(data);
     } catch (error) {
-      const message = error.response?.data?.message || "Failed to load schedule.";
+      const message = error.response?.data?.message || "Failed to load routine.";
       Swal.fire({ icon: "error", title: "Error", text: message });
     } finally {
       setLoading(false);
@@ -247,7 +244,7 @@ function MySchedule() {
   };
 
   useEffect(() => {
-    loadSchedule();
+    loadRoutine();
   }, []);
 
   const handleLogout = async () => {
@@ -280,7 +277,7 @@ function MySchedule() {
           </button>
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">Student Portal</p>
-            <p className="text-xs text-gray-500">My Schedule</p>
+            <p className="text-xs text-gray-500">Routine</p>
           </div>
           <button
             onClick={handleLogout}
@@ -302,13 +299,10 @@ function MySchedule() {
               <Grid className="w-5 h-5" />
               <span>Dashboard</span>
             </button>
-            <button
-              className="flex w-full items-center gap-3 p-4 text-left"
-              onClick={() => navigate("/student/dashboard/routine")}
-            >
+            <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-lg">
               <List className="w-5 h-5" />
               <span>Routine</span>
-            </button>
+            </div>
             <button
               className="flex w-full items-center gap-3 p-4 text-left"
               onClick={() => navigate("/student/dashboard/courseselection")}
@@ -325,27 +319,30 @@ function MySchedule() {
               <FileText className="w-5 h-5" />
               <span>Registration Status</span>
             </button>
-            <div className="flex items-center gap-3 p-4 bg-blue-600 text-white rounded-lg">
+            <button
+              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => navigate("/student/dashboard/myschedule")}
+            >
               <Calendar className="w-5 h-5" />
               <span>My Schedule</span>
-            </div>
+            </button>
           </nav>
         </aside>
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">
           <div>
-            <p className="text-3xl font-bold mb-1">My Schedule</p>
-            <p className="text-lg text-gray-500">Your weekly class schedule for {schedule.semester || "Spring 2025"}.</p>
+            <p className="text-3xl font-bold mb-1">Routine</p>
+            <p className="text-lg text-gray-500">All courses in your section for {routine.semester || "Spring 2025"}.</p>
           </div>
           <div className="border border-gray-300 p-6 rounded-lg bg-white">
             <div className="mb-4">
               <p className="text-lg font-semibold">Weekly Schedule</p>
-              <p className="text-gray-500 text-sm">View your class timings and locations</p>
+              <p className="text-gray-500 text-sm">View all class timings and locations for your section</p>
             </div>
-            {loading && <p className="text-gray-500 mt-4">Loading schedule...</p>}
+            {loading && <p className="text-gray-500 mt-4">Loading routine...</p>}
             {!loading && (
               <ScheduleGrid 
-                weeklySchedule={schedule.weeklySchedule || {}} 
-                courses={schedule.courses || []}
+                weeklySchedule={routine.weeklySchedule || {}} 
+                courses={routine.courses || []}
                 onCourseClick={(course) => {
                   setSelectedCourse(course);
                   setIsModalOpen(true);
@@ -368,4 +365,5 @@ function MySchedule() {
   );
 }
 
-export default MySchedule;
+export default Routine;
+
