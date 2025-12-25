@@ -17,8 +17,8 @@ export const fetchSelectedCourses = async () => {
   return data?.data || { courses: [], summary: {} };
 };
 
-export const addCourseSelection = async (courseId) => {
-  await studentClient.post('/courses/add', { courseId });
+export const addCourseSelection = async (courseId, sectionId) => {
+  await studentClient.post('/courses/add', { courseId, sectionId });
 };
 
 export const removeCourseSelection = async (courseId) => {

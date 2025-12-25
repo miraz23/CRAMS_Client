@@ -16,6 +16,8 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
     sectionName: "",
     semester: "",
     assignedAdvisor: "",
+    regularStudents: 0,
+    maxIrregularStudents: 0,
     totalCapacity: 0,
     // enrolledStudents is managed automatically from student data after CSV upload
     crName: "",
@@ -27,14 +29,22 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
   // Keep local form state in sync with the passed-in section when editing
   useEffect(() => {
     if (section) {
+      const regularStudents = section.enrolledStudents || 0;
+      const maxIrregularStudents = section.maxIrregularStudents || 0;
+      const totalCapacity = regularStudents + maxIrregularStudents;
       setFormData({
         ...section,
+        regularStudents,
+        maxIrregularStudents,
+        totalCapacity,
       });
     } else {
       setFormData({
         sectionName: "",
         semester: "",
         assignedAdvisor: "",
+        regularStudents: 0,
+        maxIrregularStudents: 0,
         totalCapacity: 0,
         crName: "",
         crContact: "",
@@ -48,15 +58,30 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        e.target.type === "number"
-          ? value === ""
-            ? ""
-            : parseInt(value)
-          : value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]:
+          e.target.type === "number"
+            ? value === ""
+              ? ""
+              : parseInt(value)
+            : value,
+      };
+      
+      // Calculate totalCapacity when regularStudents or maxIrregularStudents change
+      if (name === "regularStudents" || name === "maxIrregularStudents") {
+        const regularStudents = name === "regularStudents" 
+          ? (value === "" ? 0 : parseInt(value) || 0)
+          : (prev.regularStudents || 0);
+        const maxIrregularStudents = name === "maxIrregularStudents"
+          ? (value === "" ? 0 : parseInt(value) || 0)
+          : (prev.maxIrregularStudents || 0);
+        updated.totalCapacity = regularStudents + maxIrregularStudents;
+      }
+      
+      return updated;
+    });
   };
 
   const handleSubmit = (e) => {
@@ -117,14 +142,42 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                 </select>
             </div>
             <div className="w-full flex flex-col gap-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Students</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
                 <input
                   type="number"
                   name="totalCapacity"
                   value={formData.totalCapacity}
+                  placeholder="Total Capacity"
+                  className="w-full border p-3 rounded-lg bg-gray-100"
+                  readOnly
+                  required
+                />
+            </div>
+          </div>
+          <div className="w-full flex gap-2">
+          <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Regular Students</label>
+                <input
+                  type="number"
+                  name="regularStudents"
+                  value={formData.regularStudents}
                   onChange={handleChange}
-                  placeholder="Total Capacity (1-50)"
-                  min="1"
+                  placeholder="Regular Students"
+                  min="0"
+                  className="w-full border p-3 rounded-lg bg-gray-100"
+                  readOnly
+                  required
+                />
+            </div>
+            <div className="w-full flex flex-col gap-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Irregular Students</label>
+                <input
+                  type="number"
+                  name="maxIrregularStudents"
+                  value={formData.maxIrregularStudents}
+                  onChange={handleChange}
+                  placeholder="Maximum Irregular Students"
+                  min="0"
                   max="50"
                   className="w-full border p-3 rounded-lg"
                   required

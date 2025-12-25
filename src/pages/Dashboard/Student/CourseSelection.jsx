@@ -23,6 +23,7 @@ import {
   removeCourseSelection,
   submitCoursesForApproval,
 } from "../../../api/studentApi";
+import { listTeachers } from "../../../api/adminApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
 
 function CourseSelection() {
@@ -34,11 +35,25 @@ function CourseSelection() {
   const [selectedData, setSelectedData] = useState({ courses: [], summary: {} });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [selectedSections, setSelectedSections] = useState({}); // courseId -> sectionId
 
   const departmentFilter = useMemo(
     () => (department === "All Departments" ? undefined : department),
     [department]
   );
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await listTeachers();
+      if (response.data.success) {
+        setTeachers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      // Silently fail - instructor names will show as IDs if teachers can't be fetched
+    }
+  };
 
   const loadCourses = async () => {
     setLoading(true);
@@ -52,6 +67,15 @@ function CourseSelection() {
       ]);
       setAvailableCourses(available || []);
       setSelectedData(selected || { courses: [], summary: {} });
+      
+      // Initialize selected sections from available courses
+      const sectionsMap = {};
+      (available || []).forEach(course => {
+        if (course.selectedSectionId) {
+          sectionsMap[course.id] = course.selectedSectionId;
+        }
+      });
+      setSelectedSections(sectionsMap);
     } catch (error) {
       const message = error.response?.data?.message || "Failed to load courses.";
       Swal.fire({ icon: "error", title: "Error", text: message });
@@ -61,17 +85,46 @@ function CourseSelection() {
   };
 
   useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  useEffect(() => {
     loadCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departmentFilter]);
+
+  const handleSectionChange = (courseId, sectionId) => {
+    setSelectedSections(prev => ({
+      ...prev,
+      [courseId]: sectionId
+    }));
+  };
 
   const handleCourseToggle = async (course) => {
     try {
       if (course.isSelected) {
         await removeCourseSelection(course.id);
         Swal.fire({ icon: "success", title: "Removed", text: "Course removed from selection." });
+        // Clear selected section
+        setSelectedSections(prev => {
+          const updated = { ...prev };
+          delete updated[course.id];
+          return updated;
+        });
       } else {
-        await addCourseSelection(course.id);
+        // Check if section is selected
+        if (course.sections && course.sections.length > 0) {
+          const selectedSectionId = selectedSections[course.id];
+          if (!selectedSectionId) {
+            Swal.fire({ 
+              icon: "warning", 
+              title: "Section Required", 
+              text: "Please select a section before adding the course." 
+            });
+            return;
+          }
+        }
+        await addCourseSelection(course.id, selectedSections[course.id]);
         Swal.fire({ icon: "success", title: "Added", text: "Course added to selection." });
       }
       await loadCourses();
@@ -265,7 +318,7 @@ function CourseSelection() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Instructor</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Schedule</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Prerequisite</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Seats</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Section</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Action</th>
                     </tr>
                   </thead>
@@ -283,26 +336,49 @@ function CourseSelection() {
                       };
                       const statusBadge = getStatusBadge();
 
+                      // Map instructor IDs to names - prefer instructorNames from backend, fallback to frontend mapping
+                      const instructorNames =
+                        Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                          ? course.instructorNames.join(", ")
+                          : Array.isArray(course.instructors) && course.instructors.length > 0
+                          ? course.instructors
+                              .map((id) => teachers.find((t) => t.teacherId === id)?.name || id)
+                              .filter(Boolean)
+                              .join(", ")
+                          : course.instructor || "TBA";
+
                       return (
                         <tr key={course.id} className={isRegistered ? "bg-gray-50 opacity-75" : "bg-white"}>
                           <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
-                            {Array.isArray(course.instructors) && course.instructors.length > 0
-                              ? course.instructors.join(", ")
-                              : course.instructor || "TBA"}
-                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{instructorNames}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {(course.schedule?.days || []).join(", ")}{" "}
                             {course.schedule?.startTime ? `${course.schedule.startTime} - ${course.schedule.endTime}` : ""}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || "—"}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            <span className={`font-semibold ${hasSeats ? "text-green-600" : "text-red-600"}`}>
-                              {course.seats?.available ?? 0}/{course.seats?.total ?? 0}
-                            </span>
+                            {course.sections && course.sections.length > 0 ? (
+                              <select
+                                className={`border rounded-lg p-2 text-sm min-w-[150px] ${
+                                  isRegistered || course.isSelected ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
+                                }`}
+                                value={selectedSections[course.id] || course.selectedSectionId || ""}
+                                onChange={(e) => handleSectionChange(course.id, e.target.value)}
+                                disabled={isRegistered || course.isSelected}
+                              >
+                                <option value="">Select Section</option>
+                                {course.sections.map((section) => (
+                                  <option key={section.id} value={section.id}>
+                                    {section.sectionName} ({section.availableSeats} seats)
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-gray-500">No sections available</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <button
