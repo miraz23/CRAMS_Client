@@ -311,14 +311,15 @@ function CourseSelection() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Credits</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Section</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Instructor</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Schedule</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Seats</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Prerequisite</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Section</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Action</th>
                     </tr>
                   </thead>
@@ -336,29 +337,72 @@ function CourseSelection() {
                       };
                       const statusBadge = getStatusBadge();
 
-                      // Map instructor IDs to names - prefer instructorNames from backend, fallback to frontend mapping
-                      const instructorNames =
-                        Array.isArray(course.instructorNames) && course.instructorNames.length > 0
-                          ? course.instructorNames.join(", ")
-                          : Array.isArray(course.instructors) && course.instructors.length > 0
-                          ? course.instructors
-                              .map((id) => teachers.find((t) => t.teacherId === id)?.name || id)
-                              .filter(Boolean)
-                              .join(", ")
-                          : course.instructor || "TBA";
+                      // Get selected section
+                      const selectedSectionId = selectedSections[course.id] || course.selectedSectionId;
+                      const selectedSection = selectedSectionId 
+                        ? course.sections?.find(s => s.id === selectedSectionId)
+                        : null;
+
+                      // Helper function to get instructor name by ID
+                      const getInstructorName = (instructorId) => {
+                        // First try to find in teachers array
+                        const teacher = teachers.find((t) => t.teacherId === instructorId);
+                        if (teacher?.name) return teacher.name;
+                        
+                        // Then try to match with instructorNames array from backend
+                        if (Array.isArray(course.instructors) && Array.isArray(course.instructorNames)) {
+                          const index = course.instructors.findIndex(id => id === instructorId);
+                          if (index >= 0 && course.instructorNames[index]) {
+                            return course.instructorNames[index];
+                          }
+                        }
+                        
+                        // Fallback to ID if name not found
+                        return instructorId;
+                      };
+
+                      // Get instructor for selected section
+                      let instructorNames = "TBA";
+                      if (selectedSection && course.instructorSections && Array.isArray(course.instructorSections)) {
+                        // Find instructor assigned to this section
+                        const sectionInstructor = course.instructorSections.find(instSec => 
+                          instSec.sections && instSec.sections.includes(selectedSection.sectionName)
+                        );
+                        
+                        if (sectionInstructor) {
+                          const instructorId = sectionInstructor.instructorId;
+                          instructorNames = getInstructorName(instructorId);
+                        } else {
+                          // Fallback to general course instructors
+                          instructorNames =
+                            Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                              ? course.instructorNames.join(", ")
+                              : Array.isArray(course.instructors) && course.instructors.length > 0
+                              ? course.instructors
+                                  .map((id) => getInstructorName(id))
+                                  .filter(Boolean)
+                                  .join(", ")
+                              : course.instructor || "TBA";
+                        }
+                      } else {
+                        // No section selected, show all instructors
+                        instructorNames =
+                          Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                            ? course.instructorNames.join(", ")
+                            : Array.isArray(course.instructors) && course.instructors.length > 0
+                            ? course.instructors
+                                .map((id) => getInstructorName(id))
+                                .filter(Boolean)
+                                .join(", ")
+                            : course.instructor || "TBA";
+                      }
 
                       return (
                         <tr key={course.id} className={isRegistered ? "bg-gray-50 opacity-75" : "bg-white"}>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">{instructorNames}</td>
-                          <td className="px-4 py-3 text-sm text-gray-700">
-                            {(course.schedule?.days || []).join(", ")}{" "}
-                            {course.schedule?.startTime ? `${course.schedule.startTime} - ${course.schedule.endTime}` : ""}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || "—"}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.sections && course.sections.length > 0 ? (
                               <select
@@ -372,7 +416,7 @@ function CourseSelection() {
                                 <option value="">Select Section</option>
                                 {course.sections.map((section) => (
                                   <option key={section.id} value={section.id}>
-                                    {section.sectionName} ({section.availableSeats} seats)
+                                    {section.sectionName}
                                   </option>
                                 ))}
                               </select>
@@ -380,6 +424,78 @@ function CourseSelection() {
                               <span className="text-gray-500">No sections available</span>
                             )}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {selectedSection ? instructorNames : (instructorNames || "—")}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {selectedSection ? (
+                              (() => {
+                                const scheduleToShow = selectedSection.schedule;
+                                
+                                if (!scheduleToShow) {
+                                  return "No schedule set";
+                                }
+                                
+                                // Handle new daySchedules structure (per-day scheduling)
+                                if (scheduleToShow?.daySchedules && Array.isArray(scheduleToShow.daySchedules) && scheduleToShow.daySchedules.length > 0) {
+                                  return (
+                                    <>
+                                      {scheduleToShow.daySchedules.map((ds, idx) => (
+                                        <span key={idx}>
+                                          {ds.day}: {ds.startTime || 'TBA'} - {ds.endTime || 'TBA'}
+                                          {idx < scheduleToShow.daySchedules.length - 1 ? ', ' : ''}
+                                        </span>
+                                      ))}
+                                    </>
+                                  );
+                                }
+                                
+                                // Handle legacy structure (single time for all days)
+                                if ((scheduleToShow?.days || []).length > 0) {
+                                  return (
+                                    <>
+                                      {scheduleToShow.days.join(", ")}
+                                      {scheduleToShow?.startTime && scheduleToShow?.endTime 
+                                        ? ` ${scheduleToShow.startTime} - ${scheduleToShow.endTime}`
+                                        : scheduleToShow?.startTime 
+                                        ? ` ${scheduleToShow.startTime}`
+                                        : ""
+                                      }
+                                    </>
+                                  );
+                                }
+                                
+                                return "No schedule set";
+                              })()
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {course.sections && course.sections.length > 0 ? (
+                              selectedSections[course.id] || course.selectedSectionId ? (
+                                (() => {
+                                  const selectedSectionId = selectedSections[course.id] || course.selectedSectionId;
+                                  const selectedSection = course.sections.find(s => s.id === selectedSectionId);
+                                  if (!selectedSection) return <span className="text-gray-500">—</span>;
+                                  
+                                  const isRegular = course.isRegular;
+                                  const seats = isRegular ? selectedSection.regularSeats : selectedSection.irregularSeats;
+                                  
+                                  return (
+                                    <span>
+                                      {seats.enrolled}/{seats.max}
+                                    </span>
+                                  );
+                                })()
+                              ) : (
+                                <span className="text-gray-500">—</span>
+                              )
+                            ) : (
+                              <span className="text-gray-500">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || "—"}</td>
                           <td className="px-4 py-3 text-sm">
                             <button
                               className={`flex py-1.5 px-3 rounded-lg gap-2 items-center ${

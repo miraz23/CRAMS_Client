@@ -4,7 +4,7 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import { listSections, createSection, updateSection, deleteSection, listAdvisors } from "../../../../api/adminApi";
+import { listSections, getSection, createSection, updateSection, deleteSection, listAdvisors, listCourses, updateCourse, listTeachers, updateSectionCourseSchedule } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
@@ -302,6 +302,829 @@ const MetricCard = ({ title, value }) => (
   </div>
 );
 
+// Helper functions for time conversion
+const convertTimeTo24Hour = (timeStr) => {
+  if (!timeStr) return '';
+  // If already in 24-hour format (HH:MM), return as is
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
+  
+  // Convert from "10:00 AM" format to "10:00"
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return '';
+  
+  let hours = parseInt(match[1]);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+  
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+};
+
+const convertTimeTo12Hour = (timeStr) => {
+  if (!timeStr) return '';
+  // If already in 12-hour format, return as is
+  if (/\d{1,2}:\d{2}\s*(AM|PM)/i.test(timeStr)) return timeStr;
+  
+  // Convert from "10:00" format to "10:00 AM"
+  const match = timeStr.match(/(\d{2}):(\d{2})/);
+  if (!match) return '';
+  
+  let hours = parseInt(match[1]);
+  const minutes = match[2];
+  const period = hours >= 12 ? 'PM' : 'AM';
+  
+  if (hours > 12) hours -= 12;
+  if (hours === 0) hours = 12;
+  
+  return `${hours}:${minutes} ${period}`;
+};
+
+// Parse time string to get hour, minute, and period
+const parseTime = (timeStr) => {
+  if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
+  
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (match) {
+    return {
+      hour: parseInt(match[1]),
+      minute: parseInt(match[2]),
+      period: match[3].toUpperCase(),
+    };
+  }
+  
+  // Try 24-hour format
+  const match24 = timeStr.match(/(\d{2}):(\d{2})/);
+  if (match24) {
+    let hours = parseInt(match24[1]);
+    const minutes = parseInt(match24[2]);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    if (hours > 12) hours -= 12;
+    if (hours === 0) hours = 12;
+    return { hour: hours, minute: minutes, period };
+  }
+  
+  return { hour: 12, minute: 0, period: 'AM' };
+};
+
+// Format time from hour, minute, period
+const formatTime = (hour, minute, period) => {
+  return `${hour}:${minute.toString().padStart(2, '0')} ${period}`;
+};
+
+// Time Picker Component
+const TimePicker = ({ value, onChange, placeholder = "Select time" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedHour, setSelectedHour] = useState(12);
+  const [selectedMinute, setSelectedMinute] = useState(0);
+  const [selectedPeriod, setSelectedPeriod] = useState('AM');
+
+  useEffect(() => {
+    if (value) {
+      const parsed = parseTime(value);
+      setSelectedHour(parsed.hour);
+      setSelectedMinute(parsed.minute);
+      setSelectedPeriod(parsed.period);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Scroll to selected values
+      setTimeout(() => {
+        const hourElement = document.getElementById(`hour-${selectedHour}`);
+        const minuteElement = document.getElementById(`minute-${selectedMinute}`);
+        if (hourElement) hourElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        if (minuteElement) minuteElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 100);
+    }
+  }, [isOpen, selectedHour, selectedMinute]);
+
+  const handleHourChange = (hour) => {
+    setSelectedHour(hour);
+    const newTime = formatTime(hour, selectedMinute, selectedPeriod);
+    onChange(newTime);
+  };
+
+  const handleMinuteChange = (minute) => {
+    setSelectedMinute(minute);
+    const newTime = formatTime(selectedHour, minute, selectedPeriod);
+    onChange(newTime);
+  };
+
+  const handlePeriodChange = (period) => {
+    setSelectedPeriod(period);
+    const newTime = formatTime(selectedHour, selectedMinute, period);
+    onChange(newTime);
+  };
+
+  const handleNow = () => {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    if (hours > 12) hours -= 12;
+    if (hours === 0) hours = 12;
+    const newTime = formatTime(hours, minutes, period);
+    setSelectedHour(hours);
+    setSelectedMinute(minutes);
+    setSelectedPeriod(period);
+    onChange(newTime);
+  };
+
+  const handleOK = () => {
+    setIsOpen(false);
+  };
+
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value || ''}
+        readOnly
+        onClick={() => setIsOpen(!isOpen)}
+        placeholder={placeholder}
+        className="w-full border p-2 rounded-lg cursor-pointer bg-white"
+      />
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute z-50 mt-1 bg-white border border-gray-300 rounded-lg shadow-xl p-4">
+            <div className="flex gap-4 items-center">
+              {/* Hours Column */}
+              <div className="w-16 h-64 overflow-y-auto border-r border-gray-200" style={{ scrollbarWidth: 'thin' }}>
+                {hours.map((hour) => (
+                  <div
+                    key={hour}
+                    id={`hour-${hour}`}
+                    onClick={() => handleHourChange(hour)}
+                    className={`px-3 py-2 text-center cursor-pointer rounded transition-colors ${
+                      selectedHour === hour
+                        ? 'bg-blue-600 text-white font-semibold'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    {hour.toString().padStart(2, '0')}
+                  </div>
+                ))}
+              </div>
+
+              {/* Minutes Column */}
+              <div className="w-16 h-64 overflow-y-auto border-r border-gray-200" style={{ scrollbarWidth: 'thin' }}>
+                {minutes.map((minute) => (
+                  <div
+                    key={minute}
+                    id={`minute-${minute}`}
+                    onClick={() => handleMinuteChange(minute)}
+                    className={`px-3 py-2 text-center cursor-pointer rounded transition-colors ${
+                      selectedMinute === minute
+                        ? 'bg-blue-600 text-white font-semibold'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    {minute.toString().padStart(2, '0')}
+                  </div>
+                ))}
+              </div>
+
+              {/* AM/PM Column */}
+              <div className="w-16 h-64 flex flex-col justify-center gap-2">
+                <button
+                  onClick={() => handlePeriodChange('AM')}
+                  className={`px-3 py-2 text-center cursor-pointer rounded transition-colors ${
+                    selectedPeriod === 'AM'
+                      ? 'bg-blue-600 text-white font-semibold'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  AM
+                </button>
+                <button
+                  onClick={() => handlePeriodChange('PM')}
+                  className={`px-3 py-2 text-center cursor-pointer rounded transition-colors ${
+                    selectedPeriod === 'PM'
+                      ? 'bg-blue-600 text-white font-semibold'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  PM
+                </button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between mt-4 pt-4 border-t">
+              <button
+                onClick={handleNow}
+                className="px-4 py-2 text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Now
+              </button>
+              <button
+                onClick={handleOK}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Section Detail Modal Component
+const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
+  const [sectionDetails, setSectionDetails] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [courseSchedules, setCourseSchedules] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && section) {
+      fetchSectionDetails();
+      fetchTeachers();
+    }
+  }, [isOpen, section]);
+
+  // Fetch courses when sectionDetails is available
+  useEffect(() => {
+    if (isOpen && section && sectionDetails) {
+      fetchCourses();
+    }
+  }, [isOpen, section, sectionDetails]);
+
+  const fetchTeachers = async () => {
+    try {
+      const response = await listTeachers();
+      if (response.data.success) {
+        setTeachers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+      // Silently fail - instructor names will show as IDs if teachers can't be fetched
+    }
+  };
+
+  const fetchSectionDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await getSection(section.id);
+      if (response.data.success) {
+        setSectionDetails(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching section details:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load section details",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const normalizeTime = (timeStr) => {
+    if (!timeStr) return '';
+    // If already in 12-hour format, return as is
+    if (/\d{1,2}:\d{2}\s*(AM|PM)/i.test(timeStr)) return timeStr.trim();
+    // If in 24-hour format, convert to 12-hour
+    if (/^\d{2}:\d{2}$/.test(timeStr)) {
+      return convertTimeTo12Hour(timeStr);
+    }
+    // Return as is if format is unclear
+    return timeStr.trim();
+  };
+
+  const fetchCourses = async (sectionDetailsData = null) => {
+    try {
+      const response = await listCourses({ semester: section.semester });
+      if (response.data.success) {
+        const coursesData = response.data.data || [];
+        setCourses(coursesData);
+        // Initialize course schedules from section-specific schedules or course default
+        const schedules = {};
+        // Use provided sectionDetailsData or fall back to state
+        const sectionDataToUse = sectionDetailsData || sectionDetails;
+        const sectionCourseSchedules = sectionDataToUse?.courseSchedules || {};
+        
+        coursesData.forEach(course => {
+          const courseId = course.id;
+          
+          // First, check if section has a specific schedule for this course
+          if (sectionCourseSchedules[courseId]) {
+            const sectionSchedule = sectionCourseSchedules[courseId];
+            
+            // Check if new daySchedules structure exists
+            if (sectionSchedule.daySchedules && Array.isArray(sectionSchedule.daySchedules) && sectionSchedule.daySchedules.length > 0) {
+              schedules[courseId] = {
+                daySchedules: sectionSchedule.daySchedules.map(ds => ({
+                  day: ds.day,
+                  startTime: normalizeTime(ds.startTime || ''),
+                  endTime: normalizeTime(ds.endTime || ''),
+                  room: ds.room || '',
+                })),
+              };
+            } else {
+              // Convert legacy structure to new format
+              const days = Array.isArray(sectionSchedule.days) ? [...sectionSchedule.days] : [];
+              const startTime = normalizeTime(sectionSchedule.startTime || '');
+              const endTime = normalizeTime(sectionSchedule.endTime || '');
+              const room = sectionSchedule.room || '';
+              
+              schedules[courseId] = {
+                daySchedules: days.map(day => ({
+                  day,
+                  startTime,
+                  endTime,
+                  room,
+                })),
+              };
+            }
+          } else {
+            // Fall back to course default schedule
+            const courseSchedule = course.schedule || {};
+            
+            if (courseSchedule.daySchedules && Array.isArray(courseSchedule.daySchedules) && courseSchedule.daySchedules.length > 0) {
+              schedules[courseId] = {
+                daySchedules: courseSchedule.daySchedules.map(ds => ({
+                  day: ds.day,
+                  startTime: normalizeTime(ds.startTime || ''),
+                  endTime: normalizeTime(ds.endTime || ''),
+                  room: ds.room || '',
+                })),
+              };
+            } else {
+              // Convert legacy structure to new format
+              const days = Array.isArray(courseSchedule.days) ? [...courseSchedule.days] : [];
+              const startTime = normalizeTime(courseSchedule.startTime || '');
+              const endTime = normalizeTime(courseSchedule.endTime || '');
+              const room = courseSchedule.room || '';
+              
+              schedules[courseId] = {
+                daySchedules: days.map(day => ({
+                  day,
+                  startTime,
+                  endTime,
+                  room,
+                })),
+              };
+            }
+          }
+        });
+        setCourseSchedules(schedules);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to load courses",
+      });
+    }
+  };
+
+  const handleDayToggle = (courseId, day) => {
+    setCourseSchedules(prev => {
+      const currentSchedule = prev[courseId] || { daySchedules: [] };
+      const daySchedules = currentSchedule.daySchedules || [];
+      
+      // Check if day already exists
+      const existingDayIndex = daySchedules.findIndex(ds => ds.day === day);
+      
+      let newDaySchedules;
+      if (existingDayIndex >= 0) {
+        // Remove the day
+        newDaySchedules = daySchedules.filter(ds => ds.day !== day);
+      } else {
+        // Add the day with default empty times (or copy from first existing day if available)
+        const defaultStartTime = daySchedules.length > 0 ? daySchedules[0].startTime : '';
+        const defaultEndTime = daySchedules.length > 0 ? daySchedules[0].endTime : '';
+        const defaultRoom = daySchedules.length > 0 ? daySchedules[0].room : '';
+        newDaySchedules = [
+          ...daySchedules,
+          {
+            day,
+            startTime: defaultStartTime,
+            endTime: defaultEndTime,
+            room: defaultRoom,
+          },
+        ];
+      }
+      
+      return {
+        ...prev,
+        [courseId]: {
+          ...prev[courseId],
+          daySchedules: newDaySchedules,
+        },
+      };
+    });
+  };
+
+  const handleTimeChange = (courseId, day, field, value) => {
+    setCourseSchedules(prev => {
+      const currentSchedule = prev[courseId] || { daySchedules: [] };
+      const daySchedules = [...(currentSchedule.daySchedules || [])];
+      
+      const dayIndex = daySchedules.findIndex(ds => ds.day === day);
+      if (dayIndex >= 0) {
+        daySchedules[dayIndex] = {
+          ...daySchedules[dayIndex],
+          [field]: value,
+        };
+      }
+      
+      return {
+        ...prev,
+        [courseId]: {
+          ...prev[courseId],
+          daySchedules,
+        },
+      };
+    });
+  };
+
+  const handleRoomChange = (courseId, day, value) => {
+    setCourseSchedules(prev => {
+      const currentSchedule = prev[courseId] || { daySchedules: [] };
+      const daySchedules = [...(currentSchedule.daySchedules || [])];
+      
+      const dayIndex = daySchedules.findIndex(ds => ds.day === day);
+      if (dayIndex >= 0) {
+        daySchedules[dayIndex] = {
+          ...daySchedules[dayIndex],
+          room: value,
+        };
+      }
+      
+      return {
+        ...prev,
+        [courseId]: {
+          ...prev[courseId],
+          daySchedules,
+        },
+      };
+    });
+  };
+
+  const handleSaveSchedule = async (courseId) => {
+    try {
+      setSaving(true);
+      const schedule = courseSchedules[courseId];
+      // Normalize times to 12-hour format and save using new daySchedules structure
+      const scheduleToSave = {
+        daySchedules: (schedule.daySchedules || []).map(ds => ({
+          day: ds.day,
+          startTime: normalizeTime(ds.startTime || ''),
+          endTime: normalizeTime(ds.endTime || ''),
+          room: ds.room || '',
+        })),
+      };
+      // Save to section-specific schedule instead of course
+      await updateSectionCourseSchedule(section.id, courseId, scheduleToSave);
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Schedule updated successfully",
+        timer: 1500,
+      });
+      // Refresh section details and courses to get updated schedules
+      const response = await getSection(section.id);
+      if (response.data.success) {
+        const updatedSectionDetails = response.data.data;
+        setSectionDetails(updatedSectionDetails);
+        // Pass the updated section details directly to fetchCourses
+        await fetchCourses(updatedSectionDetails);
+      }
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to update schedule",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveAllSchedules = async () => {
+    try {
+      setSaving(true);
+      const updatePromises = Object.keys(courseSchedules).map(courseId => {
+        const schedule = courseSchedules[courseId];
+        const scheduleToSave = {
+          daySchedules: (schedule.daySchedules || []).map(ds => ({
+            day: ds.day,
+            startTime: normalizeTime(ds.startTime || ''),
+            endTime: normalizeTime(ds.endTime || ''),
+            room: ds.room || '',
+          })),
+        };
+        // Save to section-specific schedule instead of course
+        return updateSectionCourseSchedule(section.id, courseId, scheduleToSave);
+      });
+      await Promise.all(updatePromises);
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "All schedules updated successfully",
+        timer: 1500,
+      });
+      // Refresh section details and courses to get updated schedules
+      const response = await getSection(section.id);
+      if (response.data.success) {
+        const updatedSectionDetails = response.data.data;
+        setSectionDetails(updatedSectionDetails);
+        // Pass the updated section details directly to fetchCourses
+        await fetchCourses(updatedSectionDetails);
+      }
+    } catch (error) {
+      console.error('Error updating schedules:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to update schedules",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const advisorName = sectionDetails
+    ? advisors.find((advisor) => advisor.teacherId === sectionDetails.assignedAdvisor)?.name ||
+      sectionDetails.assignedAdvisor ||
+      "N/A"
+    : "N/A";
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Helper function to get instructor name by ID
+  const getInstructorName = (instructorId) => {
+    // First try to find in teachers array
+    const teacher = teachers.find((t) => t.teacherId === instructorId);
+    if (teacher?.name) return teacher.name;
+    
+    // Then try to match with instructorNames array from backend
+    // This will be checked per course in the map function
+    return instructorId;
+  };
+
+  // Helper function to get instructor for a course in this section
+  const getCourseInstructor = (course) => {
+    const sectionName = sectionDetails?.sectionName || section.sectionName;
+    
+    // First, try to find instructor assigned to this specific section
+    if (course.instructorSections && Array.isArray(course.instructorSections)) {
+      const sectionInstructor = course.instructorSections.find(instSec => 
+        instSec.sections && instSec.sections.includes(sectionName)
+      );
+      
+      if (sectionInstructor) {
+        const instructorId = sectionInstructor.instructorId;
+        return getInstructorName(instructorId);
+      }
+    }
+    
+    // Fallback to general course instructors
+    if (Array.isArray(course.instructorNames) && course.instructorNames.length > 0) {
+      return course.instructorNames.join(", ");
+    }
+    
+    if (Array.isArray(course.instructors) && course.instructors.length > 0) {
+      return course.instructors
+        .map((id) => getInstructorName(id))
+        .filter(Boolean)
+        .join(", ");
+    }
+    
+    return course.instructor || "TBA";
+  };
+
+  return (
+    <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg w-full max-w-6xl shadow-2xl my-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Section Details</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading section details...</p>
+          </div>
+        ) : (
+          <>
+            {/* Section Information */}
+            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+              <h3 className="text-lg font-semibold mb-4">Section Information</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Section Name</p>
+                  <p className="font-semibold">{sectionDetails?.sectionName || section.sectionName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Semester</p>
+                  <p className="font-semibold">{sectionDetails?.semester || section.semester}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Advisor</p>
+                  <p className="font-semibold">{advisorName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Students</p>
+                  <p className="font-semibold">{sectionDetails?.enrolledStudents ?? 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Total Capacity</p>
+                  <p className="font-semibold">{sectionDetails?.totalCapacity ?? 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      sectionDetails?.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {sectionDetails?.status || "N/A"}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">CR</p>
+                  <p className="font-semibold">
+                    {sectionDetails?.crName
+                      ? `${sectionDetails.crName} (${sectionDetails.crContact || "N/A"})`
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">ACR</p>
+                  <p className="font-semibold">
+                    {sectionDetails?.acrName
+                      ? `${sectionDetails.acrName} (${sectionDetails.acrContact || "N/A"})`
+                      : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Courses and Schedule */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Courses for {sectionDetails?.semester || section.semester} Semester</h3>
+                <button
+                  onClick={handleSaveAllSchedules}
+                  disabled={saving}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? "Saving..." : "Save All Schedules"}
+                </button>
+              </div>
+
+              {courses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No courses found for this semester.
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {courses.map((course) => {
+                    const schedule = courseSchedules[course.id] || {
+                      daySchedules: [],
+                    };
+                    const daySchedules = schedule.daySchedules || [];
+                    const selectedDays = daySchedules.map(ds => ds.day);
+                    
+                    return (
+                      <div key={course.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-lg">{course.courseCode}</h4>
+                            <p className="text-sm text-gray-600">{course.courseName}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Credits: {course.credits} | Department: {course.department}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              <span className="font-medium">Instructor:</span> {getCourseInstructor(course)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleSaveSchedule(course.id)}
+                            disabled={saving}
+                            className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 ml-4"
+                          >
+                            Save
+                          </button>
+                        </div>
+
+                        {/* Days Selection */}
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Days
+                          </label>
+                          <div className="flex gap-2 flex-wrap">
+                            {daysOfWeek.map((day) => (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => handleDayToggle(course.id, day)}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                  selectedDays.includes(day)
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                }`}
+                              >
+                                {day}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Per-Day Time Selection */}
+                        {daySchedules.length > 0 && (
+                          <div className="space-y-3">
+                            <label className="block text-sm font-medium text-gray-700">
+                              Schedule Times & Room (per day)
+                            </label>
+                            {daySchedules.map((daySchedule) => (
+                              <div key={daySchedule.day} className="border rounded-lg p-3 bg-gray-50">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="font-semibold text-sm text-gray-700 min-w-[50px]">
+                                    {daySchedule.day}:
+                                  </span>
+                                  <div className="flex-1 grid grid-cols-3 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        Start Time
+                                      </label>
+                                      <TimePicker
+                                        value={daySchedule.startTime || ''}
+                                        onChange={(time) => handleTimeChange(course.id, daySchedule.day, 'startTime', time)}
+                                        placeholder="Select start time"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        End Time
+                                      </label>
+                                      <TimePicker
+                                        value={daySchedule.endTime || ''}
+                                        onChange={(time) => handleTimeChange(course.id, daySchedule.day, 'endTime', time)}
+                                        placeholder="Select end time"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        Room
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={daySchedule.room || ''}
+                                        onChange={(e) => handleRoomChange(course.id, daySchedule.day, e.target.value)}
+                                        placeholder="e.g., C-102, CX-201"
+                                        className="w-full border p-2 rounded-lg text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Main Section Management Component
 const SectionManagementDashboard = () => {
   const navigate = useNavigate();
@@ -314,6 +1137,8 @@ const SectionManagementDashboard = () => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [filterSemester, setFilterSemester] = useState('');
   const [advisors, setAdvisors] = useState([]);
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     fetchSections();
@@ -548,7 +1373,14 @@ const SectionManagementDashboard = () => {
                       section.assignedAdvisor ||
                       "N/A";
                     return (
-                      <tr key={section.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={section.id} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setSelectedSection(section);
+                          setIsDetailModalOpen(true);
+                        }}
+                      >
                         <td className="px-4 py-3 text-sm font-semibold text-gray-900">{section.sectionName}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">{section.semester || "—"}</td>
                         <td className="px-4 py-3 text-sm text-gray-700">{advisorName}</td>
@@ -571,7 +1403,7 @@ const SectionManagementDashboard = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          <div className="flex gap-3">
+                          <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => {
                                 setEditSection(section);
@@ -621,6 +1453,17 @@ const SectionManagementDashboard = () => {
             onClose={() => setDeleteConfirm(null)}
             onConfirm={handleDeleteSection}
             section={deleteConfirm}
+          />
+
+          {/* Section Detail Modal */}
+          <SectionDetailModal
+            isOpen={isDetailModalOpen}
+            onClose={() => {
+              setIsDetailModalOpen(false);
+              setSelectedSection(null);
+            }}
+            section={selectedSection}
+            advisors={advisors}
           />
         </div>
       </div>

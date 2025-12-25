@@ -35,9 +35,12 @@ export const deleteCourse = (id) => adminClient.delete(`/courses/${id}`);
 
 // Sections
 export const listSections = (params = {}) => adminClient.get('/sections', { params });
+export const getSection = (id) => adminClient.get(`/sections/${id}`);
 export const createSection = (payload) => adminClient.post('/sections', payload);
 export const updateSection = (id, payload) => adminClient.put(`/sections/${id}`, payload);
 export const deleteSection = (id) => adminClient.delete(`/sections/${id}`);
+export const updateSectionCourseSchedule = (sectionId, courseId, schedule) =>
+  adminClient.put(`/sections/${sectionId}/courses/${courseId}/schedule`, { schedule });
 
 // User management
 export const getUserOverview = () => adminClient.get('/user-management/overview');

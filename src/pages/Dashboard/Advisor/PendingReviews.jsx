@@ -520,7 +520,7 @@ export default function PendingReviews() {
                               className="inline-flex items-center space-x-1 bg-red-600 text-white text-xs px-2 py-1 rounded"
                             >
                               <AlertCircle className="w-3 h-3" />
-                              <span>{issue}</span>
+                              <span>{typeof issue === 'object' && issue.message ? issue.message : issue}</span>
                             </span>
                           ))}
                         </div>

@@ -14,6 +14,126 @@ import {
 import { fetchSchedule } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
 
+// Helper function to parse time string to minutes
+const parseTimeToMinutes = (timeStr) => {
+  if (!timeStr) return null;
+  const [time, period] = timeStr.split(' ');
+  const [hours, minutes] = time.split(':');
+  let hour24 = parseInt(hours, 10);
+  if (period === 'PM' && hour24 !== 12) hour24 += 12;
+  if (period === 'AM' && hour24 === 12) hour24 = 0;
+  return hour24 * 60 + parseInt(minutes || 0, 10);
+};
+
+// Helper function to check if a time falls within a time range
+const isTimeInRange = (timeStr, startTime, endTime) => {
+  const timeMinutes = parseTimeToMinutes(timeStr);
+  const startMinutes = parseTimeToMinutes(startTime);
+  const endMinutes = parseTimeToMinutes(endTime);
+  
+  if (timeMinutes === null || startMinutes === null || endMinutes === null) return false;
+  return timeMinutes >= startMinutes && timeMinutes < endMinutes;
+};
+
+// Schedule Grid Component
+const ScheduleGrid = ({ weeklySchedule }) => {
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Sat'];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Saturday'];
+  
+  // Time slots based on the image
+  const timeSlots = [
+    { start: '10:40 AM', end: '11:30 AM' },
+    { start: '11:30 AM', end: '12:20 PM' },
+    { start: '12:20 PM', end: '1:10 PM' },
+    { start: '1:10 PM', end: '1:50 PM' },
+    { start: '1:50 PM', end: '2:40 PM' },
+    { start: '2:40 PM', end: '3:30 PM' },
+    { start: '3:30 PM', end: '4:20 PM' },
+  ];
+
+  // Create a map of time slots to classes
+  const scheduleMap = {};
+  days.forEach((day) => {
+    scheduleMap[day] = {};
+    timeSlots.forEach((slot, idx) => {
+      scheduleMap[day][idx] = [];
+    });
+  });
+
+  // Populate schedule map - place classes in the time slot they fall into
+  Object.keys(weeklySchedule).forEach((day) => {
+    if (!scheduleMap[day]) return;
+    weeklySchedule[day].forEach((cls) => {
+      const classStartMinutes = parseTimeToMinutes(cls.startTime);
+      const classEndMinutes = parseTimeToMinutes(cls.endTime);
+      
+      if (classStartMinutes !== null) {
+        // Find which time slot this class belongs to
+        timeSlots.forEach((slot, idx) => {
+          const slotStartMinutes = parseTimeToMinutes(slot.start);
+          const slotEndMinutes = parseTimeToMinutes(slot.end);
+          
+          // Check if class overlaps with this time slot
+          if (slotStartMinutes !== null && slotEndMinutes !== null) {
+            // Class starts during this slot or overlaps with it
+            if ((classStartMinutes >= slotStartMinutes && classStartMinutes < slotEndMinutes) ||
+                (classEndMinutes !== null && classEndMinutes > slotStartMinutes && classStartMinutes < slotEndMinutes)) {
+              scheduleMap[day][idx].push(cls);
+            }
+          }
+        });
+      }
+    });
+  });
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="inline-block min-w-full">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 bg-gray-50 p-3 text-left font-semibold text-gray-700">
+                Day
+              </th>
+              {timeSlots.map((slot, idx) => (
+                <th key={idx} className="border border-gray-300 bg-gray-50 p-3 text-center font-semibold text-gray-700">
+                  <div className="text-sm">{slot.start}</div>
+                  <div className="text-xs text-gray-600 mt-1">-</div>
+                  <div className="text-sm">{slot.end}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((day, dayIdx) => (
+              <tr key={day}>
+                <td className="border border-gray-300 bg-gray-50 p-3 text-sm font-medium text-gray-700">
+                  {dayNames[dayIdx]}
+                </td>
+                {timeSlots.map((slot, slotIdx) => (
+                  <td key={`${day}-${slotIdx}`} className="border border-gray-300 p-2 align-top" style={{ minHeight: '60px', width: '150px' }}>
+                    {scheduleMap[day] && scheduleMap[day][slotIdx] && scheduleMap[day][slotIdx].length > 0 ? (
+                      scheduleMap[day][slotIdx].map((cls, idx) => (
+                        <div
+                          key={`${cls.courseId}-${idx}`}
+                          className="bg-blue-600 text-white rounded p-2 mb-1 text-sm"
+                        >
+                          <div className="font-semibold">{cls.courseCode}</div>
+                          <div className="text-xs mt-1">{cls.room || 'TBA'}</div>
+                        </div>
+                      ))
+                    ) : null}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 function MySchedule() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -114,54 +234,16 @@ function MySchedule() {
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">
           <div>
             <p className="text-3xl font-bold mb-1">My Schedule</p>
-            <p className="text-lg text-gray-500">Live schedule pulled from backend.</p>
+            <p className="text-lg text-gray-500">Your weekly class schedule for {schedule.semester || "Spring 2025"}.</p>
           </div>
-          <div className="border border-gray-300 p-6 rounded-lg bg-white ">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-lg font-semibold">Weekly Schedule</p>
-                <p className="text-gray-500">
-                  View your class timings and locations for the week.
-                </p>
-              </div>
-              <p className="text-sm text-gray-500">
-                Semester: {schedule.semester || "N/A"} | Total Credits:{" "}
-                {schedule.summary?.totalCredits ?? 0}
-              </p>
+          <div className="border border-gray-300 p-6 rounded-lg bg-white">
+            <div className="mb-4">
+              <p className="text-lg font-semibold">Weekly Schedule</p>
+              <p className="text-gray-500 text-sm">View your class timings and locations</p>
             </div>
             {loading && <p className="text-gray-500 mt-4">Loading schedule...</p>}
             {!loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                {Object.keys(schedule.weeklySchedule || {}).map((day) => (
-                  <div key={day} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="w-4 h-4 text-blue-600" />
-                      <p className="font-semibold text-gray-800">{day}</p>
-                    </div>
-                    <div className="space-y-3">
-                      {(schedule.weeklySchedule[day] || []).map((cls, idx) => (
-                        <div
-                          key={`${cls.courseId}-${idx}`}
-                          className="bg-blue-50 border border-blue-100 rounded-lg p-3"
-                        >
-                          <p className="font-bold text-gray-900">{cls.courseCode}</p>
-                          <p className="text-sm text-gray-700">{cls.courseName}</p>
-                          <p className="text-sm text-gray-600">
-                            {cls.startTime} - {cls.endTime}
-                          </p>
-                          <p className="text-sm text-gray-600">{cls.instructor}</p>
-                          <span className="text-xs uppercase tracking-wide text-gray-500">
-                            {cls.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {Object.keys(schedule.weeklySchedule || {}).length === 0 && (
-                  <p className="text-gray-500 col-span-full">No scheduled classes found.</p>
-                )}
-              </div>
+              <ScheduleGrid weeklySchedule={schedule.weeklySchedule || {}} />
             )}
           </div>
 
@@ -184,11 +266,25 @@ function MySchedule() {
                     </div>
                     <div className="text-gray-600">
                       <p>Instructor: {course.instructor || "TBA"}</p>
-                      <p>
-                        Days: {(course.schedule?.days || []).join(", ")}{" "}
-                        {course.schedule?.startTime ? `• ${course.schedule.startTime}` : ""}{" "}
-                        {course.schedule?.endTime ? `- ${course.schedule.endTime}` : ""}
-                      </p>
+                      <div>
+                        {/* Display per-day schedules if available */}
+                        {course.schedule?.daySchedules && course.schedule.daySchedules.length > 0 ? (
+                          <div>
+                            <p className="font-medium mb-1">Schedule:</p>
+                            {course.schedule.daySchedules.map((ds, idx) => (
+                              <p key={idx} className="text-sm">
+                                {ds.day}: {ds.startTime || 'TBA'} - {ds.endTime || 'TBA'}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>
+                            Days: {(course.schedule?.days || []).join(", ")}{" "}
+                            {course.schedule?.startTime ? `• ${course.schedule.startTime}` : ""}{" "}
+                            {course.schedule?.endTime ? `- ${course.schedule.endTime}` : ""}
+                          </p>
+                        )}
+                      </div>
                       <p>Semester: {course.semester || "N/A"}</p>
                       <p>Credits: {course.credits || 0}</p>
                     </div>
