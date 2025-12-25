@@ -871,7 +871,7 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
       "N/A"
     : "N/A";
 
-  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const daysOfWeek = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
 
   // Helper function to get instructor name by ID
   const getInstructorName = (instructorId) => {
@@ -888,31 +888,42 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
   const getCourseInstructor = (course) => {
     const sectionName = sectionDetails?.sectionName || section.sectionName;
     
+    // Check if course uses section-specific instructor assignments
+    const hasSectionSpecificInstructors = course.instructorSections && 
+      Array.isArray(course.instructorSections) && 
+      course.instructorSections.length > 0;
+    
     // First, try to find instructor assigned to this specific section
-    if (course.instructorSections && Array.isArray(course.instructorSections)) {
+    if (sectionName && hasSectionSpecificInstructors) {
       const sectionInstructor = course.instructorSections.find(instSec => 
         instSec.sections && instSec.sections.includes(sectionName)
       );
       
-      if (sectionInstructor) {
+      if (sectionInstructor && sectionInstructor.instructorId) {
         const instructorId = sectionInstructor.instructorId;
         return getInstructorName(instructorId);
       }
+      // If section-specific assignments exist but this section has no instructor, return —
+      return "—";
     }
     
-    // Fallback to general course instructors
-    if (Array.isArray(course.instructorNames) && course.instructorNames.length > 0) {
-      return course.instructorNames.join(", ");
+    // Only fallback to general course instructors if section-specific assignments are NOT being used
+    if (!hasSectionSpecificInstructors) {
+      if (Array.isArray(course.instructorNames) && course.instructorNames.length > 0) {
+        return course.instructorNames.join(", ");
+      }
+      
+      if (Array.isArray(course.instructors) && course.instructors.length > 0) {
+        return course.instructors
+          .map((id) => getInstructorName(id))
+          .filter(Boolean)
+          .join(", ");
+      }
+      
+      return course.instructor || "—";
     }
     
-    if (Array.isArray(course.instructors) && course.instructors.length > 0) {
-      return course.instructors
-        .map((id) => getInstructorName(id))
-        .filter(Boolean)
-        .join(", ");
-    }
-    
-    return course.instructor || "TBA";
+    return "—";
   };
 
   return (

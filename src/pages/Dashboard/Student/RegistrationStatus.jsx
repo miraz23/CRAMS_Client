@@ -190,7 +190,7 @@ function RegistrationStatus() {
                       <p className="font-semibold  mb-2">{reg.course?.courseName}</p>
                     </div>
                     <div className="text-gray-600 mb-2 ">
-                      <p>Instructor: {reg.course?.instructor || "TBA"}</p>
+                      <p>Instructor: {reg.course?.instructor || "—"}</p>
                       <p>Semester: {reg.semester || "N/A"}</p>
                       <p>Submitted: {reg.submittedAt ? new Date(reg.submittedAt).toLocaleString() : "N/A"}</p>
                       {reg.approvedAt && <p>Processed: {new Date(reg.approvedAt).toLocaleString()}</p>}

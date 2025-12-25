@@ -11,8 +11,8 @@ import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 const emptyCourse = {
     courseCode: "",
     courseName: "",
-    credits: 3,
-    department: "Computer Science",
+    credits: '',
+    department: "CSE",
     prerequisite: "",
     semester: "",
     instructors: [],
@@ -129,7 +129,7 @@ const CourseManagement = () => {
         }
         setNewCourseData((prev) => ({
             ...prev,
-            [name]: type === 'number' ? parseInt(value) || 0 : value,
+            [name]: type === 'number' ? (value === '' ? '' : parseFloat(value) || 0) : value,
         }));
     };
 
@@ -496,7 +496,9 @@ const CourseManagement = () => {
                                                 value={newCourseData.credits} 
                                                 onChange={handleFormChange} 
                                                 placeholder="3" 
-                                                min="1" 
+                                                min="0.75" 
+                                                max="4"
+                                                step="0.25"
                                                 required 
                                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
                                             />

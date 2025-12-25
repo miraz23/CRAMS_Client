@@ -10,6 +10,7 @@ import {
   Grid,
   Calendar,
   FileText,
+  X,
 } from "lucide-react";
 import { fetchSchedule } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
@@ -35,10 +36,94 @@ const isTimeInRange = (timeStr, startTime, endTime) => {
   return timeMinutes >= startMinutes && timeMinutes < endMinutes;
 };
 
+// Course Details Modal Component
+const CourseDetailsModal = ({ course, isOpen, onClose }) => {
+  if (!isOpen || !course) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md border-2 border-gray-400" onClick={onClose} >
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">Course Details</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="border-b pb-3">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="text-2xl font-bold text-gray-900">{course.courseCode}</h3>
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-semibold">
+                {course.status || 'N/A'}
+              </span>
+            </div>
+            <p className="text-lg text-gray-700 font-medium">{course.courseName}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Credits</p>
+              <p className="text-gray-900">{course.credits || 0}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Semester</p>
+              <p className="text-gray-900">{course.semester || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Instructor</p>
+              <p className="text-gray-900">{course.instructor || "—"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-500 mb-1">Prerequisite</p>
+              <p className="text-gray-900">{course.prerequisite || "None"}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-500 mb-2">Schedule</p>
+            {course.schedule?.daySchedules && course.schedule.daySchedules.length > 0 ? (
+              <div className="space-y-2">
+                {course.schedule.daySchedules.map((ds, idx) => (
+                  <div key={idx} className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm font-medium text-gray-900">
+                      {ds.day}: {ds.startTime || '—'} - {ds.endTime || '—'}
+                      {ds.room && <span className="ml-2 text-gray-600">({ds.room})</span>}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : course.schedule?.days && course.schedule.days.length > 0 ? (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-900">
+                  Days: {course.schedule.days.join(", ")}
+                  {course.schedule?.startTime && course.schedule?.endTime && (
+                    <span className="ml-2">
+                      • {course.schedule.startTime} - {course.schedule.endTime}
+                    </span>
+                  )}
+                  {course.schedule?.room && (
+                    <span className="ml-2 text-gray-600">({course.schedule.room})</span>
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">—</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Schedule Grid Component
-const ScheduleGrid = ({ weeklySchedule }) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Sat'];
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Saturday'];
+const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
+  const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
+  const dayNames = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'];
   
   // Time slots based on the image
   const timeSlots = [
@@ -113,15 +198,20 @@ const ScheduleGrid = ({ weeklySchedule }) => {
                 {timeSlots.map((slot, slotIdx) => (
                   <td key={`${day}-${slotIdx}`} className="border border-gray-300 p-2 align-top" style={{ minHeight: '60px', width: '150px' }}>
                     {scheduleMap[day] && scheduleMap[day][slotIdx] && scheduleMap[day][slotIdx].length > 0 ? (
-                      scheduleMap[day][slotIdx].map((cls, idx) => (
-                        <div
-                          key={`${cls.courseId}-${idx}`}
-                          className="bg-blue-600 text-white rounded p-2 mb-1 text-sm"
-                        >
-                          <div className="font-semibold">{cls.courseCode}</div>
-                          <div className="text-xs mt-1">{cls.room || 'TBA'}</div>
-                        </div>
-                      ))
+                      scheduleMap[day][slotIdx].map((cls, idx) => {
+                        // Find the full course details from the courses array
+                        const fullCourse = courses.find(c => c.id === cls.courseId || c._id === cls.courseId);
+                        return (
+                          <div
+                            key={`${cls.courseId}-${idx}`}
+                            className="bg-blue-600 text-white rounded p-2 mb-1 text-sm cursor-pointer hover:bg-blue-700 transition-colors"
+                            onClick={() => fullCourse && onCourseClick(fullCourse)}
+                          >
+                            <div className="font-semibold">{cls.courseCode}</div>
+                            <div className="text-xs mt-1">{cls.room || '—'}</div>
+                          </div>
+                        );
+                      })
                     ) : null}
                   </td>
                 ))}
@@ -139,6 +229,8 @@ function MySchedule() {
   const { logoutUser } = useAuth();
   const [schedule, setSchedule] = useState({ weeklySchedule: {}, summary: {}, courses: [] });
   const [loading, setLoading] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const loadSchedule = async () => {
     setLoading(true);
@@ -243,58 +335,25 @@ function MySchedule() {
             </div>
             {loading && <p className="text-gray-500 mt-4">Loading schedule...</p>}
             {!loading && (
-              <ScheduleGrid weeklySchedule={schedule.weeklySchedule || {}} />
+              <ScheduleGrid 
+                weeklySchedule={schedule.weeklySchedule || {}} 
+                courses={schedule.courses || []}
+                onCourseClick={(course) => {
+                  setSelectedCourse(course);
+                  setIsModalOpen(true);
+                }}
+              />
             )}
           </div>
 
-          <div className="bg-white border border-gray-200 p-4 rounded-lg shadow-md">
-            <div className="mb-5">
-              <p className="text-3xl font-bold mb-1">Course Details</p>
-              <p className="text-lg text-gray-500">Information about selected courses.</p>
-            </div>
-            <div className="space-y-4">
-              {loading && <p className="text-gray-500">Loading courses...</p>}
-              {!loading &&
-                (schedule.courses || []).map((course) => (
-                  <div key={course.id} className="bg-gray-50 p-4 rounded-lg border">
-                    <div className="flex gap-3 mb-2 items-center">
-                      <h1 className="text-2xl font-bold">{course.courseCode}</h1>
-                      <p className="border border-gray-400 px-2 py-1 rounded-lg text-sm font-semibold">
-                        {course.courseName}
-                      </p>
-                      <span className="text-xs text-gray-600 uppercase">{course.status}</span>
-                    </div>
-                    <div className="text-gray-600">
-                      <p>Instructor: {course.instructor || "TBA"}</p>
-                      <div>
-                        {/* Display per-day schedules if available */}
-                        {course.schedule?.daySchedules && course.schedule.daySchedules.length > 0 ? (
-                          <div>
-                            <p className="font-medium mb-1">Schedule:</p>
-                            {course.schedule.daySchedules.map((ds, idx) => (
-                              <p key={idx} className="text-sm">
-                                {ds.day}: {ds.startTime || 'TBA'} - {ds.endTime || 'TBA'}
-                              </p>
-                            ))}
-                          </div>
-                        ) : (
-                          <p>
-                            Days: {(course.schedule?.days || []).join(", ")}{" "}
-                            {course.schedule?.startTime ? `• ${course.schedule.startTime}` : ""}{" "}
-                            {course.schedule?.endTime ? `- ${course.schedule.endTime}` : ""}
-                          </p>
-                        )}
-                      </div>
-                      <p>Semester: {course.semester || "N/A"}</p>
-                      <p>Credits: {course.credits || 0}</p>
-                    </div>
-                  </div>
-                ))}
-              {!loading && (schedule.courses || []).length === 0 && (
-                <p className="text-gray-500">No courses selected yet.</p>
-              )}
-            </div>
-          </div>
+          <CourseDetailsModal
+            course={selectedCourse}
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setSelectedCourse(null);
+            }}
+          />
         </main>
       </div>
     </div>

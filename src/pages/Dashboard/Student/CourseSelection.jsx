@@ -362,30 +362,28 @@ function CourseSelection() {
                       };
 
                       // Get instructor for selected section
-                      let instructorNames = "TBA";
-                      if (selectedSection && course.instructorSections && Array.isArray(course.instructorSections)) {
+                      let instructorNames = "—";
+                      
+                      // Check if course uses section-specific instructor assignments
+                      const hasSectionSpecificInstructors = course.instructorSections && 
+                        Array.isArray(course.instructorSections) && 
+                        course.instructorSections.length > 0;
+                      
+                      if (selectedSection && hasSectionSpecificInstructors) {
                         // Find instructor assigned to this section
                         const sectionInstructor = course.instructorSections.find(instSec => 
                           instSec.sections && instSec.sections.includes(selectedSection.sectionName)
                         );
                         
-                        if (sectionInstructor) {
+                        if (sectionInstructor && sectionInstructor.instructorId) {
                           const instructorId = sectionInstructor.instructorId;
                           instructorNames = getInstructorName(instructorId);
                         } else {
-                          // Fallback to general course instructors
-                          instructorNames =
-                            Array.isArray(course.instructorNames) && course.instructorNames.length > 0
-                              ? course.instructorNames.join(", ")
-                              : Array.isArray(course.instructors) && course.instructors.length > 0
-                              ? course.instructors
-                                  .map((id) => getInstructorName(id))
-                                  .filter(Boolean)
-                                  .join(", ")
-                              : course.instructor || "TBA";
+                          // Section-specific assignments exist but this section has no instructor
+                          instructorNames = "—";
                         }
-                      } else {
-                        // No section selected, show all instructors
+                      } else if (!hasSectionSpecificInstructors) {
+                        // Only fallback to general course instructors if section-specific assignments are NOT being used
                         instructorNames =
                           Array.isArray(course.instructorNames) && course.instructorNames.length > 0
                             ? course.instructorNames.join(", ")
@@ -394,7 +392,10 @@ function CourseSelection() {
                                 .map((id) => getInstructorName(id))
                                 .filter(Boolean)
                                 .join(", ")
-                            : course.instructor || "TBA";
+                            : course.instructor || "—";
+                      } else {
+                        // No section selected but section-specific assignments exist, show —
+                        instructorNames = "—";
                       }
 
                       return (
@@ -433,7 +434,7 @@ function CourseSelection() {
                                 const scheduleToShow = selectedSection.schedule;
                                 
                                 if (!scheduleToShow) {
-                                  return "No schedule set";
+                                  return "—";
                                 }
                                 
                                 // Handle new daySchedules structure (per-day scheduling)
@@ -442,7 +443,7 @@ function CourseSelection() {
                                     <>
                                       {scheduleToShow.daySchedules.map((ds, idx) => (
                                         <span key={idx}>
-                                          {ds.day}: {ds.startTime || 'TBA'} - {ds.endTime || 'TBA'}
+                                          {ds.day}: {ds.startTime || '—'} - {ds.endTime || '—'}
                                           {idx < scheduleToShow.daySchedules.length - 1 ? ', ' : ''}
                                         </span>
                                       ))}
@@ -465,7 +466,7 @@ function CourseSelection() {
                                   );
                                 }
                                 
-                                return "No schedule set";
+                                return "—";
                               })()
                             ) : (
                               "—"
