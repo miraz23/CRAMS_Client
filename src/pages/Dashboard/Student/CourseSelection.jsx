@@ -73,6 +73,9 @@ function CourseSelection() {
       (available || []).forEach(course => {
         if (course.selectedSectionId) {
           sectionsMap[course.id] = course.selectedSectionId;
+        } else if (course.isRegular && course.sections && course.sections.length > 0) {
+          // For regular students, auto-select their section
+          sectionsMap[course.id] = course.sections[0].id;
         }
       });
       setSelectedSections(sectionsMap);
@@ -112,19 +115,26 @@ function CourseSelection() {
           return updated;
         });
       } else {
-        // Check if section is selected
+        // Determine section ID to use
+        let sectionIdToUse = null;
         if (course.sections && course.sections.length > 0) {
-          const selectedSectionId = selectedSections[course.id];
-          if (!selectedSectionId) {
-            Swal.fire({ 
-              icon: "warning", 
-              title: "Section Required", 
-              text: "Please select a section before adding the course." 
-            });
-            return;
+          if (course.isRegular) {
+            // Regular students: always use their section (first/only section)
+            sectionIdToUse = course.sections[0].id;
+          } else {
+            // Irregular students: require section selection
+            sectionIdToUse = selectedSections[course.id];
+            if (!sectionIdToUse) {
+              Swal.fire({ 
+                icon: "warning", 
+                title: "Section Required", 
+                text: "Please select a section before adding the course." 
+              });
+              return;
+            }
           }
         }
-        await addCourseSelection(course.id, selectedSections[course.id]);
+        await addCourseSelection(course.id, sectionIdToUse);
         Swal.fire({ icon: "success", title: "Added", text: "Course added to selection." });
       }
       await loadCourses();
@@ -338,10 +348,14 @@ function CourseSelection() {
                       const statusBadge = getStatusBadge();
 
                       // Get selected section
-                      const selectedSectionId = selectedSections[course.id] || course.selectedSectionId;
+                      // For regular students, always use their section (first/only section in array)
+                      // For irregular students, use the selected section from state
+                      const selectedSectionId = course.isRegular 
+                        ? (course.sections && course.sections.length > 0 ? course.sections[0].id : null)
+                        : (selectedSections[course.id] || course.selectedSectionId);
                       const selectedSection = selectedSectionId 
                         ? course.sections?.find(s => s.id === selectedSectionId)
-                        : null;
+                        : (course.isRegular && course.sections && course.sections.length > 0 ? course.sections[0] : null);
 
                       // Helper function to get instructor name by ID
                       const getInstructorName = (instructorId) => {
@@ -406,21 +420,31 @@ function CourseSelection() {
                           <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.sections && course.sections.length > 0 ? (
-                              <select
-                                className={`border rounded-lg p-2 text-sm min-w-[150px] ${
-                                  isRegistered || course.isSelected ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
-                                }`}
-                                value={selectedSections[course.id] || course.selectedSectionId || ""}
-                                onChange={(e) => handleSectionChange(course.id, e.target.value)}
-                                disabled={isRegistered || course.isSelected}
-                              >
-                                <option value="">Select Section</option>
-                                {course.sections.map((section) => (
-                                  <option key={section.id} value={section.id}>
-                                    {section.sectionName}
-                                  </option>
-                                ))}
-                              </select>
+                              course.isRegular ? (
+                                // Regular students: show section name as text (no dropdown)
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-semibold text-gray-900">
+                                    {selectedSection?.sectionName || course.sections[0]?.sectionName || "—"}
+                                  </span>
+                                </div>
+                              ) : (
+                                // Irregular students: show dropdown
+                                <select
+                                  className={`border rounded-lg p-2 text-sm min-w-[150px] ${
+                                    isRegistered || course.isSelected ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
+                                  }`}
+                                  value={selectedSections[course.id] || course.selectedSectionId || ""}
+                                  onChange={(e) => handleSectionChange(course.id, e.target.value)}
+                                  disabled={isRegistered || course.isSelected}
+                                >
+                                  <option value="">Select Section</option>
+                                  {course.sections.map((section) => (
+                                    <option key={section.id} value={section.id}>
+                                      {section.sectionName}
+                                    </option>
+                                  ))}
+                                </select>
+                              )
                             ) : (
                               <span className="text-gray-500">No sections available</span>
                             )}
@@ -473,25 +497,17 @@ function CourseSelection() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {course.sections && course.sections.length > 0 ? (
-                              selectedSections[course.id] || course.selectedSectionId ? (
-                                (() => {
-                                  const selectedSectionId = selectedSections[course.id] || course.selectedSectionId;
-                                  const selectedSection = course.sections.find(s => s.id === selectedSectionId);
-                                  if (!selectedSection) return <span className="text-gray-500">—</span>;
-                                  
-                                  const isRegular = course.isRegular;
-                                  const seats = isRegular ? selectedSection.regularSeats : selectedSection.irregularSeats;
-                                  
-                                  return (
-                                    <span>
-                                      {seats.enrolled}/{seats.max}
-                                    </span>
-                                  );
-                                })()
-                              ) : (
-                                <span className="text-gray-500">—</span>
-                              )
+                            {selectedSection ? (
+                              (() => {
+                                const isRegular = course.isRegular;
+                                const seats = isRegular ? selectedSection.regularSeats : selectedSection.irregularSeats;
+                                
+                                return (
+                                  <span>
+                                    {seats.enrolled}/{seats.max}
+                                  </span>
+                                );
+                              })()
                             ) : (
                               <span className="text-gray-500">—</span>
                             )}
