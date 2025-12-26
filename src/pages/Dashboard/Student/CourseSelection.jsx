@@ -391,32 +391,40 @@ function CourseSelection() {
                         Array.isArray(course.instructorSections) && 
                         course.instructorSections.length > 0;
                       
-                      if (selectedSection && hasSectionSpecificInstructors) {
-                        // Find instructor assigned to this section
-                        const sectionInstructor = course.instructorSections.find(instSec => 
-                          instSec.sections && instSec.sections.includes(selectedSection.sectionName)
-                        );
-                        
-                        if (sectionInstructor && sectionInstructor.instructorId) {
-                          const instructorId = sectionInstructor.instructorId;
-                          instructorNames = getInstructorName(instructorId);
+                      if (selectedSection) {
+                        // Always check for section-specific instructor first when a section is selected
+                        if (hasSectionSpecificInstructors) {
+                          // Find instructor assigned to this specific section
+                          // Use case-insensitive matching to handle any case differences
+                          const sectionNameUpper = selectedSection.sectionName?.toUpperCase().trim();
+                          const sectionInstructor = course.instructorSections.find(instSec => {
+                            if (!instSec.sections || !Array.isArray(instSec.sections)) return false;
+                            return instSec.sections.some(sec => 
+                              sec?.toUpperCase().trim() === sectionNameUpper
+                            );
+                          });
+                          
+                          if (sectionInstructor && sectionInstructor.instructorId) {
+                            const instructorId = sectionInstructor.instructorId;
+                            instructorNames = getInstructorName(instructorId);
+                          } else {
+                            // Section-specific assignments exist but this section has no instructor assigned
+                            instructorNames = "—";
+                          }
                         } else {
-                          // Section-specific assignments exist but this section has no instructor
-                          instructorNames = "—";
+                          // No section-specific assignments: fallback to general course instructors
+                          instructorNames =
+                            Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                              ? course.instructorNames.join(", ")
+                              : Array.isArray(course.instructors) && course.instructors.length > 0
+                              ? course.instructors
+                                  .map((id) => getInstructorName(id))
+                                  .filter(Boolean)
+                                  .join(", ")
+                              : course.instructor || "—";
                         }
-                      } else if (!hasSectionSpecificInstructors) {
-                        // Only fallback to general course instructors if section-specific assignments are NOT being used
-                        instructorNames =
-                          Array.isArray(course.instructorNames) && course.instructorNames.length > 0
-                            ? course.instructorNames.join(", ")
-                            : Array.isArray(course.instructors) && course.instructors.length > 0
-                            ? course.instructors
-                                .map((id) => getInstructorName(id))
-                                .filter(Boolean)
-                                .join(", ")
-                            : course.instructor || "—";
                       } else {
-                        // No section selected but section-specific assignments exist, show —
+                        // No section selected: show — (irregular students must select a section first)
                         instructorNames = "—";
                       }
 
@@ -526,13 +534,15 @@ function CourseSelection() {
                               className={`flex py-1.5 px-3 rounded-lg gap-2 items-center ${
                                 isRegistered
                                   ? "bg-gray-400 text-white cursor-not-allowed"
+                                  : course.isSelected && registrationStatus === 'pending'
+                                  ? "bg-yellow-600 text-white cursor-not-allowed"
                                   : course.isSelected
                                   ? "bg-blue-600 text-white cursor-pointer"
                                   : "border border-gray-400 text-gray-700 cursor-pointer"
                               }`}
-                              onClick={() => !isRegistered && handleCourseToggle(course)}
-                              disabled={isRegistered}
-                              title={isRegistered ? `Course is already ${registrationStatus}` : ""}
+                              onClick={() => !isRegistered && registrationStatus !== 'pending' && handleCourseToggle(course)}
+                              disabled={isRegistered || registrationStatus === 'pending'}
+                              title={isRegistered ? `Course is already ${registrationStatus}` : registrationStatus === 'pending' ? "Course submitted for approval" : ""}
                             >
                               {course.isSelected ? (
                                 <Check className="w-4" />
@@ -542,7 +552,9 @@ function CourseSelection() {
                                 <Plus className="w-4" />
                               )}
                               <span className="font-semibold text-sm">
-                                {course.isSelected
+                                {course.isSelected && registrationStatus === 'pending'
+                                  ? "Submitted"
+                                  : course.isSelected
                                   ? "Selected"
                                   : isRegistered
                                   ? statusBadge?.text || "Registered"

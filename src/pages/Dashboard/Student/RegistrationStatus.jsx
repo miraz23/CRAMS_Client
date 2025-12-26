@@ -196,7 +196,7 @@ function RegistrationStatus() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Processed At
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                         Advisor Feedback
                       </th>
                     </tr>
@@ -253,13 +253,22 @@ function RegistrationStatus() {
                               : "—"}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 min-w-[200px] max-w-[400px]">
                           <div className="text-sm text-gray-600">
-                            {reg.rejectionReason ? (
-                              <div className="bg-gray-100 p-2 rounded">
-                                <p className="font-semibold text-xs mb-1">Feedback:</p>
-                                <p className="text-xs">{reg.rejectionReason}</p>
-                              </div>
+                            {reg.status === "approved" ? (
+                              reg.advisorFeedback ? (
+                                <div className="bg-gray-100 p-2 rounded">
+                                  <p className="text-xs break-words whitespace-normal">{reg.advisorFeedback}</p>
+                                </div>
+                              ) : (
+                                <span className="text-gray-700">Approved by advisor</span>
+                              )
+                            ) : reg.status === "rejected" ? (
+                              reg.rejectionReason ? (
+                                <p className="text-xs text-red-800 break-words whitespace-normal">{reg.rejectionReason}</p>
+                              ) : (
+                                "—"
+                              )
                             ) : (
                               "—"
                             )}
