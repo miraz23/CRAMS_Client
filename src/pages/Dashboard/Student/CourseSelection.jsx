@@ -330,6 +330,7 @@ function CourseSelection() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Semester</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Credits</th>
@@ -346,6 +347,8 @@ function CourseSelection() {
                       const hasSeats = course.seats?.available > 0;
                       const isRegistered = course.isRegistered && !course.isSelected;
                       const registrationStatus = course.registrationStatus;
+                      const prerequisiteClear = course.prerequisiteClear !== false; // Default to true if not provided
+                      const missingPrerequisites = course.missingPrerequisites || [];
 
                       const getStatusBadge = () => {
                         if (registrationStatus === "approved") return { text: "Approved", color: "bg-green-600" };
@@ -431,6 +434,7 @@ function CourseSelection() {
                       return (
                         <tr key={course.id} className={isRegistered ? "bg-gray-50 opacity-75" : "bg-white"}>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{course.semester || "—"}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
@@ -528,7 +532,16 @@ function CourseSelection() {
                               <span className="text-gray-500">—</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-700">{course.prerequisite || "—"}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            <div className="flex flex-col gap-1">
+                              <span>{course.prerequisite || "—"}</span>
+                              {!prerequisiteClear && course.prerequisite && (
+                                <span className="text-xs text-red-600 font-semibold">
+                                  Prerequisite not met
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-sm">
                             <button
                               className={`flex py-1.5 px-3 rounded-lg gap-2 items-center ${
@@ -538,11 +551,21 @@ function CourseSelection() {
                                   ? "bg-yellow-600 text-white cursor-not-allowed"
                                   : course.isSelected
                                   ? "bg-blue-600 text-white cursor-pointer"
+                                  : !prerequisiteClear && !course.isSelected
+                                  ? "border border-gray-400 text-gray-400 cursor-not-allowed"
                                   : "border border-gray-400 text-gray-700 cursor-pointer"
                               }`}
-                              onClick={() => !isRegistered && registrationStatus !== 'pending' && handleCourseToggle(course)}
-                              disabled={isRegistered || registrationStatus === 'pending'}
-                              title={isRegistered ? `Course is already ${registrationStatus}` : registrationStatus === 'pending' ? "Course submitted for approval" : ""}
+                              onClick={() => !isRegistered && registrationStatus !== 'pending' && prerequisiteClear && handleCourseToggle(course)}
+                              disabled={isRegistered || registrationStatus === 'pending' || (!prerequisiteClear && !course.isSelected)}
+                              title={
+                                isRegistered 
+                                  ? `Course is already ${registrationStatus}` 
+                                  : registrationStatus === 'pending' 
+                                  ? "Course submitted for approval"
+                                  : !prerequisiteClear && !course.isSelected
+                                  ? `Prerequisites not clear. Missing: ${missingPrerequisites.join(', ') || course.prerequisite}. Only courses approved by advisor are considered as passed.`
+                                  : ""
+                              }
                             >
                               {course.isSelected ? (
                                 <Check className="w-4" />
