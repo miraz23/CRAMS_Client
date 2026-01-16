@@ -359,13 +359,23 @@ function CourseSelection() {
                       const statusBadge = getStatusBadge();
 
                       // Get selected section
-                      // For regular students, always use their section (first/only section in array)
-                      // For irregular students, use the selected section from state
-                      const selectedSectionId = course.isRegular 
-                        ? (course.sections && course.sections.length > 0 ? course.sections[0].id : null)
-                        : (selectedSections[course.id] || course.selectedSectionId);
+                      // Priority: 1. course.selectedSectionId (from registration for submitted/approved courses)
+                      // 2. For regular students, use their section (first/only section in array)
+                      // 3. For irregular students, use the selected section from state
+                      const isSubmittedOrApproved = (course.isSelected && (registrationStatus === 'pending' || registrationStatus === 'approved')) || isRegistered;
+                      const selectedSectionId = course.selectedSectionId 
+                        ? course.selectedSectionId
+                        : (course.isRegular 
+                          ? (course.sections && course.sections.length > 0 ? course.sections[0].id : null)
+                          : (selectedSections[course.id] || null));
+                      
+                      // Find section by matching IDs (handle both string and object ID formats)
                       const selectedSection = selectedSectionId 
-                        ? course.sections?.find(s => s.id === selectedSectionId)
+                        ? course.sections?.find(s => {
+                            const sectionId = s.id?.toString();
+                            const searchId = selectedSectionId?.toString();
+                            return sectionId === searchId || s.id === selectedSectionId;
+                          })
                         : (course.isRegular && course.sections && course.sections.length > 0 ? course.sections[0] : null);
 
                       // Helper function to get instructor name by ID
@@ -412,7 +422,20 @@ function CourseSelection() {
                             instructorNames = getInstructorName(instructorId);
                           } else {
                             // Section-specific assignments exist but this section has no instructor assigned
-                            instructorNames = "—";
+                            // Fallback to general course instructors for submitted/approved courses
+                            if (isSubmittedOrApproved) {
+                              instructorNames =
+                                Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                                  ? course.instructorNames.join(", ")
+                                  : Array.isArray(course.instructors) && course.instructors.length > 0
+                                  ? course.instructors
+                                      .map((id) => getInstructorName(id))
+                                      .filter(Boolean)
+                                      .join(", ")
+                                  : course.instructor || "—";
+                            } else {
+                              instructorNames = "—";
+                            }
                           }
                         } else {
                           // No section-specific assignments: fallback to general course instructors
@@ -426,36 +449,44 @@ function CourseSelection() {
                                   .join(", ")
                               : course.instructor || "—";
                         }
+                      } else if (isSubmittedOrApproved) {
+                        // For submitted/approved courses without section, show general instructors
+                        instructorNames =
+                          Array.isArray(course.instructorNames) && course.instructorNames.length > 0
+                            ? course.instructorNames.join(", ")
+                            : Array.isArray(course.instructors) && course.instructors.length > 0
+                            ? course.instructors
+                                .map((id) => getInstructorName(id))
+                                .filter(Boolean)
+                                .join(", ")
+                            : course.instructor || "—";
                       } else {
                         // No section selected: show — (irregular students must select a section first)
                         instructorNames = "—";
                       }
 
                       return (
-                        <tr key={course.id} className={isRegistered ? "bg-gray-50 opacity-75" : "bg-white"}>
+                        <tr key={course.id} className={isRegistered ? "bg-gray-50" : "bg-white"}>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.semester || "—"}</td>
-                          <td className="px-4 py-3 text-sm font-semibold text-gray-900">{course.courseCode}</td>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-700">{course.courseCode}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.credits || 0}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.sections && course.sections.length > 0 ? (
-                              course.isRegular ? (
-                                // Regular students: show section name as text (no dropdown)
+                              (course.isRegular || isSubmittedOrApproved) ? (
+                                // Regular students OR submitted/approved courses: show section name as text (no dropdown)
                                 <div className="flex flex-col gap-1">
-                                  <span className="font-semibold text-gray-900">
+                                  <span className="text-gray-700">
                                     {selectedSection?.sectionName || course.sections[0]?.sectionName || "—"}
                                   </span>
                                 </div>
                               ) : (
-                                // Irregular students: show dropdown
+                                // Irregular students (not yet submitted/approved): show dropdown
                                 <select
-                                  className={`border rounded-lg p-2 text-sm min-w-[150px] ${
-                                    isRegistered || course.isSelected ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
-                                  }`}
-                                  value={selectedSections[course.id] || course.selectedSectionId || ""}
+                                  className="border rounded-lg p-2 text-sm min-w-[150px] bg-white cursor-pointer text-gray-700"
+                                  value={selectedSections[course.id] || ""}
                                   onChange={(e) => handleSectionChange(course.id, e.target.value)}
-                                  disabled={isRegistered || course.isSelected}
                                 >
                                   <option value="">Select Section</option>
                                   {course.sections.map((section) => (
@@ -466,59 +497,56 @@ function CourseSelection() {
                                 </select>
                               )
                             ) : (
-                              <span className="text-gray-500">No sections available</span>
+                              <span className="text-gray-700">No sections available</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {selectedSection ? instructorNames : (instructorNames || "—")}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {selectedSection ? (
-                              (() => {
-                                const scheduleToShow = selectedSection.schedule;
-                                
-                                if (!scheduleToShow) {
-                                  return "—";
-                                }
-                                
-                                // Handle new daySchedules structure (per-day scheduling)
-                                if (scheduleToShow?.daySchedules && Array.isArray(scheduleToShow.daySchedules) && scheduleToShow.daySchedules.length > 0) {
-                                  return (
-                                    <>
-                                      {scheduleToShow.daySchedules.map((ds, idx) => (
-                                        <span key={idx}>
-                                          {ds.day}: {ds.startTime || '—'} - {ds.endTime || '—'}
-                                          {idx < scheduleToShow.daySchedules.length - 1 ? ', ' : ''}
-                                        </span>
-                                      ))}
-                                    </>
-                                  );
-                                }
-                                
-                                // Handle legacy structure (single time for all days)
-                                if ((scheduleToShow?.days || []).length > 0) {
-                                  return (
-                                    <>
-                                      {scheduleToShow.days.join(", ")}
-                                      {scheduleToShow?.startTime && scheduleToShow?.endTime 
-                                        ? ` ${scheduleToShow.startTime} - ${scheduleToShow.endTime}`
-                                        : scheduleToShow?.startTime 
-                                        ? ` ${scheduleToShow.startTime}`
-                                        : ""
-                                      }
-                                    </>
-                                  );
-                                }
-                                
+                            {(() => {
+                              // Use section schedule if available, otherwise fall back to course schedule for submitted/approved courses
+                              const scheduleToShow = selectedSection?.schedule || (isSubmittedOrApproved ? course.schedule : null);
+                              
+                              if (!scheduleToShow) {
                                 return "—";
-                              })()
-                            ) : (
-                              "—"
-                            )}
+                              }
+                              
+                              // Handle new daySchedules structure (per-day scheduling)
+                              if (scheduleToShow?.daySchedules && Array.isArray(scheduleToShow.daySchedules) && scheduleToShow.daySchedules.length > 0) {
+                                return (
+                                  <>
+                                    {scheduleToShow.daySchedules.map((ds, idx) => (
+                                      <span key={idx}>
+                                        {ds.day}: {ds.startTime || '—'} - {ds.endTime || '—'}
+                                        {idx < scheduleToShow.daySchedules.length - 1 ? ', ' : ''}
+                                      </span>
+                                    ))}
+                                  </>
+                                );
+                              }
+                              
+                              // Handle legacy structure (single time for all days)
+                              if ((scheduleToShow?.days || []).length > 0) {
+                                return (
+                                  <>
+                                    {scheduleToShow.days.join(", ")}
+                                    {scheduleToShow?.startTime && scheduleToShow?.endTime 
+                                      ? ` ${scheduleToShow.startTime} - ${scheduleToShow.endTime}`
+                                      : scheduleToShow?.startTime 
+                                      ? ` ${scheduleToShow.startTime}`
+                                      : ""
+                                    }
+                                  </>
+                                );
+                              }
+                              
+                              return "—";
+                            })()}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
-                            {selectedSection ? (
-                              (() => {
+                            {(() => {
+                              if (selectedSection) {
                                 const isRegular = course.isRegular;
                                 const seats = isRegular ? selectedSection.regularSeats : selectedSection.irregularSeats;
                                 
@@ -527,10 +555,16 @@ function CourseSelection() {
                                     {seats.enrolled}/{seats.max}
                                   </span>
                                 );
-                              })()
-                            ) : (
-                              <span className="text-gray-500">—</span>
-                            )}
+                              } else if (isSubmittedOrApproved && course.seats) {
+                                // Fallback to course-level seat info if section not found for submitted/approved courses
+                                return (
+                                  <span>
+                                    {course.seats.enrolled}/{course.seats.total}
+                                  </span>
+                                );
+                              }
+                              return <span className="text-gray-700">—</span>;
+                            })()}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             <div className="flex flex-col gap-1">
