@@ -310,6 +310,8 @@ const UserManagement = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalTeachers: 0,
+    totalAdvisors: 0,
+    totalAdmins: 0,
   });
   const { role } = useUserRole();
   const isSuperAdmin = role === 'super admin';
@@ -321,7 +323,10 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUserOverviewData();
-  }, []);
+    if (isSuperAdmin) {
+      fetchAdminsCount();
+    }
+  }, [isSuperAdmin]);
 
   useEffect(() => {
     if (activeTab === 'Students') {
@@ -340,13 +345,32 @@ const UserManagement = () => {
       const response = await getUserOverview();
       if (response.data.success) {
         const data = response.data.data;
-        setStats({
+        const teachers = data.teachers || [];
+        const advisorsCount = teachers.filter(t => (t.privilege || '').toLowerCase() === 'advisor').length;
+        setStats(prev => ({
           totalStudents: data.totals?.totalStudents || 0,
           totalTeachers: data.totals?.totalTeachers || 0,
-        });
+          totalAdvisors: advisorsCount,
+          totalAdmins: prev.totalAdmins, // Keep existing value, will be updated by fetchAdminsCount
+        }));
       }
     } catch (error) {
       console.error('Error fetching user overview:', error);
+    }
+  };
+
+  const fetchAdminsCount = async () => {
+    try {
+      const response = await listAdmins();
+      if (response.data.success) {
+        const admins = response.data.data || [];
+        setStats(prev => ({
+          ...prev,
+          totalAdmins: admins.length,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching admins count:', error);
     }
   };
 
@@ -451,6 +475,14 @@ const UserManagement = () => {
           fetchAdmins();
         }
         
+        // Refresh counts if privilege changed (teacher/advisor) or if admin was updated
+        if (activeTab === 'Teachers' || activeTab === 'Advisors' || activeTab === 'Admins') {
+          fetchUserOverviewData();
+          if (activeTab === 'Admins' && isSuperAdmin) {
+            fetchAdminsCount();
+          }
+        }
+        
         setEditingUser(null);
       }
     } catch (error) {
@@ -496,6 +528,8 @@ const UserManagement = () => {
 
         // Refresh the lists
         fetchTeachers();
+        // Refresh counts
+        fetchUserOverviewData();
       }
     } catch (error) {
       console.error('Error removing privilege:', error);
@@ -552,6 +586,12 @@ const UserManagement = () => {
           fetchTeachers();
         } else if (activeTab === 'Admins') {
           fetchAdmins();
+        }
+        
+        // Refresh counts
+        fetchUserOverviewData();
+        if (activeTab === 'Admins' && isSuperAdmin) {
+          fetchAdminsCount();
         }
       }
     } catch (error) {
@@ -610,6 +650,8 @@ const UserManagement = () => {
 
         // Refresh admin list
         fetchAdmins();
+        // Refresh counts
+        fetchAdminsCount();
         setCsvFile(null);
         
         // Reset file input
@@ -674,6 +716,8 @@ const UserManagement = () => {
 
         // Refresh student list
         fetchStudents();
+        // Refresh counts
+        fetchUserOverviewData();
         setStudentCsvFile(null);
         
         // Reset file input
@@ -738,6 +782,8 @@ const UserManagement = () => {
 
         // Refresh teacher list
         fetchTeachers();
+        // Refresh counts
+        fetchUserOverviewData();
         setTeacherCsvFile(null);
         
         // Reset file input
@@ -781,8 +827,6 @@ const UserManagement = () => {
   };
 
   const filteredUsers = getFilteredUsers();
-  const advisorsCount = teachers.filter(t => (t.privilege || '').toLowerCase() === 'advisor').length;
-  const teacherCount = teachers.length; // include advisors in teacher bucket
 
   const handleLogout = async () => {
     try {
@@ -838,10 +882,10 @@ const UserManagement = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <StatCard title="Total Students" count={stats.totalStudents} icon="Users" />
-            <StatCard title="Total Teachers" count={teacherCount} icon="Advisors" />
-            <StatCard title="Total Advisors" count={advisorsCount} icon="Users" />
+            <StatCard title="Total Teachers" count={stats.totalTeachers} icon="Advisors" />
+            <StatCard title="Total Advisors" count={stats.totalAdvisors} icon="Users" />
             {isSuperAdmin && (
-              <StatCard title="Total Admins" count={admins.length} icon="Users" />
+              <StatCard title="Total Admins" count={stats.totalAdmins} icon="Users" />
             )}
           </div>
 
@@ -946,11 +990,11 @@ const UserManagement = () => {
             {(() => {
               const baseTabs = [
                 { label: `Students (${stats.totalStudents})`, value: 'Students' },
-                { label: `Teachers (${teacherCount})`, value: 'Teachers' },
-                { label: `Advisors (${advisorsCount})`, value: 'Advisors' },
+                { label: `Teachers (${stats.totalTeachers})`, value: 'Teachers' },
+                { label: `Advisors (${stats.totalAdvisors})`, value: 'Advisors' },
               ];
               const tabs = isSuperAdmin
-                ? [...baseTabs, { label: `Admins (${admins.length})`, value: 'Admins' }]
+                ? [...baseTabs, { label: `Admins (${stats.totalAdmins})`, value: 'Admins' }]
                 : baseTabs;
               return tabs.map(({ label, value }) => (
                 <button

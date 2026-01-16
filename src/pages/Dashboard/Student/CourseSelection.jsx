@@ -329,7 +329,6 @@ function CourseSelection() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Department</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Semester</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Name</th>
@@ -467,7 +466,6 @@ function CourseSelection() {
 
                       return (
                         <tr key={course.id} className={isRegistered ? "bg-gray-50" : "bg-white"}>
-                          <td className="px-4 py-3 text-sm text-gray-700">{course.department || "—"}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.semester || "—"}</td>
                           <td className="px-4 py-3 text-sm font-semibold text-gray-700">{course.courseCode}</td>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.courseName}</td>
