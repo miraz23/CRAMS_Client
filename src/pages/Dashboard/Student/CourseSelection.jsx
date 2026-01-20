@@ -24,10 +24,11 @@ import {
   fetchSelectedCourses,
   removeCourseSelection,
   submitCoursesForApproval,
+  getMyExtraCreditRequests,
 } from "../../../api/studentApi";
 import { listTeachers } from "../../../api/adminApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
-
+ 
 function CourseSelection() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -39,12 +40,13 @@ function CourseSelection() {
   const [submitting, setSubmitting] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [selectedSections, setSelectedSections] = useState({}); // courseId -> sectionId
-
+  const [isSelectionLocked, setIsSelectionLocked] = useState(false);
+ 
   const departmentFilter = useMemo(
     () => (department === "All Departments" ? undefined : department),
     [department]
   );
-
+ 
   const fetchTeachers = async () => {
     try {
       const response = await listTeachers();
@@ -56,24 +58,26 @@ function CourseSelection() {
       // Silently fail - instructor names will show as IDs if teachers can't be fetched
     }
   };
-
+ 
   const loadCourses = async () => {
     setLoading(true);
     try {
-      const [available, selected] = await Promise.all([
+      const [available, selected, extraRequests] = await Promise.all([
         fetchAvailableCourses({
           search: search || undefined,
           department: departmentFilter,
         }),
         fetchSelectedCourses(),
+        getMyExtraCreditRequests().catch(() => []),
       ]);
       setAvailableCourses(available || []);
       setSelectedData(selected || { courses: [], summary: {} });
-      
+      setIsSelectionLocked(Array.isArray(extraRequests) && extraRequests.some((r) => r?.status === "approved"));
+ 
       // Debug: Log selected data to check structure
       console.log('Selected Data:', selected);
       console.log('Total Credits:', selected?.summary?.totalCredits);
-      
+ 
       // Initialize selected sections from available courses
       const sectionsMap = {};
       (available || []).forEach(course => {
@@ -92,23 +96,23 @@ function CourseSelection() {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchTeachers();
   }, []);
-
+ 
   useEffect(() => {
     loadCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departmentFilter]);
-
+ 
   const handleSectionChange = (courseId, sectionId) => {
     setSelectedSections(prev => ({
       ...prev,
       [courseId]: sectionId
     }));
   };
-
+ 
   const handleCourseToggle = async (course) => {
     try {
       if (course.isSelected) {
@@ -121,6 +125,14 @@ function CourseSelection() {
           return updated;
         });
       } else {
+        if (isSelectionLocked) {
+          Swal.fire({
+            icon: "warning",
+            title: "Course selection locked",
+            text: "You can’t add more courses because extra credit has already been approved for you.",
+          });
+          return;
+        }
         // Determine section ID to use
         let sectionIdToUse = null;
         if (course.sections && course.sections.length > 0) {
@@ -157,7 +169,7 @@ function CourseSelection() {
       Swal.fire({ icon: "error", title: "Error", text: message });
     }
   };
-
+ 
   const handleSubmitForApproval = async () => {
     setSubmitting(true);
     try {
@@ -171,7 +183,7 @@ function CourseSelection() {
       setSubmitting(false);
     }
   };
-
+ 
   const filteredCourses = useMemo(() => {
     if (!search) return availableCourses;
     const term = search.toLowerCase();
@@ -182,7 +194,7 @@ function CourseSelection() {
         course.instructor?.toLowerCase().includes(term)
     );
   }, [availableCourses, search]);
-
+ 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex justify-between items-center px-10 py-2 border-b border-gray-200 fixed left-0 w-full bg-white z-10">
@@ -222,7 +234,7 @@ function CourseSelection() {
           </button>
         </div>
       </header>
-
+ 
       <div className="flex flex-1 bg-gray-50">
         <aside className="sidebar border-r border-gray-200 p-4 w-64 left-0 top-16 fixed h-[calc(100vh-4rem)] bg-white">
           <nav className="space-y-1 ">
@@ -267,7 +279,7 @@ function CourseSelection() {
             </button>
           </nav>
         </aside>
-
+ 
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">
           <div>
             <p className="text-3xl font-bold">Course Selection</p>
@@ -275,7 +287,7 @@ function CourseSelection() {
               Browse and manage courses directly from the CRAMS API.
             </p>
           </div>
-
+ 
           <div className="flex flex-col lg:flex-row border border-gray-300 p-6 rounded-lg justify-between items-center gap-4 bg-white">
             <div className="flex gap-6">
               <div className="border-r-2 border-gray-200 pr-6">
@@ -297,13 +309,6 @@ function CourseSelection() {
             </div>
             <div className="flex gap-3">
               <button
-                className="bg-orange-600 text-white rounded px-4 py-2 hover:bg-orange-700"
-                onClick={() => navigate("/student/dashboard/extra-credit-request")}
-                title="Request extra credits if you need more than 26 credits"
-              >
-                Request Extra Credits
-              </button>
-              <button
                 className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
                 onClick={handleSubmitForApproval}
                 disabled={submitting || (selectedData?.summary?.selectedCount || 0) === 0}
@@ -312,32 +317,7 @@ function CourseSelection() {
               </button>
             </div>
           </div>
-
-          {(selectedData?.summary?.totalCredits || 0) >= 26 && (
-            <div className="border border-orange-300 bg-orange-50 p-4 rounded-lg flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-orange-800 font-semibold">Credit Limit Reached</p>
-                <p className="text-orange-700 text-sm mt-1">
-                  You have reached the maximum credit limit of 26 credits per semester. 
-                  To add more courses, you need to request extra credits from your advisor.
-                </p>
-              </div>
-            </div>
-          )}
-          {(selectedData?.summary?.totalCredits || 0) >= 24 && (selectedData?.summary?.totalCredits || 0) < 26 && (
-            <div className="border border-yellow-300 bg-yellow-50 p-4 rounded-lg flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-yellow-800 font-semibold">Approaching Credit Limit</p>
-                <p className="text-yellow-700 text-sm mt-1">
-                  You have {selectedData?.summary?.totalCredits || 0} credits selected. The limit is 26 credits per semester. 
-                  If you need more credits, you can request extra credits from your advisor.
-                </p>
-              </div>
-            </div>
-          )}
-
+ 
           <div className="border border-gray-300 p-6 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white">
             <div className="w-full md:w-2/3">
               <p className="text-lg font-semibold">Search Courses</p>
@@ -375,13 +355,13 @@ function CourseSelection() {
               {loading ? "Refreshing..." : "Apply"}
             </button>
           </div>
-
+ 
           <section className="space-y-4">
             {loading && <p className="text-gray-500">Loading courses...</p>}
             {!loading && filteredCourses.length === 0 && (
               <p className="text-gray-500">No courses found for the current filters.</p>
             )}
-
+ 
             {!loading && filteredCourses.length > 0 && (
               <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -406,7 +386,7 @@ function CourseSelection() {
                       const registrationStatus = course.registrationStatus;
                       const prerequisiteClear = course.prerequisiteClear !== false; // Default to true if not provided
                       const missingPrerequisites = course.missingPrerequisites || [];
-
+ 
                       const getStatusBadge = () => {
                         if (registrationStatus === "approved") return { text: "Approved", color: "bg-green-600" };
                         if (registrationStatus === "pending") return { text: "Pending", color: "bg-yellow-600" };
@@ -414,7 +394,7 @@ function CourseSelection() {
                         return null;
                       };
                       const statusBadge = getStatusBadge();
-
+ 
                       // Get selected section
                       // Priority: 1. course.selectedSectionId (from registration for submitted/approved courses)
                       // 2. For regular students, use their section (first/only section in array)
@@ -425,7 +405,7 @@ function CourseSelection() {
                         : (course.isRegular 
                           ? (course.sections && course.sections.length > 0 ? course.sections[0].id : null)
                           : (selectedSections[course.id] || null));
-                      
+ 
                       // Find section by matching IDs (handle both string and object ID formats)
                       const selectedSection = selectedSectionId 
                         ? course.sections?.find(s => {
@@ -434,13 +414,13 @@ function CourseSelection() {
                             return sectionId === searchId || s.id === selectedSectionId;
                           })
                         : (course.isRegular && course.sections && course.sections.length > 0 ? course.sections[0] : null);
-
+ 
                       // Helper function to get instructor name by ID
                       const getInstructorName = (instructorId) => {
                         // First try to find in teachers array
                         const teacher = teachers.find((t) => t.teacherId === instructorId);
                         if (teacher?.name) return teacher.name;
-                        
+ 
                         // Then try to match with instructorNames array from backend
                         if (Array.isArray(course.instructors) && Array.isArray(course.instructorNames)) {
                           const index = course.instructors.findIndex(id => id === instructorId);
@@ -448,19 +428,19 @@ function CourseSelection() {
                             return course.instructorNames[index];
                           }
                         }
-                        
+ 
                         // Fallback to ID if name not found
                         return instructorId;
                       };
-
+ 
                       // Get instructor for selected section
                       let instructorNames = "—";
-                      
+ 
                       // Check if course uses section-specific instructor assignments
                       const hasSectionSpecificInstructors = course.instructorSections && 
                         Array.isArray(course.instructorSections) && 
                         course.instructorSections.length > 0;
-                      
+ 
                       if (selectedSection) {
                         // Always check for section-specific instructor first when a section is selected
                         if (hasSectionSpecificInstructors) {
@@ -473,7 +453,7 @@ function CourseSelection() {
                               sec?.toUpperCase().trim() === sectionNameUpper
                             );
                           });
-                          
+ 
                           if (sectionInstructor && sectionInstructor.instructorId) {
                             const instructorId = sectionInstructor.instructorId;
                             instructorNames = getInstructorName(instructorId);
@@ -521,7 +501,7 @@ function CourseSelection() {
                         // No section selected: show — (irregular students must select a section first)
                         instructorNames = "—";
                       }
-
+ 
                       return (
                         <tr key={course.id} className={isRegistered ? "bg-gray-50" : "bg-white"}>
                           <td className="px-4 py-3 text-sm text-gray-700">{course.semester || "—"}</td>
@@ -563,11 +543,11 @@ function CourseSelection() {
                             {(() => {
                               // Use section schedule if available, otherwise fall back to course schedule for submitted/approved courses
                               const scheduleToShow = selectedSection?.schedule || (isSubmittedOrApproved ? course.schedule : null);
-                              
+ 
                               if (!scheduleToShow) {
                                 return "—";
                               }
-                              
+ 
                               // Handle new daySchedules structure (per-day scheduling)
                               if (scheduleToShow?.daySchedules && Array.isArray(scheduleToShow.daySchedules) && scheduleToShow.daySchedules.length > 0) {
                                 return (
@@ -581,7 +561,7 @@ function CourseSelection() {
                                   </>
                                 );
                               }
-                              
+ 
                               // Handle legacy structure (single time for all days)
                               if ((scheduleToShow?.days || []).length > 0) {
                                 return (
@@ -596,7 +576,7 @@ function CourseSelection() {
                                   </>
                                 );
                               }
-                              
+ 
                               return "—";
                             })()}
                           </td>
@@ -605,7 +585,7 @@ function CourseSelection() {
                               if (selectedSection) {
                                 const isRegular = course.isRegular;
                                 const seats = isRegular ? selectedSection.regularSeats : selectedSection.irregularSeats;
-                                
+ 
                                 return (
                                   <span>
                                     {seats.enrolled}/{seats.max}
@@ -636,22 +616,41 @@ function CourseSelection() {
                             <button
                               className={`flex py-1.5 px-3 rounded-lg gap-2 items-center ${
                                 isRegistered
-                                  ? "bg-gray-400 text-white cursor-not-allowed"
+                                  ? registrationStatus === "approved"
+                                    ? "bg-green-600 text-white cursor-not-allowed"
+                                    : "bg-gray-400 text-white cursor-not-allowed"
                                   : course.isSelected && registrationStatus === 'pending'
                                   ? "bg-yellow-600 text-white cursor-not-allowed"
+                                  : course.isSelected && registrationStatus === "approved"
+                                  ? "bg-green-600 text-white cursor-not-allowed"
                                   : course.isSelected
                                   ? "bg-blue-600 text-white cursor-pointer"
+                                  : isSelectionLocked && !course.isSelected
+                                  ? "bg-gray-400 text-white cursor-not-allowed"
                                   : !prerequisiteClear && !course.isSelected
                                   ? "border border-gray-400 text-gray-400 cursor-not-allowed"
                                   : "border border-gray-400 text-gray-700 cursor-pointer"
                               }`}
-                              onClick={() => !isRegistered && registrationStatus !== 'pending' && prerequisiteClear && handleCourseToggle(course)}
-                              disabled={isRegistered || registrationStatus === 'pending' || (!prerequisiteClear && !course.isSelected)}
+                              onClick={() =>
+                                !isRegistered &&
+                                registrationStatus !== "pending" &&
+                                prerequisiteClear &&
+                                !(isSelectionLocked && !course.isSelected) &&
+                                handleCourseToggle(course)
+                              }
+                              disabled={
+                                isRegistered ||
+                                registrationStatus === "pending" ||
+                                (isSelectionLocked && !course.isSelected) ||
+                                (!prerequisiteClear && !course.isSelected)
+                              }
                               title={
                                 isRegistered 
                                   ? `Course is already ${registrationStatus}` 
                                   : registrationStatus === 'pending' 
                                   ? "Course submitted for approval"
+                                  : isSelectionLocked && !course.isSelected
+                                  ? "Course selection is locked after extra credit approval"
                                   : !prerequisiteClear && !course.isSelected
                                   ? `Prerequisites not clear. Missing: ${missingPrerequisites.join(', ') || course.prerequisite}. Only courses approved by advisor are considered as passed.`
                                   : ""
@@ -688,5 +687,5 @@ function CourseSelection() {
     </div>
   );
 }
-
+ 
 export default CourseSelection;

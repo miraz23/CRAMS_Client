@@ -21,7 +21,7 @@ import {
   fetchSelectedCourses,
 } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
-
+ 
 function ExtraCreditRequest() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -34,7 +34,7 @@ function ExtraCreditRequest() {
     requestedCredits: "",
     reason: "",
   });
-
+ 
   const loadData = async () => {
     setLoading(true);
     try {
@@ -44,7 +44,7 @@ function ExtraCreditRequest() {
       ]);
       setRequests(requestsData || []);
       setSelectedData(selectedCourses || { courses: [], summary: {} });
-
+ 
       // Auto-fill semester from selected courses if available
       if (selectedCourses?.courses?.length > 0) {
         const semester = selectedCourses.courses[0]?.semester || "";
@@ -59,35 +59,35 @@ function ExtraCreditRequest() {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+ 
     if (!formData.semester) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please select a semester." });
       return;
     }
-
+ 
     if (!formData.requestedCredits || formData.requestedCredits < 1) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please enter a valid number of credits (at least 1)." });
       return;
     }
-
+ 
     if (!formData.reason || formData.reason.trim().length === 0) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please provide a reason for your request." });
       return;
     }
-
+ 
     if (formData.reason.length > 500) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Reason cannot exceed 500 characters." });
       return;
     }
-
+ 
     setSubmitting(true);
     try {
       await createExtraCreditRequest(
@@ -109,7 +109,7 @@ function ExtraCreditRequest() {
       setSubmitting(false);
     }
   };
-
+ 
   const getStatusIcon = (status) => {
     switch (status) {
       case "approved":
@@ -120,7 +120,7 @@ function ExtraCreditRequest() {
         return <AlertCircle className="w-5 h-5 text-yellow-600" />;
     }
   };
-
+ 
   const getStatusColor = (status) => {
     switch (status) {
       case "approved":
@@ -131,11 +131,11 @@ function ExtraCreditRequest() {
         return "bg-yellow-50 border-yellow-200 text-yellow-800";
     }
   };
-
+ 
   const currentCredits = selectedData?.summary?.totalCredits || 0;
   const creditLimit = 26;
   const extraCreditsNeeded = Math.max(0, currentCredits - creditLimit);
-
+ 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex justify-between items-center px-10 py-2 border-b border-gray-200 fixed left-0 w-full bg-white z-10">
@@ -175,7 +175,7 @@ function ExtraCreditRequest() {
           </button>
         </div>
       </header>
-
+ 
       <div className="flex flex-1 bg-gray-50">
         <aside className="sidebar border-r border-gray-200 p-4 w-64 left-0 top-16 fixed h-[calc(100vh-4rem)] bg-white">
           <nav className="space-y-1">
@@ -216,7 +216,7 @@ function ExtraCreditRequest() {
             </button>
           </nav>
         </aside>
-
+ 
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">
           <div className="flex items-center gap-4">
             <button
@@ -232,7 +232,7 @@ function ExtraCreditRequest() {
               </p>
             </div>
           </div>
-
+ 
           {/* Credit Summary */}
           <div className="border border-gray-300 p-6 rounded-lg bg-white">
             <h3 className="text-lg font-semibold mb-4">Current Credit Status</h3>
@@ -251,7 +251,7 @@ function ExtraCreditRequest() {
               </div>
             </div>
           </div>
-
+ 
           {/* Request Form */}
           <div className="border border-gray-300 p-6 rounded-lg bg-white">
             <h3 className="text-lg font-semibold mb-4">Request Extra Credits</h3>
@@ -312,7 +312,7 @@ function ExtraCreditRequest() {
               </button>
             </form>
           </div>
-
+ 
           {/* Previous Requests */}
           <div className="border border-gray-300 p-6 rounded-lg bg-white">
             <h3 className="text-lg font-semibold mb-4">My Extra Credit Requests</h3>
@@ -363,5 +363,5 @@ function ExtraCreditRequest() {
     </div>
   );
 }
-
+ 
 export default ExtraCreditRequest;

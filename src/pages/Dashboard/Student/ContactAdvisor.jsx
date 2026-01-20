@@ -413,63 +413,72 @@ function ContactAdvisor() {
                 <div className="space-y-6">
  
                   {/* Request Form */}
-                  <form onSubmit={handleExtraCreditSubmit} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Semester *
-                      </label>
-                      <input
-                        type="text"
-                        value={extraCreditForm.semester}
-                        onChange={(e) => setExtraCreditForm({ ...extraCreditForm, semester: e.target.value })}
-                        className="border border-gray-300 rounded-lg p-2 w-full"
-                        placeholder="e.g., Fall 2024"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Requested Credits *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="1"
-                        value={extraCreditForm.requestedCredits}
-                        onChange={(e) => setExtraCreditForm({ ...extraCreditForm, requestedCredits: e.target.value })}
-                        className="border border-gray-300 rounded-lg p-2 w-full"
-                        placeholder="Enter number of extra credits needed"
-                        required
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Minimum: 1 credit. You currently need {extraCreditsNeeded} extra credit(s).
+                  {requests.length > 0 ? (
+                    <div className="border border-yellow-300 bg-yellow-50 p-4 rounded-lg">
+                      <p className="text-yellow-800 font-semibold">Extra credit request already submitted</p>
+                      <p className="text-yellow-700 text-sm mt-1">
+                        You can submit only one extra credit request.
                       </p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason *
-                      </label>
-                      <textarea
-                        value={extraCreditForm.reason}
-                        onChange={(e) => setExtraCreditForm({ ...extraCreditForm, reason: e.target.value })}
-                        className="border border-gray-300 rounded-lg p-2 w-full"
-                        rows="4"
-                        placeholder="Please explain why you need extra credits..."
-                        maxLength={500}
-                        required
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {extraCreditForm.reason.length}/500 characters
-                      </p>
-                    </div>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 text-white rounded px-6 py-2 hover:bg-blue-700 disabled:opacity-50"
-                      disabled={submitting}
-                    >
-                      {submitting ? "Submitting..." : "Submit Request"}
-                    </button>
-                  </form>
+                  ) : (
+                    <form onSubmit={handleExtraCreditSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Semester *
+                        </label>
+                        <input
+                          type="text"
+                          value={extraCreditForm.semester}
+                          onChange={(e) => setExtraCreditForm({ ...extraCreditForm, semester: e.target.value })}
+                          className="border border-gray-300 rounded-lg p-2 w-full"
+                          placeholder="e.g., Fall 2024"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Requested Credits *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="1"
+                          value={extraCreditForm.requestedCredits}
+                          onChange={(e) => setExtraCreditForm({ ...extraCreditForm, requestedCredits: e.target.value })}
+                          className="border border-gray-300 rounded-lg p-2 w-full"
+                          placeholder="Enter number of extra credits needed"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Minimum: 1 credit. You currently need {extraCreditsNeeded} extra credit(s).
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Reason *
+                        </label>
+                        <textarea
+                          value={extraCreditForm.reason}
+                          onChange={(e) => setExtraCreditForm({ ...extraCreditForm, reason: e.target.value })}
+                          className="border border-gray-300 rounded-lg p-2 w-full"
+                          rows="4"
+                          placeholder="Please explain why you need extra credits..."
+                          maxLength={500}
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          {extraCreditForm.reason.length}/500 characters
+                        </p>
+                      </div>
+                      <button
+                        type="submit"
+                        className="bg-blue-600 text-white rounded px-6 py-2 hover:bg-blue-700 disabled:opacity-50"
+                        disabled={submitting}
+                      >
+                        {submitting ? "Submitting..." : "Submit Request"}
+                      </button>
+                    </form>
+                  )}
  
                   {/* Previous Requests */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
