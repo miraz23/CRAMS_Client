@@ -13,6 +13,7 @@ import {
   FileText,
   CircleX,
   List,
+  User,
 } from "lucide-react";
 import { fetchRegistrationStatus } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
@@ -119,6 +120,13 @@ function RegistrationStatus() {
             >
               <Calendar className="w-5 h-5" />
               <span>My Schedule</span>
+            </button>
+            <button
+              className="flex items-center gap-3 p-4 w-full text-left"
+              onClick={() => navigate("/student/dashboard/contact-advisor")}
+            >
+              <User className="w-5 h-5" />
+              <span>Contact Advisor</span>
             </button>
           </nav>
         </aside>

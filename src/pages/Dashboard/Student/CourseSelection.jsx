@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Plus,
   List,
+  User,
 } from "lucide-react";
 import {
   addCourseSelection,
@@ -68,6 +69,10 @@ function CourseSelection() {
       ]);
       setAvailableCourses(available || []);
       setSelectedData(selected || { courses: [], summary: {} });
+      
+      // Debug: Log selected data to check structure
+      console.log('Selected Data:', selected);
+      console.log('Total Credits:', selected?.summary?.totalCredits);
       
       // Initialize selected sections from available courses
       const sectionsMap = {};
@@ -135,8 +140,16 @@ function CourseSelection() {
             }
           }
         }
-        await addCourseSelection(course.id, sectionIdToUse);
-        Swal.fire({ icon: "success", title: "Added", text: "Course added to selection." });
+        const response = await addCourseSelection(course.id, sectionIdToUse);
+        // Check if there's a warning about credit limit
+        if (response?.warning) {
+          Swal.fire({ 
+            icon: "warning", 
+            title: "Course Added", 
+            text: response.warning,
+            confirmButtonText: "OK"
+          });
+        }
       }
       await loadCourses();
     } catch (error) {
@@ -245,6 +258,13 @@ function CourseSelection() {
               <Calendar className="w-5 h-5" />
               <span>My Schedule</span>
             </button>
+            <button
+              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => navigate("/student/dashboard/contact-advisor")}
+            >
+              <User className="w-5 h-5" />
+              <span>Contact Advisor</span>
+            </button>
           </nav>
         </aside>
 
@@ -264,21 +284,59 @@ function CourseSelection() {
                   {selectedData?.summary?.selectedCount ?? selectedData?.courses?.length ?? 0}
                 </p>
               </div>
-              <div>
+              <div className="border-r-2 border-gray-200 pr-6">
                 <p className="text-gray-500 font-semibold">Total Credits</p>
                 <p className="font-bold text-2xl">
                   {selectedData?.summary?.totalCredits ?? 0}
                 </p>
               </div>
+              <div>
+                <p className="text-gray-500 font-semibold">Credit Limit</p>
+                <p className="font-bold text-2xl">26</p>
+              </div>
             </div>
-            <button
-              className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
-              onClick={handleSubmitForApproval}
-              disabled={submitting || (selectedData?.summary?.selectedCount || 0) === 0}
-            >
-              {submitting ? "Submitting..." : "Submit for Approval"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                className="bg-orange-600 text-white rounded px-4 py-2 hover:bg-orange-700"
+                onClick={() => navigate("/student/dashboard/extra-credit-request")}
+                title="Request extra credits if you need more than 26 credits"
+              >
+                Request Extra Credits
+              </button>
+              <button
+                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
+                onClick={handleSubmitForApproval}
+                disabled={submitting || (selectedData?.summary?.selectedCount || 0) === 0}
+              >
+                {submitting ? "Submitting..." : "Submit for Approval"}
+              </button>
+            </div>
           </div>
+
+          {(selectedData?.summary?.totalCredits || 0) >= 26 && (
+            <div className="border border-orange-300 bg-orange-50 p-4 rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-orange-800 font-semibold">Credit Limit Reached</p>
+                <p className="text-orange-700 text-sm mt-1">
+                  You have reached the maximum credit limit of 26 credits per semester. 
+                  To add more courses, you need to request extra credits from your advisor.
+                </p>
+              </div>
+            </div>
+          )}
+          {(selectedData?.summary?.totalCredits || 0) >= 24 && (selectedData?.summary?.totalCredits || 0) < 26 && (
+            <div className="border border-yellow-300 bg-yellow-50 p-4 rounded-lg flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-yellow-800 font-semibold">Approaching Credit Limit</p>
+                <p className="text-yellow-700 text-sm mt-1">
+                  You have {selectedData?.summary?.totalCredits || 0} credits selected. The limit is 26 credits per semester. 
+                  If you need more credits, you can request extra credits from your advisor.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="border border-gray-300 p-6 rounded-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white">
             <div className="w-full md:w-2/3">

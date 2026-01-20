@@ -13,6 +13,8 @@ import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
 import MySchedule from "../pages/Dashboard/Student/MySchedule";
 import Routine from "../pages/Dashboard/Student/Routine";
 import RegistrationStatus from "../pages/Dashboard/Student/Registrationstatus";
+import ExtraCreditRequest from "../pages/Dashboard/Student/ExtraCreditRequest";
+import ContactAdvisor from "../pages/Dashboard/Student/ContactAdvisor";
 // Admin Pages
 import AdminDashboard from "../pages/Dashboard/Admin/Dashboard/AdminDasboard";
 import CourseManagement from "../pages/Dashboard/Admin/CourseManagement/CourseManagement";
@@ -24,6 +26,7 @@ import AdvisorDashboard from "../pages/Dashboard/Advisor/AdvisorDashboard";
 import PendingReviews from "../pages/Dashboard/Advisor/PendingReviews";
 import MyStudents from "../pages/Dashboard/Advisor/MyStudents";
 import ApprovedCourses from "../pages/Dashboard/Advisor/ApprovedCourses";
+import ExtraCreditRequests from "../pages/Dashboard/Advisor/ExtraCreditRequests";
 
 export const router = createBrowserRouter([
   {
@@ -94,6 +97,14 @@ export const router = createBrowserRouter([
         path: "registrationstatus",
         element: <RegistrationStatus />,
       },
+      {
+        path: "extra-credit-request",
+        element: <ExtraCreditRequest />,
+      },
+      {
+        path: "contact-advisor",
+        element: <ContactAdvisor />,
+      },
     ],
   },
   {
@@ -119,6 +130,10 @@ export const router = createBrowserRouter([
       {
         path: "approvedcourses",
         element: <ApprovedCourses />,
+      },
+      {
+        path: "extra-credit-requests",
+        element: <ExtraCreditRequests />,
       },
     ],
   },

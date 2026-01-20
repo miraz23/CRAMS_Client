@@ -60,3 +60,23 @@ export const bulkRejectRegistrations = async (studentId, registrationIds, reject
   });
   return data;
 };
+
+// Extra Credit Request APIs
+export const getPendingExtraCreditRequests = async () => {
+  const { data } = await teacherClient.get('/advisor/extra-credit-requests/pending');
+  return data?.data || [];
+};
+
+export const approveExtraCreditRequest = async (requestId, advisorFeedback = '') => {
+  const { data } = await teacherClient.post(`/advisor/extra-credit-requests/${requestId}/approve`, {
+    advisorFeedback,
+  });
+  return data;
+};
+
+export const rejectExtraCreditRequest = async (requestId, advisorFeedback = '') => {
+  const { data } = await teacherClient.post(`/advisor/extra-credit-requests/${requestId}/reject`, {
+    advisorFeedback,
+  });
+  return data;
+};

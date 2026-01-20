@@ -18,7 +18,8 @@ export const fetchSelectedCourses = async () => {
 };
 
 export const addCourseSelection = async (courseId, sectionId) => {
-  await studentClient.post('/courses/add', { courseId, sectionId });
+  const { data } = await studentClient.post('/courses/add', { courseId, sectionId });
+  return data;
 };
 
 export const removeCourseSelection = async (courseId) => {
@@ -42,5 +43,56 @@ export const fetchSchedule = async (params = {}) => {
 export const fetchRoutine = async (params = {}) => {
   const { data } = await studentClient.get('/routine', { params });
   return data?.data || { weeklySchedule: {}, courses: [], summary: {} };
+};
+
+// Extra Credit Request APIs
+export const createExtraCreditRequest = async (semester, requestedCredits, reason) => {
+  const { data } = await studentClient.post('/extra-credit-requests', {
+    semester,
+    requestedCredits,
+    reason,
+  });
+  return data;
+};
+
+export const getMyExtraCreditRequests = async (params = {}) => {
+  const { data } = await studentClient.get('/extra-credit-requests', { params });
+  return data?.data || [];
+};
+
+// Advisor Appointment APIs
+export const getMyAdvisor = async () => {
+  try {
+    const { data } = await studentClient.get('/advisor');
+    return data?.data || null;
+  } catch (error) {
+    // Return null if advisor not found instead of throwing
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+export const bookAppointment = async (appointmentDate, appointmentTime, reason) => {
+  const { data } = await studentClient.post('/appointments', {
+    appointmentDate,
+    appointmentTime,
+    reason,
+  });
+  return data;
+};
+
+export const getMyAppointments = async () => {
+  try {
+    const { data } = await studentClient.get('/appointments');
+    return data?.data || [];
+  } catch (error) {
+    // Return empty array if appointments not found
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
 };
 

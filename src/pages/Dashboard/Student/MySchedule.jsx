@@ -12,6 +12,7 @@ import {
   FileText,
   X,
   List,
+  User,
 } from "lucide-react";
 import { fetchSchedule } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
@@ -329,6 +330,13 @@ function MySchedule() {
               <Calendar className="w-5 h-5" />
               <span>My Schedule</span>
             </div>
+            <button
+              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => navigate("/student/dashboard/contact-advisor")}
+            >
+              <User className="w-5 h-5" />
+              <span>Contact Advisor</span>
+            </button>
           </nav>
         </aside>
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">

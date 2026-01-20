@@ -4,7 +4,7 @@ import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
-import { listSections, getSection, createSection, updateSection, deleteSection, listAdvisors, listCourses, updateCourse, listTeachers, updateSectionCourseSchedule } from "../../../../api/adminApi";
+import { listSections, getSection, createSection, updateSection, deleteSection, listAdvisors, listCourses, updateCourse, listTeachers, updateSectionCourseSchedule, populateSectionsFromStudents } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
@@ -1275,6 +1275,81 @@ const SectionManagementDashboard = () => {
     }
   };
 
+  const handlePopulateSectionsFromStudents = async () => {
+    try {
+      // Show confirmation dialog
+      const result = await Swal.fire({
+        title: 'Populate Sections from Student Data?',
+        text: 'This will create sections for all distinct section names found in student data. Existing sections will be skipped.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, populate sections',
+        cancelButtonText: 'Cancel',
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Processing...',
+        text: 'Populating sections from student data',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
+      const response = await populateSectionsFromStudents();
+      
+      if (response.data.success) {
+        const { created, skipped, sections, skipped: skippedSections } = response.data.data;
+        
+        let message = `Successfully created ${created} section(s).`;
+        if (skipped > 0) {
+          message += ` ${skipped} section(s) were skipped (already exist or failed to create).`;
+        }
+
+        // Show detailed results
+        let detailsHtml = '';
+        if (sections && sections.length > 0) {
+          detailsHtml += '<div style="text-align: left; margin-top: 10px;"><strong>Created Sections:</strong><ul style="margin-top: 5px;">';
+          sections.forEach((sec) => {
+            detailsHtml += `<li>${sec.sectionName} (${sec.enrolledStudents} students)</li>`;
+          });
+          detailsHtml += '</ul></div>';
+        }
+        if (skippedSections && skippedSections.length > 0) {
+          detailsHtml += '<div style="text-align: left; margin-top: 10px;"><strong>Skipped Sections:</strong><ul style="margin-top: 5px;">';
+          skippedSections.forEach((sec) => {
+            detailsHtml += `<li>${sec.sectionName} - ${sec.reason}</li>`;
+          });
+          detailsHtml += '</ul></div>';
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Sections Populated",
+          html: message + detailsHtml,
+          confirmButtonText: 'OK',
+        });
+
+        // Refresh sections list
+        fetchSections();
+      }
+    } catch (error) {
+      console.error('Error populating sections:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to populate sections from student data",
+      });
+    }
+  };
+
   // Get unique semesters from sections
   const semesters = useMemo(() => {
     const semSet = new Set(sections.map(s => s.semester).filter(Boolean));
@@ -1328,15 +1403,24 @@ const SectionManagementDashboard = () => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold">Section Management</h2>
-            <button
-              onClick={() => {
-                setEditSection(null);
-                setIsModalOpen(true);
-              }}
-              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
-            >
-              + Add Section
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handlePopulateSectionsFromStudents}
+                className="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
+                title="Create sections from distinct section names in student data"
+              >
+                Populate from Students
+              </button>
+              <button
+                onClick={() => {
+                  setEditSection(null);
+                  setIsModalOpen(true);
+                }}
+                className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+              >
+                + Add Section
+              </button>
+            </div>
           </div>
 
           {/* Filter */}
