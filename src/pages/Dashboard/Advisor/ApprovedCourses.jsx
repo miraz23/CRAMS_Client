@@ -17,7 +17,7 @@ import {
 import useAuth from "../../../hooks/useAuth/useAuth";
 import { getApprovedCourses } from "../../../api/teacherApi";
 import Swal from "sweetalert2";
-
+ 
 export default function ApprovedCourses() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,11 +28,11 @@ export default function ApprovedCourses() {
   const [approvedCourses, setApprovedCourses] = useState([]);
   const [summary, setSummary] = useState({ totalApproved: 0, approvedThisWeek: 0, totalCredits: 0 });
   const isInitialMount = useRef(true);
-
+ 
   useEffect(() => {
     fetchApprovedCourses();
   }, []);
-
+ 
   // Refresh data when navigating to this page
   useEffect(() => {
     if (isInitialMount.current) {
@@ -44,7 +44,7 @@ export default function ApprovedCourses() {
       fetchApprovedCourses();
     }
   }, [location.pathname]);
-
+ 
   // Refresh data when page comes into focus (user switches tabs/windows)
   // Only refresh if we're on the approved courses page
   useEffect(() => {
@@ -53,20 +53,20 @@ export default function ApprovedCourses() {
         fetchApprovedCourses();
       }
     };
-
+ 
     window.addEventListener('focus', handleFocus);
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
   }, [location.pathname]);
-
+ 
   const fetchApprovedCourses = async () => {
     try {
       setLoading(true);
       const data = await getApprovedCourses();
-      
+ 
       setSummary(data.summary || { totalApproved: 0, approvedThisWeek: 0, totalCredits: 0 });
-      
+ 
       // Format approved courses for display
       const formattedCourses = (data.recentApprovals || []).map((course, index) => ({
         id: index + 1,
@@ -90,7 +90,7 @@ export default function ApprovedCourses() {
       setLoading(false);
     }
   };
-
+ 
   const handleExport = async () => {
     try {
       const data = await getApprovedCourses({ format: 'csv' });
@@ -110,7 +110,7 @@ export default function ApprovedCourses() {
       });
     }
   };
-
+ 
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -120,7 +120,7 @@ export default function ApprovedCourses() {
       navigate("/login");
     }
   };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -134,7 +134,7 @@ export default function ApprovedCourses() {
               >
                 <Menu className="w-6 h-6" />
               </button>
-
+ 
               <div className="flex items-center space-x-2 lg:pl-6 cursor-pointer">
                 <GraduationCap
                   className="w-8 h-8 text-blue-600"
@@ -150,13 +150,13 @@ export default function ApprovedCourses() {
                 </div>
               </div>
             </div>
-
+ 
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-
+ 
               <div className="lg:hidden relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -164,7 +164,7 @@ export default function ApprovedCourses() {
                 >
                   <User className="w-5 h-5 cursor-pointer" />
                 </button>
-
+ 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-200">
@@ -183,7 +183,7 @@ export default function ApprovedCourses() {
                   </div>
                 )}
               </div>
-
+ 
               <div className="hidden lg:flex items-center space-x-3">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900">
@@ -198,7 +198,7 @@ export default function ApprovedCourses() {
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
-
+ 
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-20 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                       {/* <div className="px-4 py-3 border-b border-gray-200">
@@ -223,7 +223,7 @@ export default function ApprovedCourses() {
           </div>
         </div>
       </header>
-
+ 
       <div className="flex">
         {/* Sidebar */}
         <aside
@@ -237,7 +237,7 @@ export default function ApprovedCourses() {
           >
             <X className="w-6 h-6" />
           </button>
-
+ 
           <nav className="p-4 space-y-2">
             <Link
               to="/advisor/dashboard"
@@ -282,18 +282,25 @@ export default function ApprovedCourses() {
               <CheckCircle className="w-5 h-5" />
               <span className="font-medium">Approved Courses</span>
             </Link>
+            <Link
+              to="/advisor/dashboard/extra-credit-requests"
+              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Advising Support</span>
+            </Link>
           </nav>
         </aside>
-
+ 
         {isSidebarOpen && (
           <div
             className="lg:hidden fixed inset-0  bg-opacity-50 z-10"
             onClick={() => setIsSidebarOpen(false)}
           ></div>
         )}
-
+ 
         <div className="hidden lg:block w-64 flex-shrink-0"></div>
-
+ 
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
@@ -325,7 +332,7 @@ export default function ApprovedCourses() {
               </button>
             </div>
           </div>
-
+ 
           {/* Stats Cards */}
           {loading ? (
             <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-8 animate-pulse">
@@ -362,7 +369,7 @@ export default function ApprovedCourses() {
               </div>
             </div>
           )}
-
+ 
           {/* Recent Approvals */}
           <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
             <div className="mb-6">
@@ -373,7 +380,7 @@ export default function ApprovedCourses() {
                 Course registrations you've approved
               </p>
             </div>
-
+ 
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>

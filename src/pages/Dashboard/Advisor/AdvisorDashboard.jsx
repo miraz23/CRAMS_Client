@@ -18,7 +18,7 @@ import {
 import useAuth from "../../../hooks/useAuth/useAuth";
 import { getAdvisorDashboard } from "../../../api/teacherApi";
 import Swal from "sweetalert2";
-
+ 
 export default function AdvisorDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,16 +54,16 @@ export default function AdvisorDashboard() {
   const [recentActivity, setRecentActivity] = useState([]);
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-
+ 
   useEffect(() => {
     fetchDashboardData();
   }, []);
-
+ 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       const data = await getAdvisorDashboard();
-      
+ 
       // Update stats
       const summary = data.summary || {};
       setStats([
@@ -94,14 +94,14 @@ export default function AdvisorDashboard() {
           color: "text-teal-600",
         },
       ]);
-
+ 
       // Format urgent reviews
       const formattedUrgentReviews = (data.urgentReviews || []).map((review) => {
         const submittedDate = review.submittedAt ? new Date(review.submittedAt) : new Date();
         const now = new Date();
         const hoursAgo = Math.floor((now - submittedDate) / (1000 * 60 * 60));
         const submitted = hoursAgo < 1 ? "Just now" : `${hoursAgo}h ago`;
-        
+ 
         return {
           name: review.studentName || "Unknown Student",
           id: review.studentId || "",
@@ -112,7 +112,7 @@ export default function AdvisorDashboard() {
         };
       });
       setUrgentReviews(formattedUrgentReviews);
-
+ 
       // Format recent activity
       const formattedActivity = (data.recentActivity || []).map((activity) => {
         const actedDate = activity.actedAt ? new Date(activity.actedAt) : new Date();
@@ -130,7 +130,7 @@ export default function AdvisorDashboard() {
           const daysAgo = Math.floor(hoursAgo / 24);
           time = `${daysAgo} day${daysAgo !== 1 ? "s" : ""} ago`;
         }
-
+ 
         return {
           status: activity.status === "approved" ? "Approved" : "Rejected",
           course: activity.courseCode || "",
@@ -151,7 +151,7 @@ export default function AdvisorDashboard() {
       setLoading(false);
     }
   };
-
+ 
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -161,7 +161,7 @@ export default function AdvisorDashboard() {
       navigate("/login");
     }
   };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -176,7 +176,7 @@ export default function AdvisorDashboard() {
               >
                 <Menu className="w-6 h-6" />
               </button>
-
+ 
               <div className="flex items-center space-x-2 lg:pl-6 cursor-pointer">
                 <GraduationCap
                   className="w-8 h-8 text-blue-600"
@@ -192,14 +192,14 @@ export default function AdvisorDashboard() {
                 </div>
               </div>
             </div>
-
+ 
             {/* Right side - User info */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-
+ 
               {/* Mobile & Tablet User Icon - Shows on small and medium screens */}
               <div className="lg:hidden relative">
                 <button
@@ -208,7 +208,7 @@ export default function AdvisorDashboard() {
                 >
                   <User className="w-5 h-5" />
                 </button>
-
+ 
                 {/* Mobile & Tablet User Dropdown Menu */}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
@@ -228,7 +228,7 @@ export default function AdvisorDashboard() {
                   </div>
                 )}
               </div>
-
+ 
               {/* Desktop User Info - Shows on large screens only */}
               <div className="hidden lg:flex items-center space-x-3">
                 <div className="text-right">
@@ -244,7 +244,7 @@ export default function AdvisorDashboard() {
                   >
                     <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
                   </button>
-
+ 
                   {/* Desktop User Dropdown Menu */}
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-20 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
@@ -262,7 +262,7 @@ export default function AdvisorDashboard() {
           </div>
         </div>
       </header>
-
+ 
       <div className="flex">
         {/* Sidebar - Fixed on desktop, slide-in on mobile */}
         <aside
@@ -277,7 +277,7 @@ export default function AdvisorDashboard() {
           >
             <X className="w-6 h-6" />
           </button>
-
+ 
           <nav className="p-4 space-y-2">
             <Link
               to="/advisor/dashboard"
@@ -291,7 +291,7 @@ export default function AdvisorDashboard() {
               className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
             >
               <Clock className="w-5 h-5" />
-
+ 
               <span className="font-medium">Pending Reviews</span>
             </Link>
             <Link
@@ -308,9 +308,16 @@ export default function AdvisorDashboard() {
               <CheckCircle className="w-5 h-5" />
               <span className="font-medium">Approved Courses</span>
             </Link>
+            <Link
+              to="/advisor/dashboard/extra-credit-requests"
+              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <User2 className="w-5 h-5" />
+              <span className="font-medium">Advising Support</span>
+            </Link>
           </nav>
         </aside>
-
+ 
         {/* Overlay for mobile */}
         {isSidebarOpen && (
           <div
@@ -318,10 +325,10 @@ export default function AdvisorDashboard() {
             onClick={() => setIsSidebarOpen(false)}
           ></div>
         )}
-
+ 
         {/* Spacer for fixed sidebar on desktop */}
         <div className="hidden lg:block w-64 flex-shrink-0"></div>
-
+ 
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Welcome Section */}
@@ -333,7 +340,7 @@ export default function AdvisorDashboard() {
               Here's your advising overview for Spring 2025
             </p>
           </div>
-
+ 
           {/* Stats Cards */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -370,7 +377,7 @@ export default function AdvisorDashboard() {
             })}
           </div>
           )}
-
+ 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Urgent Reviews */}
             <div className="lg:col-span-2 bg-white rounded-lg shadow border border-gray-200 p-6">
@@ -382,7 +389,7 @@ export default function AdvisorDashboard() {
                   Students waiting for course approval
                 </p>
               </div>
-
+ 
               <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-8">
@@ -424,7 +431,7 @@ export default function AdvisorDashboard() {
                   ))
                 )}
               </div>
-
+ 
               <button 
                 onClick={() => navigate("/advisor/dashboard/pendingreviews")}
                 className="w-full mt-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
@@ -432,7 +439,7 @@ export default function AdvisorDashboard() {
                 View All Pending Reviews
               </button>
             </div>
-
+ 
             {/* Recent Activity */}
             <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
               <div className="mb-4">
@@ -441,7 +448,7 @@ export default function AdvisorDashboard() {
                 </h3>
                 <p className="text-sm text-gray-600">Your latest actions</p>
               </div>
-
+ 
               <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-4">
@@ -472,7 +479,7 @@ export default function AdvisorDashboard() {
               </div>
             </div>
           </div>
-
+ 
           {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">

@@ -26,7 +26,7 @@ import {
   rejectRegistration
 } from "../../../api/teacherApi";
 import Swal from "sweetalert2";
-
+ 
 export default function PendingReviews() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -36,17 +36,17 @@ export default function PendingReviews() {
   const [reviews, setReviews] = useState([]);
   const [summary, setSummary] = useState({ totalPending: 0, withIssues: 0 });
   const [selectedReview, setSelectedReview] = useState(null);
-
+ 
   useEffect(() => {
     fetchPendingReviews();
   }, []);
-
+ 
   const fetchPendingReviews = async () => {
     try {
       setLoading(true);
       const data = await getPendingReviews();
       setSummary(data.summary || { totalPending: 0, withIssues: 0 });
-      
+ 
       // Format reviews for display
       const formattedReviews = (data.reviews || []).map((review, index) => ({
         id: index + 1,
@@ -80,7 +80,7 @@ export default function PendingReviews() {
       setLoading(false);
     }
   };
-
+ 
   const handleApproveAll = async (review) => {
     if (!review.studentMongoId || !review.registrationIds || review.registrationIds.length === 0) {
       Swal.fire({
@@ -90,7 +90,7 @@ export default function PendingReviews() {
       });
       return;
     }
-
+ 
     // Debug: Log registration IDs
     console.log("Approving registrations:", {
       studentId: review.studentMongoId,
@@ -98,7 +98,7 @@ export default function PendingReviews() {
       totalCourses: review.totalCourses,
       registrationIdsCount: review.registrationIds.length
     });
-
+ 
     const result = await Swal.fire({
       title: "Approve All Courses?",
       html: `Approve all <b>${review.totalCourses}</b> course(s) for <b>${review.name}</b>?`,
@@ -109,16 +109,16 @@ export default function PendingReviews() {
       confirmButtonText: "Yes, Approve All",
       cancelButtonText: "Cancel",
     });
-
+ 
     if (!result.isConfirmed) return;
-
+ 
     try {
       const response = await bulkApproveRegistrations(
         review.studentMongoId,
         review.registrationIds,
         "Approved by advisor"
       );
-
+ 
       if (response.success) {
         Swal.fire({
           icon: "success",
@@ -138,7 +138,7 @@ export default function PendingReviews() {
       });
     }
   };
-
+ 
   const handleRejectAll = async (review) => {
     if (!review.studentMongoId || !review.registrationIds || review.registrationIds.length === 0) {
       Swal.fire({
@@ -148,7 +148,7 @@ export default function PendingReviews() {
       });
       return;
     }
-
+ 
     const result = await Swal.fire({
       title: "Reject All Courses?",
       html: `Reject all <b>${review.totalCourses}</b> course(s) for <b>${review.name}</b>?`,
@@ -165,16 +165,16 @@ export default function PendingReviews() {
       confirmButtonText: "Yes, Reject All",
       cancelButtonText: "Cancel",
     });
-
+ 
     if (!result.isConfirmed) return; // User cancelled
-
+ 
     try {
       const response = await bulkRejectRegistrations(
         review.studentMongoId,
         review.registrationIds,
         result.value || "Rejected by advisor"
       );
-
+ 
       if (response.success) {
         Swal.fire({
           icon: "success",
@@ -194,7 +194,7 @@ export default function PendingReviews() {
       });
     }
   };
-
+ 
   const handleApproveCourse = async (course, studentName) => {
     if (!course.registrationId) {
       Swal.fire({
@@ -204,7 +204,7 @@ export default function PendingReviews() {
       });
       return;
     }
-
+ 
     const result = await Swal.fire({
       title: "Approve Course?",
       html: `Approve <b>${course.code} - ${course.name}</b> for <b>${studentName}</b>?`,
@@ -215,12 +215,12 @@ export default function PendingReviews() {
       confirmButtonText: "Yes, Approve",
       cancelButtonText: "Cancel",
     });
-
+ 
     if (!result.isConfirmed) return;
-
+ 
     try {
       const response = await approveRegistration(course.registrationId, "Approved by advisor");
-
+ 
       if (response.success) {
         Swal.fire({
           icon: "success",
@@ -242,7 +242,7 @@ export default function PendingReviews() {
       });
     }
   };
-
+ 
   const handleRejectCourse = async (course, studentName) => {
     if (!course.registrationId) {
       Swal.fire({
@@ -252,7 +252,7 @@ export default function PendingReviews() {
       });
       return;
     }
-
+ 
     const result = await Swal.fire({
       title: "Reject Course?",
       html: `Reject <b>${course.code} - ${course.name}</b> for <b>${studentName}</b>?`,
@@ -269,15 +269,15 @@ export default function PendingReviews() {
       confirmButtonText: "Yes, Reject",
       cancelButtonText: "Cancel",
     });
-
+ 
     if (!result.isConfirmed) return;
-
+ 
     try {
       const response = await rejectRegistration(
         course.registrationId,
         result.value || "Rejected by advisor"
       );
-
+ 
       if (response.success) {
         Swal.fire({
           icon: "success",
@@ -299,7 +299,7 @@ export default function PendingReviews() {
       });
     }
   };
-
+ 
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -309,7 +309,7 @@ export default function PendingReviews() {
       navigate("/login");
     }
   };
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -323,7 +323,7 @@ export default function PendingReviews() {
               >
                 <Menu className="w-6 h-6" />
               </button>
-
+ 
               <div className="flex items-center space-x-2 lg:pl-6 cursor-pointer">
                 <GraduationCap
                   className="w-8 h-8 text-blue-600"
@@ -339,13 +339,13 @@ export default function PendingReviews() {
                 </div>
               </div>
             </div>
-
+ 
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-
+ 
               <div className="lg:hidden relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -353,7 +353,7 @@ export default function PendingReviews() {
                 >
                   <User className="w-5 h-5 cursor-pointer" />
                 </button>
-
+ 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-3 border-b border-gray-200">
@@ -372,7 +372,7 @@ export default function PendingReviews() {
                   </div>
                 )}
               </div>
-
+ 
               <div className="hidden lg:flex items-center space-x-3">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900">
@@ -401,7 +401,7 @@ export default function PendingReviews() {
                     {/* <User className="w-5 h-5" /> */}
                     <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
                   </button>
-
+ 
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-20 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                       {/* <div className="px-4 py-3 border-b border-gray-200">
@@ -426,7 +426,7 @@ export default function PendingReviews() {
           </div>
         </div>
       </header>
-
+ 
       <div className="flex">
         {/* Sidebar */}
         <aside
@@ -440,7 +440,7 @@ export default function PendingReviews() {
           >
             <X className="w-6 h-6" />
           </button>
-
+ 
           <nav className="p-4 space-y-2">
             <Link
               to="/advisor/dashboard"
@@ -485,18 +485,30 @@ export default function PendingReviews() {
                 Approved Courses
               </span>
             </Link>
+            <Link
+              to="/advisor/dashboard/extra-credit-requests"
+              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <CheckCircle className="w-5 h-5" />
+              <span
+                className="font-medium"
+                onClick={() => navigate("/advisor/dashboard/extra-credit-requests")}
+              >
+                Advising Support
+              </span>
+            </Link>
           </nav>
         </aside>
-
+ 
         {isSidebarOpen && (
           <div
             className="lg:hidden fixed inset-0 bg-opacity-50 z-10"
             onClick={() => setIsSidebarOpen(false)}
           ></div>
         )}
-
+ 
         <div className="hidden lg:block w-64 flex-shrink-0"></div>
-
+ 
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
@@ -508,7 +520,7 @@ export default function PendingReviews() {
               Review and approve student course registrations
             </p>
           </div>
-
+ 
           {/* Summary Cards */}
           <div className="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
             <div className="flex items-center space-x-8 ">
@@ -526,7 +538,7 @@ export default function PendingReviews() {
               </div>
             </div>
           </div>
-
+ 
           {/* Reviews Table */}
           {loading ? (
             <div className="text-center py-12">
@@ -688,7 +700,7 @@ export default function PendingReviews() {
                                     </div>
                                   </div>
                                 </div>
-
+ 
                                 {/* Courses Details */}
                                 <div>
                                   <h4 className="text-md font-semibold text-gray-900 mb-3">
@@ -713,7 +725,7 @@ export default function PendingReviews() {
                                               {course.credits} Credits
                                             </span>
                                           </div>
-                                          
+ 
                                           <div className="flex justify-end space-x-2">
                                             <button
                                               onClick={(e) => {
@@ -737,7 +749,7 @@ export default function PendingReviews() {
                                             </button>
                                           </div>
                                         </div>
-
+ 
                                         {course.issues.length > 0 && (
                                           <div className="mb-3">
                                             <p className="text-xs font-medium text-red-800 mb-1">Issues:</p>
@@ -754,12 +766,12 @@ export default function PendingReviews() {
                                             </div>
                                           </div>
                                         )}
-                                        
+ 
                                       </div>
                                     ))}
                                   </div>
                                 </div>
-
+ 
                                 {/* Action Buttons */}
                                 <div className="flex justify-end space-x-3 pt-3 border-t border-gray-200">
                                   <button 
