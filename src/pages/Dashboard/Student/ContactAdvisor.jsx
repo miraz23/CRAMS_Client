@@ -27,7 +27,7 @@ import {
   fetchRegistrationStatus,
 } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
-
+ 
 function ContactAdvisor() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -49,7 +49,7 @@ function ContactAdvisor() {
     appointmentTime: "",
     reason: "",
   });
-
+ 
   const loadData = async () => {
     setLoading(true);
     try {
@@ -61,20 +61,20 @@ function ContactAdvisor() {
         getMyAdvisor().catch(() => null),
         getMyAppointments().catch(() => []),
       ]);
-
+ 
       // Extract results safely
       const requestsData = results[0].status === 'fulfilled' ? results[0].value : [];
       const selectedCourses = results[1].status === 'fulfilled' ? results[1].value : { courses: [], summary: {} };
       const registrationData = results[2].status === 'fulfilled' ? results[2].value : { registrations: [], summary: {} };
       const advisorData = results[3].status === 'fulfilled' ? results[3].value : null;
       const appointmentsData = results[4].status === 'fulfilled' ? results[4].value : [];
-
+ 
       setRequests(requestsData || []);
       setSelectedData(selectedCourses || { courses: [], summary: {} });
       setRegistrationStatus(registrationData || { registrations: [], summary: {} });
       setAdvisorInfo(advisorData || null);
       setAppointments(appointmentsData || []);
-
+ 
       // Auto-fill semester from selected courses if available
       if (selectedCourses?.courses?.length > 0 && !extraCreditForm.semester) {
         const semester = selectedCourses.courses[0]?.semester || "";
@@ -89,36 +89,37 @@ function ContactAdvisor() {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+ 
   const handleExtraCreditSubmit = async (e) => {
     e.preventDefault();
-
+ 
     if (!extraCreditForm.semester) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please select a semester." });
       return;
     }
-
+ 
     const requested = parseFloat(extraCreditForm.requestedCredits);
-    if (Number.isNaN(requested) || requested < 0.1) {
-      Swal.fire({ icon: "warning", title: "Validation Error", text: "Please enter a valid number of credits (at least 0.1)." });
+    // Backend enforces minimum 1 credit
+    if (Number.isNaN(requested) || requested < 1) {
+      Swal.fire({ icon: "warning", title: "Validation Error", text: "Please enter a valid number of credits (at least 1)." });
       return;
     }
-
+ 
     if (!extraCreditForm.reason || extraCreditForm.reason.trim().length === 0) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please provide a reason for your request." });
       return;
     }
-
+ 
     if (extraCreditForm.reason.length > 500) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Reason cannot exceed 500 characters." });
       return;
     }
-
+ 
     setSubmitting(true);
     try {
       await createExtraCreditRequest(
@@ -134,36 +135,40 @@ function ContactAdvisor() {
       setExtraCreditForm({ semester: "", requestedCredits: "", reason: "" });
       await loadData();
     } catch (error) {
-      const message = error.response?.data?.message || "Failed to submit request.";
+      const rawMessage = error.response?.data?.message;
+      const message =
+        rawMessage === "Invalid: no data provided"
+          ? "Request failed: missing data. Please fill Semester, Requested Credits (min 1), and Reason, then try again."
+          : rawMessage || "Failed to submit request.";
       Swal.fire({ icon: "error", title: "Error", text: message });
     } finally {
       setSubmitting(false);
     }
   };
-
+ 
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
-
+ 
     if (!appointmentForm.appointmentDate) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please select an appointment date." });
       return;
     }
-
+ 
     if (!appointmentForm.appointmentTime) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please select an appointment time." });
       return;
     }
-
+ 
     if (!appointmentForm.reason || appointmentForm.reason.trim().length === 0) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please provide a reason for the appointment." });
       return;
     }
-
+ 
     if (appointmentForm.reason.length > 500) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Reason cannot exceed 500 characters." });
       return;
     }
-
+ 
     setSubmitting(true);
     try {
       await bookAppointment(
@@ -185,7 +190,7 @@ function ContactAdvisor() {
       setSubmitting(false);
     }
   };
-
+ 
   const getStatusIcon = (status) => {
     switch (status) {
       case "approved":
@@ -196,7 +201,7 @@ function ContactAdvisor() {
         return <AlertCircle className="w-5 h-5 text-yellow-600" />;
     }
   };
-
+ 
   const getStatusColor = (status) => {
     switch (status) {
       case "approved":
@@ -207,14 +212,14 @@ function ContactAdvisor() {
         return "bg-yellow-50 border-yellow-200 text-yellow-800";
     }
   };
-
+ 
   // Calculate credits
   const approvedCredits = registrationStatus?.summary?.totalCredits || 0;
   const selectedCredits = selectedData?.summary?.totalCredits || 0;
   const creditLimit = 26;
   const totalCredits = approvedCredits + selectedCredits;
   const extraCreditsNeeded = Math.max(0, totalCredits - creditLimit);
-
+ 
   // Pre-fill requested credits with computed extra credit needed (but don't overwrite user edits)
   useEffect(() => {
     if (activeTab !== "extraCredit") return;
@@ -229,7 +234,7 @@ function ContactAdvisor() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, extraCreditsNeeded, submitting]);
-
+ 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex justify-between items-center px-10 py-2 border-b border-gray-200 fixed left-0 w-full bg-white z-10">
@@ -269,7 +274,7 @@ function ContactAdvisor() {
           </button>
         </div>
       </header>
-
+ 
       <div className="flex flex-1 bg-gray-50">
         <aside className="sidebar border-r border-gray-200 p-4 w-64 left-0 top-16 fixed h-[calc(100vh-4rem)] bg-white">
           <nav className="space-y-1">
@@ -314,7 +319,7 @@ function ContactAdvisor() {
             </div>
           </nav>
         </aside>
-
+ 
         <main className="ml-64 p-4 md:p-8 mt-16 flex flex-col gap-6 flex-1 overflow-y-auto bg-gray-50">
           <div>
             <p className="text-3xl font-bold">Contact Advisor</p>
@@ -322,7 +327,7 @@ function ContactAdvisor() {
               Request extra credits or book an appointment with your advisor.
             </p>
           </div>
-
+ 
           {/* Credit Summary Card */}
           <div className="border border-gray-300 p-6 rounded-lg bg-white">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -348,7 +353,7 @@ function ContactAdvisor() {
               </div>
             </div>
           </div>
-
+ 
           {/* Advisor Info Card */}
           {advisorInfo && (
             <div className="border border-gray-300 p-6 rounded-lg bg-white">
@@ -376,7 +381,7 @@ function ContactAdvisor() {
               </div>
             </div>
           )}
-
+ 
           {/* Tabs */}
           <div className="border border-gray-300 rounded-lg bg-white overflow-hidden">
             <div className="flex border-b border-gray-200">
@@ -401,12 +406,12 @@ function ContactAdvisor() {
                 Book Appointment
               </button>
             </div>
-
+ 
             <div className="p-6">
               {/* Extra Credit Request Tab */}
               {activeTab === "extraCredit" && (
                 <div className="space-y-6">
-
+ 
                   {/* Request Form */}
                   <form onSubmit={handleExtraCreditSubmit} className="space-y-4">
                     <div>
@@ -429,7 +434,7 @@ function ContactAdvisor() {
                       <input
                         type="number"
                         step="0.1"
-                        min="0.1"
+                        min="1"
                         value={extraCreditForm.requestedCredits}
                         onChange={(e) => setExtraCreditForm({ ...extraCreditForm, requestedCredits: e.target.value })}
                         className="border border-gray-300 rounded-lg p-2 w-full"
@@ -437,7 +442,7 @@ function ContactAdvisor() {
                         required
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Minimum: 0.1 credit. You currently need {extraCreditsNeeded} extra credit(s).
+                        Minimum: 1 credit. You currently need {extraCreditsNeeded} extra credit(s).
                       </p>
                     </div>
                     <div>
@@ -465,7 +470,7 @@ function ContactAdvisor() {
                       {submitting ? "Submitting..." : "Submit Request"}
                     </button>
                   </form>
-
+ 
                   {/* Previous Requests */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
                     <h4 className="text-md font-semibold mb-4">My Extra Credit Requests</h4>
@@ -513,7 +518,7 @@ function ContactAdvisor() {
                   </div>
                 </div>
               )}
-
+ 
               {/* Book Appointment Tab */}
               {activeTab === "appointment" && (
                 <div className="space-y-6">
@@ -568,7 +573,7 @@ function ContactAdvisor() {
                       {submitting ? "Booking..." : "Book Appointment"}
                     </button>
                   </form>
-
+ 
                   {/* Previous Appointments */}
                   <div className="border-t border-gray-200 pt-6 mt-6">
                     <h4 className="text-md font-semibold mb-4">My Appointments</h4>
@@ -625,5 +630,5 @@ function ContactAdvisor() {
     </div>
   );
 }
-
+ 
 export default ContactAdvisor;
