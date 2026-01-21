@@ -12,7 +12,7 @@ import StdDashboard from "../pages/Dashboard/Student/StdDashboard";
 import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
 import MySchedule from "../pages/Dashboard/Student/MySchedule";
 import Routine from "../pages/Dashboard/Student/Routine";
-import RegistrationStatus from "../pages/Dashboard/Student/Registrationstatus";
+import RegistrationStatus from "../pages/Dashboard/Student/RegistrationStatus";
 import ExtraCreditRequest from "../pages/Dashboard/Student/ExtraCreditRequest";
 import ContactAdvisor from "../pages/Dashboard/Student/ContactAdvisor";
 // Admin Pages
