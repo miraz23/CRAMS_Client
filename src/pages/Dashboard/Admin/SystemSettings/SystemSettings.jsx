@@ -105,36 +105,6 @@ const SystemSettings = () => {
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Menu className="w-6 h-6 text-gray-600 lg:hidden" />
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {role === "super admin" ? "Super Admin" : "Admin"}
-                  </p>
-                  <p className="text-xs text-gray-500">System Settings</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
-                  title="Logout"
-                >
-                  <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="p-8">
           <h1 className="text-2xl font-semibold text-gray-900">System Settings</h1>
           <p className="text-gray-500 mb-6">Configure system-wide settings and preferences</p>

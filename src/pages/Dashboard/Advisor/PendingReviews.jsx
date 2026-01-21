@@ -1,22 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  GraduationCap,
-  Bell,
-  Menu,
-  X,
-  LayoutDashboard,
-  Clock,
-  Users,
-  CheckCircle,
   ThumbsUp,
   ThumbsDown,
   AlertCircle,
-  LogOut,
-  User,
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
+import AdvisorSidebar from "../../../Components/AdvisorSidebar/AdvisorSidebar";
 import useAuth from "../../../hooks/useAuth/useAuth";
 import { 
   getPendingReviews, 
@@ -30,8 +21,6 @@ import Swal from "sweetalert2";
 export default function PendingReviews() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
   const [summary, setSummary] = useState({ totalPending: 0, withIssues: 0 });
@@ -300,217 +289,22 @@ export default function PendingReviews() {
     }
   };
  
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      navigate("/login");
-    }
-  };
- 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
- 
-              <div className="flex items-center space-x-2 lg:pl-6 cursor-pointer">
-                <GraduationCap
-                  className="w-8 h-8 text-blue-600"
-                  strokeWidth={2}
-                />
-                <div className="flex flex-col">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                    CRAMS
-                  </h1>
-                  <p className="text-xs text-gray-500 hidden sm:block">
-                    Academic Advisor
-                  </p>
-                </div>
-              </div>
-            </div>
- 
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full cursor-pointer">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
- 
-              <div className="lg:hidden relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-                >
-                  <User className="w-5 h-5 cursor-pointer" />
-                </button>
- 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">
-                        Dr. Ahasanul Kalam Akib
-                      </p>
-                      <p className="text-xs text-gray-500">Academic Advisor</p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2"
-                    >
-                      <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                )}
-              </div>
- 
-              <div className="hidden lg:flex items-center space-x-3">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">
-                    Dr. Ahasanul Kalam Akib
-                  </p>
-                  <p className="text-xs text-gray-500">Academic Advisor</p>
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
-                  >
-                    {/* <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg> */}
-                    {/* <User className="w-5 h-5" /> */}
-                    <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
-                  </button>
- 
-                  {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-20 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      {/* <div className="px-4 py-3 border-b border-gray-200">
-                        <p className="text-sm font-semibold text-gray-900">
-                          Dr. Ahasanul Kalam Akib
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Academic Advisor
-                        </p>
-                      </div> */}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center space-x-2 cursor-pointer"
-                      >
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
- 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside
-          className={`${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed top-16 bottom-0 left-0 z-20 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out overflow-y-auto`}
-        >
-          <button
-            onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg z-10"
-          >
-            <X className="w-6 h-6" />
-          </button>
- 
-          <nav className="p-4 space-y-2">
-            <Link
-              to="/advisor/dashboard"
-              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              <span
-                className="font-medium"
-                onClick={() => navigate("/advisor/dashboard")}
-              >
-                Dashboard
-              </span>
-            </Link>
-            <Link
-              to="/advisor/dashboard/pendingreviews"
-              className="flex items-center space-x-3 px-4 py-3 bg-blue-600 text-white rounded-lg"
-            >
-              <Clock className="w-5 h-5" />
-              <span className="font-medium">Pending Reviews</span>
-            </Link>
-            <Link
-              to="/advisor/dashboard/mystudents"
-              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <Users className="w-5 h-5" />
-              <span
-                className="font-medium"
-                onClick={() => navigate("/advisor/dashboard/mystudents")}
-              >
-                My Students
-              </span>
-            </Link>
-            <Link
-              to="/advisor/dashboard/approvedcourses"
-              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <CheckCircle className="w-5 h-5" />
-              <span
-                className="font-medium"
-                onClick={() => navigate("/advisor/dashboard/approvedcourses")}
-              >
-                Approved Courses
-              </span>
-            </Link>
-            <Link
-              to="/advisor/dashboard/extra-credit-requests"
-              className="flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <CheckCircle className="w-5 h-5" />
-              <span
-                className="font-medium"
-                onClick={() => navigate("/advisor/dashboard/extra-credit-requests")}
-              >
-                Advising Support
-              </span>
-            </Link>
-          </nav>
-        </aside>
- 
-        {isSidebarOpen && (
-          <div
-            className="lg:hidden fixed inset-0 bg-opacity-50 z-10"
-            onClick={() => setIsSidebarOpen(false)}
-          ></div>
-        )}
- 
-        <div className="hidden lg:block w-64 flex-shrink-0"></div>
- 
-        {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+    <div className="flex h-screen bg-gray-50">
+      <AdvisorSidebar
+        onLogout={async () => {
+          try {
+            await logoutUser();
+            navigate("/login");
+          } catch (error) {
+            console.error("Logout error:", error);
+            navigate("/login");
+          }
+        }}
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -806,7 +600,8 @@ export default function PendingReviews() {
               </div>
             </div>
           )}
-        </main>
+          </div>
+        </div>
       </div>
     </div>
   );

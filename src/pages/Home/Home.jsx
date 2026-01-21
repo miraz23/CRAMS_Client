@@ -2,7 +2,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import Navbar from "../../Components/shared/Navbar/Navbar";
 import caplogo from "../../assets/CAP.png";
 import {
   FiClock,

@@ -1,21 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import {
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Clock,
-  User,
-  GraduationCap,
-  LogOut,
-  Menu,
-  X,
-  LayoutDashboard,
-  Users,
-  FileText,
-  BookOpen,
-} from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
+import AdvisorSidebar from "../../../Components/AdvisorSidebar/AdvisorSidebar";
 import useAuth from "../../../hooks/useAuth/useAuth";
 import {
   getPendingExtraCreditRequests,
@@ -26,9 +13,6 @@ import {
 export default function ExtraCreditRequests() {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [processingId, setProcessingId] = useState(null);
@@ -149,117 +133,21 @@ export default function ExtraCreditRequests() {
   };
  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
-              >
-                {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-              <h1 className="ml-4 lg:ml-0 text-xl font-semibold text-gray-900">
-                Advising Support
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                <AlertCircle className="w-5 h-5" />
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <User className="w-5 h-5 text-gray-600" />
-                </button>
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                    <button
-                      onClick={async () => {
-                        try {
-                          await logoutUser();
-                          navigate("/login");
-                        } catch (error) {
-                          console.error("Logout error:", error);
-                          navigate("/login");
-                        }
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
- 
-      <div className="flex">
-        {/* Sidebar */}
-        <aside
-          className={`${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out lg:transition-none`}
-        >
-          <div className="h-full flex flex-col">
-            <nav className="flex-1 px-4 py-6 space-y-1">
-              <button
-                onClick={() => navigate("/advisor/dashboard")}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                <LayoutDashboard className="w-5 h-5" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => navigate("/advisor/dashboard/pendingreviews")}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                <Clock className="w-5 h-5" />
-                <span>Pending Reviews</span>
-              </button>
-              <button
-                onClick={() => navigate("/advisor/dashboard/mystudents")}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                <Users className="w-5 h-5" />
-                <span>My Students</span>
-              </button>
-              <button
-                onClick={() => navigate("/advisor/dashboard/approvedcourses")}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
-              >
-                <CheckCircle className="w-5 h-5" />
-                <span>Approved Courses</span>
-              </button>
-              <button
-                onClick={() => navigate("/advisor/dashboard/extra-credit-requests")}
-                className="flex items-center gap-3 w-full px-4 py-3 text-left bg-blue-50 text-blue-700 rounded-lg"
-              >
-                <BookOpen className="w-5 h-5" />
-                <span>Advising Support</span>
-              </button>
-            </nav>
-          </div>
-        </aside>
- 
-        {/* Overlay for mobile */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
- 
-        {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="flex h-screen bg-gray-50">
+      <AdvisorSidebar
+        onLogout={async () => {
+          try {
+            await logoutUser();
+            navigate("/login");
+          } catch (error) {
+            console.error("Logout error:", error);
+            navigate("/login");
+          }
+        }}
+      />
+      <div className="flex-1 overflow-auto">
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto">
             {loading ? (
               <div className="text-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -371,7 +259,7 @@ export default function ExtraCreditRequests() {
               </div>
             )}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

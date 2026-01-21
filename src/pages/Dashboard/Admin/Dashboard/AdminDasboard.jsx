@@ -4,7 +4,6 @@ import { BiBookOpen, BiTrendingUp, BiUserCheck } from "react-icons/bi";
 import { FaUserSecret } from "react-icons/fa";
 import { FaCircleDot } from "react-icons/fa6";
 import { FiAlertCircle } from "react-icons/fi";
-import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
 import { getDashboardData } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
@@ -133,7 +132,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50">
-        <AdminSidebar />
+        <AdminSidebar onLogout={handleLogout} />
         <div className="flex-1 overflow-auto flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -146,38 +145,8 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <AdminSidebar />
+      <AdminSidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Menu className="w-6 h-6 text-gray-600 lg:hidden" />
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {role === "super admin" ? "Super Admin" : "Admin"}
-                  </p>
-                  <p className="text-xs text-gray-500">Dashboard</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="relative group p-2 flex items-center justify-center hover:bg-gray-50 rounded-lg"
-                  title="Logout"
-                >
-                  <LogOut className="w-5 h-5 text-gray-600 cursor-pointer" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="p-8">
           {/* Welcome Section */}
           <div className="mb-8">

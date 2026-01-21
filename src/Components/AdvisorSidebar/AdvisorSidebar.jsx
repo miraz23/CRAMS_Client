@@ -1,17 +1,9 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Grid, BookOpen, ShieldHalf , Users, Settings, Bell, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, Clock, Users, CheckCircle, User2, Bell, LogOut, Home } from "lucide-react";
 import caplogo from "../../assets/CAP.png";
 
-/**
- * Reusable sidebar component.
- *
- * - By default renders the Admin sidebar items.
- * - Can be customized via `menuItems` and `bottomActions` props.
- */
-const AdminSidebar = ({
-  menuItems,
-  bottomActions,
+const AdvisorSidebar = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
@@ -19,37 +11,35 @@ const AdminSidebar = ({
 
   const isActive = (path) => location.pathname === path;
 
-  const defaultMenuItems = [
+  const menuItems = [
     {
       label: "Dashboard",
-      icon: Grid,
-      path: "/admin/dashboard",
+      icon: LayoutDashboard,
+      path: "/advisor/dashboard",
     },
     {
-      label: "Course Management",
-      icon: BookOpen,
-      path: "/admin/dashboard/coursemanagement",
+      label: "Pending Reviews",
+      icon: Clock,
+      path: "/advisor/dashboard/pendingreviews",
     },
     {
-      label: "Section Management",
-      icon: ShieldHalf,
-      path: "/admin/dashboard/sectionmanagement",
-    },
-    {
-      label: "User Management",
+      label: "My Students",
       icon: Users,
-      path: "/admin/dashboard/usermanagement",
+      path: "/advisor/dashboard/mystudents",
     },
     {
-      label: "System Settings",
-      icon: Settings,
-      path: "/admin/dashboard/systemsettings",
+      label: "Approved Courses",
+      icon: CheckCircle,
+      path: "/advisor/dashboard/approvedcourses",
+    },
+    {
+      label: "Advising Support",
+      icon: User2,
+      path: "/advisor/dashboard/extra-credit-requests",
     },
   ];
 
-  const resolvedMenuItems = menuItems || defaultMenuItems;
-
-  const defaultBottomActions = [
+  const bottomActions = [
     {
       key: "home",
       icon: Home,
@@ -60,7 +50,7 @@ const AdminSidebar = ({
       key: "notifications",
       icon: Bell,
       title: "Notifications",
-      onClick: () => navigate("/admin/dashboard/notifications"),
+      onClick: () => navigate("/advisor/dashboard/notifications"),
     },
     {
       key: "logout",
@@ -76,8 +66,6 @@ const AdminSidebar = ({
     },
   ];
 
-  const resolvedBottomActions = bottomActions || defaultBottomActions;
-
   return (
     <div className="w-64 bg-white shadow-sm flex flex-col h-full">
       <div className="p-4 flex flex-col justify-between h-full">
@@ -91,12 +79,12 @@ const AdminSidebar = ({
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">CRAMS</h1>
-              <p className="text-xs text-gray-500">Admin Dashboard</p>
+              <p className="text-xs text-gray-500">Student Dashboard</p>
             </div>
           </div>
 
           <nav className="space-y-1">
-            {resolvedMenuItems.map((item) => {
+            {menuItems.map((item) => {
               const Icon = item.icon;
               return (
                 <a
@@ -125,7 +113,7 @@ const AdminSidebar = ({
         </div>
 
         <div className="mt-8 flex items-center justify-between px-4">
-          {resolvedBottomActions.map((action) => {
+          {bottomActions.map((action) => {
             const Icon = action.icon;
             return (
               <button
@@ -145,5 +133,4 @@ const AdminSidebar = ({
   );
 };
 
-export default AdminSidebar;
-
+export default AdvisorSidebar;
