@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import useAxiosSecure from "../../../hooks/useAxiosSecure/useAxiosSecure.jsx";
 import useAuth from "../../../hooks/useAuth/useAuth.jsx";
-import Loader from "../../../components/shared/Loader/Loader";
+import Loader from "../../../Components/shared/Loader/Loader";
 
 const Profile = () => {
     const axiosSecure = useAxiosSecure();

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { Bell, LogOut, Menu } from "lucide-react";
-import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import AdminSidebar from "../../../../Components/AdminSidebar/AdminSidebar";
 import { listSections, getSection, createSection, updateSection, deleteSection, listAdvisors, listCourses, updateCourse, listTeachers, updateSectionCourseSchedule, populateSectionsFromStudents } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";

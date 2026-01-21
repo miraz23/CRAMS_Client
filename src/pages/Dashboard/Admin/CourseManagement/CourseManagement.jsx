@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Edit, Trash2, X, Bell, LogOut, Menu } from "lucide-react";
-import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import AdminSidebar from "../../../../Components/AdminSidebar/AdminSidebar";
 import { listCourses, createCourse, updateCourse, deleteCourse, listTeachers, listSections } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";

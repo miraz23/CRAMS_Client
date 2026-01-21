@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router';
-import Loader from '../../components/shared/Loader/Loader';
+import Loader from '../../Components/shared/Loader/Loader';
 import useAuth from '../../hooks/useAuth/useAuth.jsx';
 import useUserRole from '../../hooks/useUserRole/useUserRole';
 

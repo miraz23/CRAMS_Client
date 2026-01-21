@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, Menu } from "lucide-react";
-import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import AdminSidebar from "../../../../Components/AdminSidebar/AdminSidebar";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 

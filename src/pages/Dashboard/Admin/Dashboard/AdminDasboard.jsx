@@ -4,7 +4,7 @@ import { BiBookOpen, BiTrendingUp, BiUserCheck } from "react-icons/bi";
 import { FaUserSecret } from "react-icons/fa";
 import { FaCircleDot } from "react-icons/fa6";
 import { FiAlertCircle } from "react-icons/fi";
-import AdminSidebar from "../../../../components/AdminSidebar/AdminSidebar";
+import AdminSidebar from "../../../../Components/AdminSidebar/AdminSidebar";
 import { getDashboardData } from "../../../../api/adminApi";
 import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
