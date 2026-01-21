@@ -92,11 +92,12 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
 
   return (
     <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-      <div className="bg-white p-6 rounded-lg w-full max-w-lg shadow-2xl">
-        <h2 className="text-2xl font-bold mb-4">
+      <div className="bg-white rounded-lg w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+        <h2 className="text-2xl font-bold p-6 pb-4 flex-shrink-0">
           {isEditing ? "Edit Section" : "Add New Section"}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 px-6 overflow-y-auto flex-1">
           <div className="w-full flex gap-2">
             <div className="w-full flex flex-col gap-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
@@ -106,7 +107,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                 value={formData.semester}
                 onChange={handleChange}
                 placeholder="Semester"
-                className="w-full border p-3 rounded-lg"
+                className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -118,7 +119,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                 value={formData.sectionName}
                 onChange={handleChange}
                 placeholder="Section Name"
-                className="w-full border p-3 rounded-lg"
+                className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -130,7 +131,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                   name="assignedAdvisor"
                   value={formData.assignedAdvisor}
                   onChange={handleChange}
-                  className="w-full border p-3 rounded-lg"
+                  className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   <option value="">Select Advisor</option>
@@ -148,7 +149,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                   name="totalCapacity"
                   value={formData.totalCapacity}
                   placeholder="Total Capacity"
-                  className="w-full border p-3 rounded-lg bg-gray-100"
+                  className="w-full border-0 p-3 rounded-lg bg-gray-100"
                   readOnly
                   required
                 />
@@ -164,7 +165,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                   onChange={handleChange}
                   placeholder="Regular Students"
                   min="0"
-                  className="w-full border p-3 rounded-lg bg-gray-100"
+                  className="w-full border-0 p-3 rounded-lg bg-gray-100"
                   readOnly
                   required
                 />
@@ -179,7 +180,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
                   placeholder="Maximum Irregular Students"
                   min="0"
                   max="50"
-                  className="w-full border p-3 rounded-lg"
+                  className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
                   required
                 />
             </div>
@@ -193,7 +194,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
               value={formData.crName}
               onChange={handleChange}
               placeholder="CR Name"
-              className="w-full border p-3 rounded-lg"
+              className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
               required
             />
             </div>
@@ -205,7 +206,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
               value={formData.crContact}
               onChange={handleChange}
               placeholder="CR Contact"
-              className="w-full border p-3 rounded-lg"
+              className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
               required
             />
             </div>
@@ -219,7 +220,7 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
               value={formData.acrName}
               onChange={handleChange}
               placeholder="ACR Name"
-              className="w-full border p-3 rounded-lg"
+              className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
               required
             />
             </div>
@@ -231,13 +232,14 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
               value={formData.acrContact}
               onChange={handleChange}
               placeholder="ACR Contact"
-              className="w-full border p-3 rounded-lg"
+              className="w-full border-0 p-3 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500"
               required
             />
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 p-6 pt-4 border-t border-gray-200 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -262,8 +264,8 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
 const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full mx-4">
         <h3 className="text-lg font-bold mb-2 text-gray-800">
           Confirm Deletion
         </h3>
@@ -927,9 +929,9 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
   };
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white p-6 rounded-lg w-full max-w-6xl shadow-2xl my-8">
-        <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-6xl shadow-2xl max-h-[90vh] flex flex-col my-8">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold">Section Details</h2>
           <button
             onClick={onClose}
@@ -945,9 +947,9 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
             <p className="mt-4 text-gray-500">Loading section details...</p>
           </div>
         ) : (
-          <>
+          <div className="overflow-y-auto flex-1 p-6">
             {/* Section Information */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg mb-6 flex-shrink-0">
               <h3 className="text-lg font-semibold mb-4">Section Information</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
@@ -1002,16 +1004,9 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
             </div>
 
             {/* Courses and Schedule */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h3 className="text-lg font-semibold">Courses for {sectionDetails?.semester || section.semester} Semester</h3>
-                <button
-                  onClick={handleSaveAllSchedules}
-                  disabled={saving}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : "Save All Schedules"}
-                </button>
               </div>
 
               {courses.length === 0 ? (
@@ -1019,7 +1014,7 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
                   No courses found for this semester.
                 </div>
               ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-4 flex-1 overflow-y-auto pr-2">
                   {courses.map((course) => {
                     const schedule = courseSchedules[course.id] || {
                       daySchedules: [],
@@ -1128,8 +1123,21 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
                   })}
                 </div>
               )}
+              
+              {/* Save All Button Footer */}
+              {courses.length > 0 && (
+                <div className="flex justify-end pt-4 mt-4 border-t border-gray-200 flex-shrink-0">
+                  <button
+                    onClick={handleSaveAllSchedules}
+                    disabled={saving}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                  >
+                    {saving ? "Saving..." : "Save All Schedules"}
+                  </button>
+                </div>
+              )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

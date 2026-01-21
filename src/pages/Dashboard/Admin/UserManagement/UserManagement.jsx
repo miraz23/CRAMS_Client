@@ -70,10 +70,11 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
   if (!user) return null;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-md flex justify-center items-center z-50">
-      <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Edit {userType} Info</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="fixed inset-0 backdrop-blur-md flex justify-center items-center z-50 p-4">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 max-h-[90vh] flex flex-col">
+        <h2 className="text-xl font-semibold p-6 pb-4 text-gray-800 flex-shrink-0">Edit {userType} Info</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="space-y-4 px-6 overflow-y-auto flex-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
@@ -268,8 +269,9 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
               </div>
             </>
           )}
+          </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end space-x-2 p-6 pt-4 border-t border-gray-200 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}

@@ -127,6 +127,18 @@ const CourseManagement = () => {
             }));
             return;
         }
+        
+        // If semester is changed, clear all instructor section assignments to prevent mismatches
+        if (name === 'semester') {
+            setNewCourseData((prev) => ({
+                ...prev,
+                [name]: value,
+                // Clear all instructor section assignments when semester changes
+                instructorSections: {},
+            }));
+            return;
+        }
+        
         setNewCourseData((prev) => ({
             ...prev,
             [name]: type === 'number' ? (value === '' ? '' : parseFloat(value) || 0) : value,
@@ -415,11 +427,11 @@ const CourseManagement = () => {
 
                     {/* Modal for Add/Edit Course */}
                     {isModalOpen && (
-                        <div className="fixed inset-0 backdrop-brightness-50 bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+                        <div className="fixed inset-0 backdrop-brightness-50 bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm overflow-y-auto"
                              onClick={() => setIsModalOpen(false)}>
-                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg"
+                            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg my-8 max-h-[90vh] flex flex-col"
                                  onClick={e => e.stopPropagation()}>
-                                <div className="flex justify-between items-center p-6 border-b border-gray-100">
+                                <div className="flex justify-between items-center p-6 border-b border-gray-100 flex-shrink-0">
                                     <h2 className="text-2xl font-bold text-gray-800">
                                         {isEditing ? 'Edit Course' : 'Add New Course'}
                                     </h2>
@@ -432,7 +444,8 @@ const CourseManagement = () => {
                                 </div>
 
                                 {/* Form */}
-                                <form onSubmit={handleSaveCourse} className="p-6 space-y-4">
+                                <form onSubmit={handleSaveCourse} className="flex flex-col flex-1 min-h-0">
+                                    <div className="p-6 space-y-4 overflow-y-auto flex-1">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-600 mb-1">Course Code</label>
@@ -516,7 +529,8 @@ const CourseManagement = () => {
                                                 multiple
                                                 value={newCourseData.instructors}
                                                 onChange={handleFormChange}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white h-24"
+                                                size="4"
                                             >
                                                 {teachers.map((t) => (
                                                     <option key={t.id} value={t.teacherId}>
@@ -528,34 +542,50 @@ const CourseManagement = () => {
                                         </div>
                                         {newCourseData.instructors.map((instId) => {
                                             const selectedSections = newCourseData.instructorSections?.[instId] || [];
+                                            // Filter sections to only show those matching the course's semester
+                                            const relevantSections = sections.filter(s => s.semester === newCourseData.semester);
                                             return (
                                                 <div key={instId} className="col-span-1 sm:col-span-2 border rounded-lg p-3 bg-gray-50">
                                                     <p className="text-sm font-semibold text-gray-700 mb-2">
                                                         Sections for {teachers.find((t) => t.teacherId === instId)?.name || instId}
                                                     </p>
-                                                    <select
-                                                        multiple
-                                                        value={selectedSections}
-                                                        onChange={(e) => {
-                                                            const vals = Array.from(e.target.selectedOptions || []).map((opt) => opt.value);
-                                                            handleInstructorSectionsChange(instId, vals);
-                                                        }}
-                                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-                                                    >
-                                                        {sections.map((s) => (
-                                                            <option key={s.id} value={s.sectionName}>
-                                                                {s.sectionName} ({s.semester})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <p className="text-xs text-gray-500 mt-1">Assign this instructor to sections (multi-select).</p>
+                                                    {newCourseData.semester ? (
+                                                        <>
+                                                            <select
+                                                                multiple
+                                                                value={selectedSections}
+                                                                onChange={(e) => {
+                                                                    const vals = Array.from(e.target.selectedOptions || []).map((opt) => opt.value);
+                                                                    handleInstructorSectionsChange(instId, vals);
+                                                                }}
+                                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white h-20"
+                                                                size="3"
+                                                            >
+                                                                {relevantSections.length > 0 ? (
+                                                                    relevantSections.map((s) => (
+                                                                        <option key={s.id} value={s.sectionName}>
+                                                                            {s.sectionName} ({s.semester})
+                                                                        </option>
+                                                                    ))
+                                                                ) : (
+                                                                    <option value="" disabled>No sections available for semester {newCourseData.semester}</option>
+                                                                )}
+                                                            </select>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                Assign this instructor to sections in semester {newCourseData.semester} (multi-select).
+                                                            </p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-xs text-amber-600 mt-1">Please select a semester first to see available sections.</p>
+                                                    )}
                                                 </div>
                                             );
                                         })}
                                     </div>
+                                    </div>
 
                                     {/* Buttons */}
-                                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                                    <div className="flex justify-end gap-3 p-6 border-t border-gray-100 flex-shrink-0 bg-white rounded-b-xl">
                                         <button
                                             type="button"
                                             onClick={() => setIsModalOpen(false)}

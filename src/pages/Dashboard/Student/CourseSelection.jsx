@@ -116,12 +116,26 @@ function CourseSelection() {
     try {
       if (course.isSelected) {
         await removeCourseSelection(course.id);
-        Swal.fire({ icon: "success", title: "Removed", text: "Course removed from selection." });
         // Clear selected section
         setSelectedSections(prev => {
           const updated = { ...prev };
           delete updated[course.id];
           return updated;
+        });
+        // Update state locally without full refresh
+        setAvailableCourses(prev => prev.map(c => 
+          c.id === course.id ? { ...c, isSelected: false } : c
+        ));
+        setSelectedData(prev => {
+          const updatedCourses = prev.courses.filter(c => c.id !== course.id);
+          const totalCredits = updatedCourses.reduce((sum, c) => sum + (c.credits || 0), 0);
+          return {
+            courses: updatedCourses,
+            summary: {
+              selectedCount: updatedCourses.length,
+              totalCredits: totalCredits
+            }
+          };
         });
       } else {
         if (isSelectionLocked) {
@@ -152,6 +166,24 @@ function CourseSelection() {
           }
         }
         const response = await addCourseSelection(course.id, sectionIdToUse);
+        
+        // Update state locally without full refresh
+        setAvailableCourses(prev => prev.map(c => 
+          c.id === course.id ? { ...c, isSelected: true, selectedSectionId: sectionIdToUse } : c
+        ));
+        setSelectedData(prev => {
+          const newCourse = { ...course, isSelected: true, selectedSectionId: sectionIdToUse };
+          const updatedCourses = [...prev.courses, newCourse];
+          const totalCredits = updatedCourses.reduce((sum, c) => sum + (c.credits || 0), 0);
+          return {
+            courses: updatedCourses,
+            summary: {
+              selectedCount: updatedCourses.length,
+              totalCredits: totalCredits
+            }
+          };
+        });
+        
         // Check if there's a warning about credit limit
         if (response?.warning) {
           Swal.fire({ 
@@ -162,10 +194,11 @@ function CourseSelection() {
           });
         }
       }
-      await loadCourses();
     } catch (error) {
       const message = error.response?.data?.message || "Update failed.";
       Swal.fire({ icon: "error", title: "Error", text: message });
+      // Reload courses on error to ensure consistency
+      await loadCourses();
     }
   };
  
@@ -225,21 +258,35 @@ function CourseSelection() {
                 </p>
               </div>
               <div className="border-r-2 border-gray-200 pr-6">
-                <p className="text-gray-500 font-semibold">Total Credits</p>
-                <p className="font-bold text-2xl">
+                <p className="text-gray-500 font-semibold" title="Includes selected, submitted, and approved courses">
+                  Total Credits
+                </p>
+                <p className={`font-bold text-2xl ${(selectedData?.summary?.totalCredits ?? 0) > 26 ? 'text-red-600' : ''}`}>
                   {selectedData?.summary?.totalCredits ?? 0}
                 </p>
+                {(selectedData?.summary?.totalCredits ?? 0) > 26 && (
+                  <p className="text-xs text-red-600 font-semibold mt-1">
+                    Exceeds limit by {(selectedData?.summary?.totalCredits ?? 0) - 26}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-gray-500 font-semibold">Credit Limit</p>
                 <p className="font-bold text-2xl">26</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-2">
+              {(selectedData?.summary?.totalCredits ?? 0) > 26 && (
+                <div className="bg-red-50 border border-red-300 rounded px-3 py-2 text-sm text-red-700">
+                  <p className="font-semibold">Credit limit exceeded!</p>
+                  <p className="text-xs">Request extra credits from your advisor before submitting.</p>
+                </div>
+              )}
               <button
-                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
+                className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmitForApproval}
-                disabled={submitting || (selectedData?.summary?.selectedCount || 0) === 0}
+                disabled={submitting || (selectedData?.summary?.selectedCount || 0) === 0 || (selectedData?.summary?.totalCredits ?? 0) > 26}
+                title={(selectedData?.summary?.totalCredits ?? 0) > 26 ? "Cannot submit: Total credits exceed limit. Request extra credits from your advisor." : ""}
               >
                 {submitting ? "Submitting..." : "Submit for Approval"}
               </button>

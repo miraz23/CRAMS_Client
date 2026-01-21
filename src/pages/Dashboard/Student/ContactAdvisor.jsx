@@ -213,11 +213,14 @@ function ContactAdvisor() {
   };
  
   // Calculate credits
-  const approvedCredits = registrationStatus?.summary?.totalCredits || 0;
-  const selectedCredits = selectedData?.summary?.totalCredits || 0;
+  // Note: selectedData.summary.totalCredits now includes selected + pending + approved courses
+  const totalCredits = selectedData?.summary?.totalCredits || 0;
   const creditLimit = 26;
-  const totalCredits = approvedCredits + selectedCredits;
   const extraCreditsNeeded = Math.max(0, totalCredits - creditLimit);
+  
+  // Breakdown for display
+  const approvedCredits = registrationStatus?.summary?.totalCredits || 0;
+  const pendingAndSelectedCredits = totalCredits - approvedCredits;
  
   // Pre-fill requested credits with computed extra credit needed (but don't overwrite user edits)
   useEffect(() => {
@@ -264,20 +267,24 @@ function ContactAdvisor() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="border-r border-gray-200 pr-4">
-                <p className="text-sm text-gray-500 mb-1">Approved Course Credits</p>
+                <p className="text-sm text-gray-500 mb-1">Approved Credits</p>
                 <p className="font-bold text-2xl text-green-600">{approvedCredits}</p>
               </div>
               <div className="border-r border-gray-200 pr-4">
-                <p className="text-sm text-gray-500 mb-1">Selected Course Credits</p>
-                <p className="font-bold text-2xl text-blue-600">{selectedCredits}</p>
+                <p className="text-sm text-gray-500 mb-1">Selected Credits</p>
+                <p className="font-bold text-2xl text-blue-600">{pendingAndSelectedCredits}</p>
               </div>
               <div className="border-r border-gray-200 pr-4">
-                <p className="text-sm text-gray-500 mb-1">Credit Limit</p>
-                <p className="font-bold text-2xl">{creditLimit}</p>
+                <p className="text-sm text-gray-500 mb-1">Total Credits</p>
+                <p className={`font-bold text-2xl ${totalCredits > creditLimit ? 'text-red-600' : 'text-gray-900'}`}>
+                  {totalCredits} / {creditLimit}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Extra Credit Needed</p>
-                <p className="font-bold text-2xl text-orange-600">{extraCreditsNeeded}</p>
+                <p className={`font-bold text-2xl ${extraCreditsNeeded > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                  {extraCreditsNeeded}
+                </p>
               </div>
             </div>
           </div>
