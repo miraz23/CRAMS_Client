@@ -1,94 +1,178 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Bell, LogOut, Menu } from "lucide-react";
 import AdminSidebar from "../../../../Components/AdminSidebar/AdminSidebar";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
-
-// NOTE: You would typically pass the active page and user info via props/context.
-// For this standalone component, we'll hardcode some data and state.
+import { getSystemSettings, updateSystemSettings } from "../../../../api/adminApi";
+import Loader from "../../../../Components/shared/Loader/Loader";
 
 const SystemSettings = () => {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
   const { role } = useUserRole();
-  // Mock state for the active tab and the Maintenance Mode toggle
-  const [activeTab, setActiveTab] = useState('General');
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  
+  // State for settings
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  
+  // Registration period settings
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
+  const [registrationStartDate, setRegistrationStartDate] = useState('');
+  const [registrationEndDate, setRegistrationEndDate] = useState('');
 
-  // Mock data for the navigation (Sidebar)
-  // const navItems = [
-  //   { name: 'Dashboard', icon: 'LayoutDashboard', active: false },
-  //   { name: 'Course Management', icon: 'BookOpen', active: false },
-  //   { name: 'Section Management', icon: 'Users', active: false },
-  //   { name: 'User Management', icon: 'User', active: false },
-  //   { name: 'System Settings', icon: 'Settings', active: true },
-  // ];
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
-  // Mock data for the General Settings fields
-  const generalSettings = [
-    { label: 'University Name', value: 'International Islamic University Chittagong' },
-    { label: 'Current Semester', value: 'Spring 2025' },
-    { label: 'System Email', value: 'crams@iiuc.ac.bd' },
-  ];
+  // Clear messages after 5 seconds
+  useEffect(() => {
+    if (successMessage || error) {
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, error]);
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await getSystemSettings();
+      const data = response.data.data;
+      
+      // Set registration period settings
+      setRegistrationEnabled(data.registrationPeriod?.enabled || false);
+      setRegistrationStartDate(
+        data.registrationPeriod?.startDate 
+          ? new Date(data.registrationPeriod.startDate).toISOString().split('T')[0] 
+          : ''
+      );
+      setRegistrationEndDate(
+        data.registrationPeriod?.endDate 
+          ? new Date(data.registrationPeriod.endDate).toISOString().split('T')[0] 
+          : ''
+      );
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading settings:', err);
+      setError('Failed to load system settings');
+      setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      // Validate registration period dates if enabled
+      if (registrationEnabled && registrationStartDate && registrationEndDate) {
+        const start = new Date(registrationStartDate);
+        const end = new Date(registrationEndDate);
+        if (start >= end) {
+          setError('Registration start date must be before end date');
+          setSaving(false);
+          return;
+        }
+      }
+
+      const payload = {
+        registrationPeriod: {
+          enabled: registrationEnabled,
+          startDate: registrationStartDate || null,
+          endDate: registrationEndDate || null,
+        }
+      };
+
+      await updateSystemSettings(payload);
+      setSuccessMessage('Settings saved successfully!');
+      setSaving(false);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      setError(err.response?.data?.message || 'Failed to save settings');
+      setSaving(false);
+    }
+  };
 
   const renderContent = () => {
-    switch (activeTab) {
-      case 'General':
-        return (
-          <>
-            <h3 className="text-lg font-semibold mb-2">General Settings</h3>
-            <p className="text-gray-500 mb-6 text-sm">Basic system configuration</p>
-            
-            {/* Input Fields Container */}
-            <div className="space-y-6">
-              {generalSettings.map((setting) => (
-                <div key={setting.label}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {setting.label}
-                  </label>
-                  <input
-                    type="text"
-                    value={setting.value}
-                    readOnly
-                    // You'll need styling here to match the look (e.g., border, padding)
-                    className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                  />
-                </div>
-              ))}
-
-              {/* Maintenance Mode Toggle */}
-              <div className="flex justify-between items-center pt-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Maintenance Mode
-                  </label>
-                  <p className="text-sm text-gray-500">
-                    Temporarily disable student access
-                  </p>
-                </div>
-                {/* Toggle Switch Placeholder - Replace with a proper switch component */}
-                <button 
-                  onClick={() => setMaintenanceMode(!maintenanceMode)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${maintenanceMode ? 'bg-blue-600' : 'bg-gray-200'}`}
-                  aria-checked={maintenanceMode}
-                  role="switch"
-                >
-                  <span 
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${maintenanceMode ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </button>
-              </div>
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-2">Registration Period</h3>
+        <p className="text-gray-500 mb-6 text-sm">Configure course registration period</p>
+        
+        {/* Registration Period Settings */}
+        <div className="space-y-6">
+          {/* Enable Registration Period Toggle */}
+          <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Enable Registration Period Restriction
+              </label>
+              <p className="text-sm text-gray-500">
+                Restrict course registration to a specific time period
+              </p>
             </div>
-          </>
-        );
-      case 'Registration':
-        return <p>Registration Settings content would go here.</p>;
-      case 'Notifications':
-        return <p>Notifications Settings content would go here.</p>;
-      default:
-        return null;
-    }
+            <button 
+              onClick={() => setRegistrationEnabled(!registrationEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${registrationEnabled ? 'bg-blue-600' : 'bg-gray-200'}`}
+              aria-checked={registrationEnabled}
+              role="switch"
+            >
+              <span 
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${registrationEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+              />
+            </button>
+          </div>
+
+          {/* Date Inputs */}
+          <div className={`space-y-4 ${!registrationEnabled ? 'opacity-50' : ''}`}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Registration Start Date
+              </label>
+              <input
+                type="date"
+                value={registrationStartDate}
+                onChange={(e) => setRegistrationStartDate(e.target.value)}
+                disabled={!registrationEnabled}
+                className="w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Registration End Date
+              </label>
+              <input
+                type="date"
+                value={registrationEndDate}
+                onChange={(e) => setRegistrationEndDate(e.target.value)}
+                disabled={!registrationEnabled}
+                className="w-full p-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {/* Info Box */}
+          {registrationEnabled && registrationStartDate && registrationEndDate && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-sm text-blue-800">
+                <strong>Registration Period:</strong> Students will only be able to select and register for courses between{' '}
+                <strong>{new Date(registrationStartDate).toLocaleDateString()}</strong> and{' '}
+                <strong>{new Date(registrationEndDate).toLocaleDateString()}</strong>.
+              </p>
+            </div>
+          )}
+        </div>
+      </>
+    );
   };
 
   const handleLogout = async () => {
@@ -101,48 +185,62 @@ const SystemSettings = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <AdminSidebar />
+        <main className="flex-1 overflow-y-auto flex items-center justify-center">
+          <Loader />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
-          <h1 className="text-2xl font-semibold text-gray-900">System Settings</h1>
-          <p className="text-gray-500 mb-6">Configure system-wide settings and preferences</p>
+        <div className="p-10">
+          <h1 className="text-3xl font-bold text-gray-900">Registration Period Settings</h1>
+          <p className="text-gray-500 mb-6">Configure when students can register for courses</p>
 
-          {/* Settings Tabs */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-4" aria-label="Tabs">
-              {['General', 'Registration', 'Notifications'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  // Styling the active tab with a blue underline/border
-                  className={`py-2 px-1 text-sm font-medium transition-colors ${
-                    activeTab === tab
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </nav>
-          </div>
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md">
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md">
+              {error}
+            </div>
+          )}
 
           {/* Settings Card/Container */}
           <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
             {renderContent()}
           </div>
 
-          {/* Save Settings Button - Fixed to bottom right in the image */}
-          {/* Note: In a real app, this would likely be outside the main content card */}
+          {/* Save Settings Button */}
           <div className="flex justify-end mt-6">
             <button 
-              className="flex items-center bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md hover:bg-blue-700 transition-colors"
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="flex items-center bg-blue-600 text-white font-medium py-2 px-4 rounded-md shadow-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              {/* Save Icon Placeholder */}
-              💾
-              <span className="ml-2">Save Settings</span>
+              {saving ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <span className="ml-2">Save Settings</span>
+                </>
+              )}
             </button>
           </div>
         </div>

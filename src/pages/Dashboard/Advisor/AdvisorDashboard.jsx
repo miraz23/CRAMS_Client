@@ -162,10 +162,10 @@ export default function AdvisorDashboard() {
           {/* Welcome Section */}
           <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, Dr. Akib
+              Welcome Back
             </h2>
             <p className="text-gray-600">
-              Here's your advising overview for Spring 2025
+              Here's your advising overview for Spring 2026
             </p>
           </div>
  

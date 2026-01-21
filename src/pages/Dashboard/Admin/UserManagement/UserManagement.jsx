@@ -842,12 +842,12 @@ const UserManagement = () => {
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="p-10">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+            <p className="text-gray-500 mb-6">Manage students and teachers</p>
           </div>
-          <p className="text-gray-500 mb-6">Manage students and teachers</p>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

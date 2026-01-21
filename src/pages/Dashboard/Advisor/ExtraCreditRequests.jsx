@@ -147,7 +147,15 @@ export default function ExtraCreditRequests() {
       />
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-          <div className="max-w-7xl mx-auto">
+            <div className="mb-4 sm:mb-0">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Advising Support
+              </h2>
+              <p className="text-gray-600">
+                View your recently approved course registrations
+              </p>
+            </div>
+          <div className="mt-4 max-w-7xl mx-auto">
             {loading ? (
               <div className="text-center py-12">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

@@ -86,3 +86,7 @@ export const uploadTeacherCSV = (formData) =>
     },
   });
 
+// System Settings
+export const getSystemSettings = () => adminClient.get('/system-settings');
+export const updateSystemSettings = (payload) => adminClient.put('/system-settings', payload);
+

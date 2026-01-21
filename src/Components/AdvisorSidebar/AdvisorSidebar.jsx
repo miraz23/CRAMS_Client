@@ -79,7 +79,7 @@ const AdvisorSidebar = ({
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">CRAMS</h1>
-              <p className="text-xs text-gray-500">Student Dashboard</p>
+              <p className="text-xs text-gray-500">Advisor Dashboard</p>
             </div>
           </div>
 

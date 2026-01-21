@@ -216,7 +216,7 @@ function CourseSelection() {
             </p>
           </div>
  
-          <div className="flex flex-col lg:flex-row border border-gray-300 p-6 rounded-lg justify-between items-center gap-4 bg-white">
+          <div className="flex flex-col lg:flex-row border border-gray-300 p-6 my-4 rounded-lg justify-between items-center gap-4 bg-white">
             <div className="flex gap-6">
               <div className="border-r-2 border-gray-200 pr-6">
                 <p className="text-gray-500 font-semibold">Selected Courses</p>
@@ -276,7 +276,7 @@ function CourseSelection() {
               </select>
             </div>
             <button
-              className="bg-gray-900 text-white rounded px-4 py-2"
+              className="mt-7 bg-gray-900 text-white rounded px-4 py-2"
               onClick={loadCourses}
               disabled={loading}
             >
@@ -284,7 +284,7 @@ function CourseSelection() {
             </button>
           </div>
  
-          <section className="space-y-4">
+          <section className="mt-4 space-y-4">
             {loading && <p className="text-gray-500">Loading courses...</p>}
             {!loading && filteredCourses.length === 0 && (
               <p className="text-gray-500">No courses found for the current filters.</p>

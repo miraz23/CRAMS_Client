@@ -96,3 +96,14 @@ export const getMyAppointments = async () => {
   }
 };
 
+// Get system settings (registration deadline, current semester, etc.)
+export const getSystemSettings = async () => {
+  try {
+    const { data } = await studentClient.get('/system-settings');
+    return data?.data || {};
+  } catch (error) {
+    console.error('Error fetching system settings:', error);
+    return {};
+  }
+};
+

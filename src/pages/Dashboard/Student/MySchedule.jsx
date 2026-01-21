@@ -269,7 +269,7 @@ function MySchedule() {
             <p className="text-3xl font-bold mb-1">My Schedule</p>
             <p className="text-lg text-gray-500">Your weekly class schedule for {schedule.semester || "Spring 2025"}.</p>
           </div>
-          <div className="border border-gray-300 p-6 rounded-lg bg-white">
+          <div className="border border-gray-300 p-6 rounded-lg bg-white mt-4">
             <div className="mb-4">
               <p className="text-lg font-semibold">Weekly Schedule</p>
               <p className="text-gray-500 text-sm">View your class timings and locations</p>

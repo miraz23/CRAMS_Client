@@ -1369,10 +1369,13 @@ const SectionManagementDashboard = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
+      <div className="flex-1 overflow-auto p-10">
+        <div className="">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold">Section Management</h2>
+            <div>
+              <h2 className="text-3xl font-bold mb-3">Section Management</h2>
+              <p className="text-gray-500 mb-6">Manage sections and their details</p>
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={handlePopulateSectionsFromStudents}

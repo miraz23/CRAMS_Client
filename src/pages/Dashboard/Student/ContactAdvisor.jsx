@@ -249,7 +249,7 @@ function ContactAdvisor() {
       />
       <div className="flex-1 overflow-auto">
         <div className="p-8">
-          <div>
+          <div className="mb-4">
             <p className="text-3xl font-bold">Contact Advisor</p>
             <p className="text-lg text-gray-600">
               Request extra credits or book an appointment with your advisor.
@@ -257,7 +257,7 @@ function ContactAdvisor() {
           </div>
  
           {/* Credit Summary Card */}
-          <div className="border border-gray-300 p-6 rounded-lg bg-white">
+          <div className="border border-gray-300 p-6 rounded-lg bg-white mb-4">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5" />
               Credit Information
@@ -284,7 +284,7 @@ function ContactAdvisor() {
  
           {/* Advisor Info Card */}
           {advisorInfo && (
-            <div className="border border-gray-300 p-6 rounded-lg bg-white">
+            <div className="border border-gray-300 p-6 rounded-lg bg-white mb-4">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <User className="w-5 h-5" />
                 Your Advisor

@@ -147,11 +147,11 @@ const AdminDashboard = () => {
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar onLogout={handleLogout} />
       <div className="flex-1 overflow-auto">
-        <div className="p-8">
+        <div className="p-10">
           {/* Welcome Section */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              System Dashboard
+              Admin Dashboard
             </h2>
             <p className="text-gray-600">
               Monitor and manage the CRAMS platform

@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import StudentSidebar from "../../../Components/StudentSidebar/StudentSidebar";
 import Swal from "sweetalert2";
-import { fetchRegistrationStatus, fetchSchedule } from "../../../api/studentApi";
+import { fetchRegistrationStatus, fetchSchedule, getSystemSettings } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
 
 export default function StdDashboard() {
@@ -17,16 +17,19 @@ export default function StdDashboard() {
   const [regSummary, setRegSummary] = useState({});
   const [recentRegs, setRecentRegs] = useState([]);
   const [scheduleSummary, setScheduleSummary] = useState({});
+  const [systemSettings, setSystemSettings] = useState({});
 
   const loadData = async () => {
     try {
-      const [statusData, scheduleData] = await Promise.all([
+      const [statusData, scheduleData, settingsData] = await Promise.all([
         fetchRegistrationStatus(),
         fetchSchedule(),
+        getSystemSettings(),
       ]);
       setRegSummary(statusData?.summary || {});
       setRecentRegs((statusData?.registrations || []).slice(0, 3));
       setScheduleSummary(scheduleData?.summary || {});
+      setSystemSettings(settingsData || {});
     } catch (error) {
       const message = error.response?.data?.message || "Unable to load dashboard data.";
       Swal.fire({ icon: "error", title: "Error", text: message });
@@ -77,13 +80,46 @@ export default function StdDashboard() {
     [regSummary]
   );
 
+  // Format registration deadline
+  const formatDeadline = () => {
+    const regPeriod = systemSettings?.registrationPeriod;
+    if (!regPeriod || !regPeriod.enabled) {
+      return "Not Available";
+    }
+    if (regPeriod.endDate) {
+      const endDate = new Date(regPeriod.endDate);
+      return endDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    }
+    return "Check portal notice";
+  };
+
+  // Format days with classes
+  const formatActiveDays = () => {
+    const days = scheduleSummary.daysWithClasses;
+    if (!days || days.length === 0) {
+      return "N/A";
+    }
+    return days.join(", ");
+  };
+
   const deadlines = [
     {
       title: "Course Registration Deadline",
-      date: "Check portal notice",
-      days: scheduleSummary.daysWithClasses?.length
-        ? `${scheduleSummary.daysWithClasses.length} active days`
-        : "N/A",
+      date: formatDeadline(),
+      info: systemSettings?.registrationPeriod?.enabled 
+        ? "Registration is open" 
+        : "Registration is currently closed",
+    },
+    {
+      title: "Active Class Days",
+      date: formatActiveDays(),
+      info: scheduleSummary.daysWithClasses?.length 
+        ? `${scheduleSummary.daysWithClasses.length} days per week`
+        : "No classes scheduled",
     },
   ];
 
@@ -94,8 +130,8 @@ export default function StdDashboard() {
         <div className="p-8">
           {/* Welcome Section */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
-            <p className="text-gray-600">Overview synced from backend data.</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+            <p className="text-gray-600">Here's your registration overview for Spring 2026</p>
           </div>
 
           {/* Stats Cards */}
@@ -179,15 +215,13 @@ export default function StdDashboard() {
                     key={index}
                     className="pb-4 border-b border-gray-100 last:border-0"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-gray-900 text-sm">
-                        {deadline.title}
-                      </h4>
-                      <span className="text-xs font-bold text-gray-900">
-                        {deadline.days}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">{deadline.date}</p>
+                    <h4 className="font-semibold text-gray-900 text-sm mb-2">
+                      {deadline.title}
+                    </h4>
+                    <p className="text-base font-bold text-blue-600 mb-1">
+                      {deadline.date}
+                    </p>
+                    <p className="text-xs text-gray-500">{deadline.info}</p>
                   </div>
                 ))}
               </div>

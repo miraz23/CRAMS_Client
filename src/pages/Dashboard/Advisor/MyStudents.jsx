@@ -159,18 +159,6 @@ export default function MyStudents() {
                   <Clock className="w-8 h-8 text-blue-600" />
                 </div>
               </div>
-
-              <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Average CGPA</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {summary.averageCGPA ? summary.averageCGPA.toFixed(2) : "N/A"}
-                    </p>
-                  </div>
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
             </div>
           )}
 

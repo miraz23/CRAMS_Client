@@ -266,7 +266,7 @@ function Routine() {
             <p className="text-3xl font-bold mb-1">Routine</p>
             <p className="text-lg text-gray-500">All courses in your section for {routine.semester || "Spring 2025"}.</p>
           </div>
-          <div className="border border-gray-300 p-6 rounded-lg bg-white">
+          <div className="border border-gray-300 p-6 rounded-lg bg-white mt-4">
             <div className="mb-4">
               <p className="text-lg font-semibold">Weekly Schedule</p>
               <p className="text-gray-500 text-sm">View all class timings and locations for your section</p>
