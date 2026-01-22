@@ -17,9 +17,7 @@ const PrivateRoutes = ({ children, allowedRoles }) => {
         return <Navigate to="/login" state={location.pathname}></Navigate>;
     }
 
-    // If allowedRoles is specified, check if user's role is allowed
     if (allowedRoles && allowedRoles.length > 0) {
-        // Normalize role to lowercase for case-insensitive comparison
         const normalizedRole = role?.toLowerCase();
         const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
         

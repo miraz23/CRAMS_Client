@@ -52,7 +52,6 @@ function ContactAdvisor() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Use Promise.allSettled to handle individual failures gracefully
       const results = await Promise.allSettled([
         getMyExtraCreditRequests().catch(() => []),
         fetchSelectedCourses().catch(() => ({ courses: [], summary: {} })),
@@ -61,7 +60,6 @@ function ContactAdvisor() {
         getMyAppointments().catch(() => []),
       ]);
  
-      // Extract results safely
       const requestsData = results[0].status === 'fulfilled' ? results[0].value : [];
       const selectedCourses = results[1].status === 'fulfilled' ? results[1].value : { courses: [], summary: {} };
       const registrationData = results[2].status === 'fulfilled' ? results[2].value : { registrations: [], summary: {} };
@@ -74,7 +72,6 @@ function ContactAdvisor() {
       setAdvisorInfo(advisorData || null);
       setAppointments(appointmentsData || []);
  
-      // Auto-fill semester from selected courses if available
       if (selectedCourses?.courses?.length > 0 && !extraCreditForm.semester) {
         const semester = selectedCourses.courses[0]?.semester || "";
         if (semester) {
@@ -83,7 +80,6 @@ function ContactAdvisor() {
       }
     } catch (error) {
       console.error("Error loading data:", error);
-      // Don't show error alert for individual failures, just log them
     } finally {
       setLoading(false);
     }
@@ -91,7 +87,6 @@ function ContactAdvisor() {
  
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
  
   const handleExtraCreditSubmit = async (e) => {
@@ -103,7 +98,6 @@ function ContactAdvisor() {
     }
  
     const requested = parseFloat(extraCreditForm.requestedCredits);
-    // Backend enforces minimum 1 credit
     if (Number.isNaN(requested) || requested < 1) {
       Swal.fire({ icon: "warning", title: "Validation Error", text: "Please enter a valid number of credits (at least 1)." });
       return;
@@ -212,17 +206,13 @@ function ContactAdvisor() {
     }
   };
  
-  // Calculate credits
-  // Note: selectedData.summary.totalCredits now includes selected + pending + approved courses
   const totalCredits = selectedData?.summary?.totalCredits || 0;
   const creditLimit = 26;
   const extraCreditsNeeded = Math.max(0, totalCredits - creditLimit);
   
-  // Breakdown for display
   const approvedCredits = registrationStatus?.summary?.totalCredits || 0;
   const pendingAndSelectedCredits = totalCredits - approvedCredits;
  
-  // Pre-fill requested credits with computed extra credit needed (but don't overwrite user edits)
   useEffect(() => {
     if (activeTab !== "extraCredit") return;
     if (submitting) return;
@@ -234,7 +224,6 @@ function ContactAdvisor() {
         requestedCredits: extraCreditsNeeded > 0 ? String(extraCreditsNeeded) : "",
       }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, extraCreditsNeeded, submitting]);
  
   return (

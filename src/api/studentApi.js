@@ -1,7 +1,6 @@
 import axios from 'axios';
 import API_BASE_URL from '../config/api';
 
-// Axios instance pre-configured for student endpoints
 const studentClient = axios.create({
   baseURL: `${API_BASE_URL}/student`,
   withCredentials: true,
@@ -45,7 +44,6 @@ export const fetchRoutine = async (params = {}) => {
   return data?.data || { weeklySchedule: {}, courses: [], summary: {} };
 };
 
-// Extra Credit Request APIs
 export const createExtraCreditRequest = async (semester, requestedCredits, reason) => {
   const { data } = await studentClient.post('/extra-credit-requests', {
     semester,
@@ -60,13 +58,11 @@ export const getMyExtraCreditRequests = async (params = {}) => {
   return data?.data || [];
 };
 
-// Advisor Appointment APIs
 export const getMyAdvisor = async () => {
   try {
     const { data } = await studentClient.get('/advisor');
     return data?.data || null;
   } catch (error) {
-    // Return null if advisor not found instead of throwing
     if (error.response?.status === 404) {
       return null;
     }
@@ -88,7 +84,6 @@ export const getMyAppointments = async () => {
     const { data } = await studentClient.get('/appointments');
     return data?.data || [];
   } catch (error) {
-    // Return empty array if appointments not found
     if (error.response?.status === 404) {
       return [];
     }
@@ -96,7 +91,6 @@ export const getMyAppointments = async () => {
   }
 };
 
-// Get system settings (registration deadline, current semester, etc.)
 export const getSystemSettings = async () => {
   try {
     const { data } = await studentClient.get('/system-settings');

@@ -24,7 +24,6 @@ const Profile = () => {
         formState: { isSubmitting },
     } = useForm();
 
-    // Fetch user data using email
     const { data: userDetails, isLoading } = useQuery({
         queryKey: ["userProfile", user?.email],
         queryFn: async () => {

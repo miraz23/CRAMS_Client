@@ -9,7 +9,6 @@ import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 
-// Add/Edit Modal Component
 const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
   const isEditing = !!section;
   const [formData, setFormData] = useState({
@@ -19,14 +18,12 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
     regularStudents: 0,
     maxIrregularStudents: 0,
     totalCapacity: 0,
-    // enrolledStudents is managed automatically from student data after CSV upload
     crName: "",
     crContact: "",
     acrName: "",
     acrContact: "",
   });
 
-  // Keep local form state in sync with the passed-in section when editing
   useEffect(() => {
     if (section) {
       const regularStudents = section.enrolledStudents || 0;
@@ -69,7 +66,6 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
             : value,
       };
       
-      // Calculate totalCapacity when regularStudents or maxIrregularStudents change
       if (name === "regularStudents" || name === "maxIrregularStudents") {
         const regularStudents = name === "regularStudents" 
           ? (value === "" ? 0 : parseInt(value) || 0)
@@ -260,7 +256,6 @@ const SectionModal = ({ isOpen, onClose, onSave, section, advisors = [] }) => {
   );
 };
 
-// Delete Confirmation Modal
 const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
   if (!isOpen) return null;
   return (
@@ -296,7 +291,6 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, section }) => {
   );
 };
 
-// Metric Card Component
 const MetricCard = ({ title, value }) => (
   <div className="bg-white p-5 rounded-xl shadow-md">
     <h4 className="text-sm text-gray-500">{title}</h4>
@@ -304,13 +298,10 @@ const MetricCard = ({ title, value }) => (
   </div>
 );
 
-// Helper functions for time conversion
 const convertTimeTo24Hour = (timeStr) => {
   if (!timeStr) return '';
-  // If already in 24-hour format (HH:MM), return as is
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
   
-  // Convert from "10:00 AM" format to "10:00"
   const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
   if (!match) return '';
   
@@ -326,10 +317,8 @@ const convertTimeTo24Hour = (timeStr) => {
 
 const convertTimeTo12Hour = (timeStr) => {
   if (!timeStr) return '';
-  // If already in 12-hour format, return as is
   if (/\d{1,2}:\d{2}\s*(AM|PM)/i.test(timeStr)) return timeStr;
   
-  // Convert from "10:00" format to "10:00 AM"
   const match = timeStr.match(/(\d{2}):(\d{2})/);
   if (!match) return '';
   
@@ -343,7 +332,6 @@ const convertTimeTo12Hour = (timeStr) => {
   return `${hours}:${minutes} ${period}`;
 };
 
-// Parse time string to get hour, minute, and period
 const parseTime = (timeStr) => {
   if (!timeStr) return { hour: 12, minute: 0, period: 'AM' };
   
@@ -356,7 +344,6 @@ const parseTime = (timeStr) => {
     };
   }
   
-  // Try 24-hour format
   const match24 = timeStr.match(/(\d{2}):(\d{2})/);
   if (match24) {
     let hours = parseInt(match24[1]);
@@ -370,12 +357,10 @@ const parseTime = (timeStr) => {
   return { hour: 12, minute: 0, period: 'AM' };
 };
 
-// Format time from hour, minute, period
 const formatTime = (hour, minute, period) => {
   return `${hour}:${minute.toString().padStart(2, '0')} ${period}`;
 };
 
-// Time Picker Component
 const TimePicker = ({ value, onChange, placeholder = "Select time" }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedHour, setSelectedHour] = useState(12);
@@ -393,7 +378,6 @@ const TimePicker = ({ value, onChange, placeholder = "Select time" }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Scroll to selected values
       setTimeout(() => {
         const hourElement = document.getElementById(`hour-${selectedHour}`);
         const minuteElement = document.getElementById(`minute-${selectedMinute}`);
@@ -543,7 +527,6 @@ const TimePicker = ({ value, onChange, placeholder = "Select time" }) => {
   );
 };
 
-// Section Detail Modal Component
 const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
   const [sectionDetails, setSectionDetails] = useState(null);
   const [courses, setCourses] = useState([]);
@@ -559,7 +542,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
     }
   }, [isOpen, section]);
 
-  // Fetch courses when sectionDetails is available
   useEffect(() => {
     if (isOpen && section && sectionDetails) {
       fetchCourses();
@@ -574,7 +556,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
-      // Silently fail - instructor names will show as IDs if teachers can't be fetched
     }
   };
 
@@ -599,13 +580,10 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
 
   const normalizeTime = (timeStr) => {
     if (!timeStr) return '';
-    // If already in 12-hour format, return as is
     if (/\d{1,2}:\d{2}\s*(AM|PM)/i.test(timeStr)) return timeStr.trim();
-    // If in 24-hour format, convert to 12-hour
     if (/^\d{2}:\d{2}$/.test(timeStr)) {
       return convertTimeTo12Hour(timeStr);
     }
-    // Return as is if format is unclear
     return timeStr.trim();
   };
 
@@ -615,20 +593,16 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
       if (response.data.success) {
         const coursesData = response.data.data || [];
         setCourses(coursesData);
-        // Initialize course schedules from section-specific schedules or course default
         const schedules = {};
-        // Use provided sectionDetailsData or fall back to state
         const sectionDataToUse = sectionDetailsData || sectionDetails;
         const sectionCourseSchedules = sectionDataToUse?.courseSchedules || {};
         
         coursesData.forEach(course => {
           const courseId = course.id;
           
-          // First, check if section has a specific schedule for this course
           if (sectionCourseSchedules[courseId]) {
             const sectionSchedule = sectionCourseSchedules[courseId];
             
-            // Check if new daySchedules structure exists
             if (sectionSchedule.daySchedules && Array.isArray(sectionSchedule.daySchedules) && sectionSchedule.daySchedules.length > 0) {
               schedules[courseId] = {
                 daySchedules: sectionSchedule.daySchedules.map(ds => ({
@@ -639,7 +613,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
                 })),
               };
             } else {
-              // Convert legacy structure to new format
               const days = Array.isArray(sectionSchedule.days) ? [...sectionSchedule.days] : [];
               const startTime = normalizeTime(sectionSchedule.startTime || '');
               const endTime = normalizeTime(sectionSchedule.endTime || '');
@@ -655,7 +628,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
               };
             }
           } else {
-            // Fall back to course default schedule
             const courseSchedule = course.schedule || {};
             
             if (courseSchedule.daySchedules && Array.isArray(courseSchedule.daySchedules) && courseSchedule.daySchedules.length > 0) {
@@ -668,7 +640,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
                 })),
               };
             } else {
-              // Convert legacy structure to new format
               const days = Array.isArray(courseSchedule.days) ? [...courseSchedule.days] : [];
               const startTime = normalizeTime(courseSchedule.startTime || '');
               const endTime = normalizeTime(courseSchedule.endTime || '');
@@ -702,15 +673,12 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
       const currentSchedule = prev[courseId] || { daySchedules: [] };
       const daySchedules = currentSchedule.daySchedules || [];
       
-      // Check if day already exists
       const existingDayIndex = daySchedules.findIndex(ds => ds.day === day);
       
       let newDaySchedules;
       if (existingDayIndex >= 0) {
-        // Remove the day
         newDaySchedules = daySchedules.filter(ds => ds.day !== day);
       } else {
-        // Add the day with default empty times (or copy from first existing day if available)
         const defaultStartTime = daySchedules.length > 0 ? daySchedules[0].startTime : '';
         const defaultEndTime = daySchedules.length > 0 ? daySchedules[0].endTime : '';
         const defaultRoom = daySchedules.length > 0 ? daySchedules[0].room : '';
@@ -785,7 +753,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
     try {
       setSaving(true);
       const schedule = courseSchedules[courseId];
-      // Normalize times to 12-hour format and save using new daySchedules structure
       const scheduleToSave = {
         daySchedules: (schedule.daySchedules || []).map(ds => ({
           day: ds.day,
@@ -794,7 +761,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
           room: ds.room || '',
         })),
       };
-      // Save to section-specific schedule instead of course
       await updateSectionCourseSchedule(section.id, courseId, scheduleToSave);
       Swal.fire({
         icon: "success",
@@ -802,12 +768,10 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
         text: "Schedule updated successfully",
         timer: 1500,
       });
-      // Refresh section details and courses to get updated schedules
       const response = await getSection(section.id);
       if (response.data.success) {
         const updatedSectionDetails = response.data.data;
         setSectionDetails(updatedSectionDetails);
-        // Pass the updated section details directly to fetchCourses
         await fetchCourses(updatedSectionDetails);
       }
     } catch (error) {
@@ -835,7 +799,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
             room: ds.room || '',
           })),
         };
-        // Save to section-specific schedule instead of course
         return updateSectionCourseSchedule(section.id, courseId, scheduleToSave);
       });
       await Promise.all(updatePromises);
@@ -845,12 +808,10 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
         text: "All schedules updated successfully",
         timer: 1500,
       });
-      // Refresh section details and courses to get updated schedules
       const response = await getSection(section.id);
       if (response.data.success) {
         const updatedSectionDetails = response.data.data;
         setSectionDetails(updatedSectionDetails);
-        // Pass the updated section details directly to fetchCourses
         await fetchCourses(updatedSectionDetails);
       }
     } catch (error) {
@@ -875,27 +836,20 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
 
   const daysOfWeek = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
 
-  // Helper function to get instructor name by ID
   const getInstructorName = (instructorId) => {
-    // First try to find in teachers array
     const teacher = teachers.find((t) => t.teacherId === instructorId);
     if (teacher?.name) return teacher.name;
     
-    // Then try to match with instructorNames array from backend
-    // This will be checked per course in the map function
     return instructorId;
   };
 
-  // Helper function to get instructor for a course in this section
   const getCourseInstructor = (course) => {
     const sectionName = sectionDetails?.sectionName || section.sectionName;
     
-    // Check if course uses section-specific instructor assignments
     const hasSectionSpecificInstructors = course.instructorSections && 
       Array.isArray(course.instructorSections) && 
       course.instructorSections.length > 0;
     
-    // First, try to find instructor assigned to this specific section
     if (sectionName && hasSectionSpecificInstructors) {
       const sectionInstructor = course.instructorSections.find(instSec => 
         instSec.sections && instSec.sections.includes(sectionName)
@@ -905,11 +859,9 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
         const instructorId = sectionInstructor.instructorId;
         return getInstructorName(instructorId);
       }
-      // If section-specific assignments exist but this section has no instructor, return —
       return "—";
     }
     
-    // Only fallback to general course instructors if section-specific assignments are NOT being used
     if (!hasSectionSpecificInstructors) {
       if (Array.isArray(course.instructorNames) && course.instructorNames.length > 0) {
         return course.instructorNames.join(", ");
@@ -1144,7 +1096,6 @@ const SectionDetailModal = ({ isOpen, onClose, section, advisors = [] }) => {
   );
 };
 
-// Main Section Management Component
 const SectionManagementDashboard = () => {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -1227,7 +1178,6 @@ const SectionManagementDashboard = () => {
   const handleSaveSection = async (sectionData) => {
     try {
       if (sectionData.id) {
-        // Update existing section
         const response = await updateSection(sectionData.id, sectionData);
         if (response.data.success) {
           Swal.fire({
@@ -1239,7 +1189,6 @@ const SectionManagementDashboard = () => {
           fetchSections();
         }
       } else {
-        // Create new section
         const response = await createSection(sectionData);
         if (response.data.success) {
           Swal.fire({
@@ -1285,7 +1234,6 @@ const SectionManagementDashboard = () => {
 
   const handlePopulateSectionsFromStudents = async () => {
     try {
-      // Show confirmation dialog
       const result = await Swal.fire({
         title: 'Populate Sections from Student Data?',
         text: 'This will create sections for all distinct section names found in student data. Existing sections will be skipped.',
@@ -1301,7 +1249,6 @@ const SectionManagementDashboard = () => {
         return;
       }
 
-      // Show loading
       Swal.fire({
         title: 'Processing...',
         text: 'Populating sections from student data',
@@ -1321,7 +1268,6 @@ const SectionManagementDashboard = () => {
           message += ` ${skipped} section(s) were skipped (already exist or failed to create).`;
         }
 
-        // Show detailed results
         let detailsHtml = '';
         if (sections && sections.length > 0) {
           detailsHtml += '<div style="text-align: left; margin-top: 10px;"><strong>Created Sections:</strong><ul style="margin-top: 5px;">';
@@ -1345,7 +1291,6 @@ const SectionManagementDashboard = () => {
           confirmButtonText: 'OK',
         });
 
-        // Refresh sections list
         fetchSections();
       }
     } catch (error) {
@@ -1358,7 +1303,6 @@ const SectionManagementDashboard = () => {
     }
   };
 
-  // Get unique semesters from sections
   const semesters = useMemo(() => {
     const semSet = new Set(sections.map(s => s.semester).filter(Boolean));
     return ['All Semesters', ...Array.from(semSet)];

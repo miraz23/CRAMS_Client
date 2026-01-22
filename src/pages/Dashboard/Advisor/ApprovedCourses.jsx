@@ -23,20 +23,16 @@ export default function ApprovedCourses() {
     fetchApprovedCourses();
   }, []);
  
-  // Refresh data when navigating to this page
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    // Refresh when location changes (user navigates to this page)
     if (location.pathname === '/advisor/dashboard/approvedcourses') {
       fetchApprovedCourses();
     }
   }, [location.pathname]);
  
-  // Refresh data when page comes into focus (user switches tabs/windows)
-  // Only refresh if we're on the approved courses page
   useEffect(() => {
     const handleFocus = () => {
       if (location.pathname === '/advisor/dashboard/approvedcourses') {
@@ -57,7 +53,6 @@ export default function ApprovedCourses() {
  
       setSummary(data.summary || { totalApproved: 0, approvedThisWeek: 0, totalCredits: 0 });
  
-      // Format approved courses for display
       const formattedCourses = (data.recentApprovals || []).map((course, index) => ({
         id: index + 1,
         code: course.courseCode || "",
@@ -84,8 +79,6 @@ export default function ApprovedCourses() {
   const handleExport = async () => {
     try {
       const data = await getApprovedCourses({ format: 'csv' });
-      // The backend should return CSV data, but if it returns JSON, we need to handle it
-      // For now, just show a message
       Swal.fire({
         icon: "info",
         title: "Export",

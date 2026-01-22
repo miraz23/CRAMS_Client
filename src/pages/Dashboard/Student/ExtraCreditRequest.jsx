@@ -44,7 +44,6 @@ function ExtraCreditRequest() {
       setRequests(requestsData || []);
       setSelectedData(selectedCourses || { courses: [], summary: {} });
  
-      // Auto-fill semester from selected courses if available
       if (selectedCourses?.courses?.length > 0) {
         const semester = selectedCourses.courses[0]?.semester || "";
         if (semester && !formData.semester) {
@@ -61,7 +60,6 @@ function ExtraCreditRequest() {
  
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
  
   const handleSubmit = async (e) => {

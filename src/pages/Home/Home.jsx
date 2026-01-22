@@ -22,7 +22,6 @@ import {
 } from "react-icons/fi";
 import { LuGraduationCap } from "react-icons/lu";
 
-// Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -48,7 +47,6 @@ const staggerContainer = {
   },
 };
 
-// Reusable animation component
 const AnimatedSection = ({ children, className = "", delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -67,7 +65,6 @@ const AnimatedSection = ({ children, className = "", delay = 0 }) => {
   );
 };
 
-// FAQ Component
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -177,7 +174,6 @@ const FAQSection = () => {
   );
 };
 
-// Notice Slider Component
 const NoticeSlider = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -268,7 +264,6 @@ const NoticeSlider = () => {
     });
   };
 
-  // Auto-play functionality
   useEffect(() => {
     const timer = setInterval(() => {
       paginate(1);

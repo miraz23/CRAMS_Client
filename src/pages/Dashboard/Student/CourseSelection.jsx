@@ -54,7 +54,6 @@ function CourseSelection() {
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
-      // Silently fail - instructor names will show as IDs if teachers can't be fetched
     }
   };
  
@@ -73,17 +72,14 @@ function CourseSelection() {
       setSelectedData(selected || { courses: [], summary: {} });
       setIsSelectionLocked(Array.isArray(extraRequests) && extraRequests.some((r) => r?.status === "approved"));
  
-      // Debug: Log selected data to check structure
       console.log('Selected Data:', selected);
       console.log('Total Credits:', selected?.summary?.totalCredits);
  
-      // Initialize selected sections from available courses
       const sectionsMap = {};
       (available || []).forEach(course => {
         if (course.selectedSectionId) {
           sectionsMap[course.id] = course.selectedSectionId;
         } else if (course.isRegular && course.sections && course.sections.length > 0) {
-          // For regular students, auto-select their section
           sectionsMap[course.id] = course.sections[0].id;
         }
       });
@@ -102,7 +98,6 @@ function CourseSelection() {
  
   useEffect(() => {
     loadCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departmentFilter]);
  
   const handleSectionChange = (courseId, sectionId) => {
@@ -116,13 +111,11 @@ function CourseSelection() {
     try {
       if (course.isSelected) {
         await removeCourseSelection(course.id);
-        // Clear selected section
         setSelectedSections(prev => {
           const updated = { ...prev };
           delete updated[course.id];
           return updated;
         });
-        // Update state locally without full refresh
         setAvailableCourses(prev => prev.map(c => 
           c.id === course.id ? { ...c, isSelected: false } : c
         ));
@@ -146,14 +139,11 @@ function CourseSelection() {
           });
           return;
         }
-        // Determine section ID to use
         let sectionIdToUse = null;
         if (course.sections && course.sections.length > 0) {
           if (course.isRegular) {
-            // Regular students: always use their section (first/only section)
             sectionIdToUse = course.sections[0].id;
           } else {
-            // Irregular students: require section selection
             sectionIdToUse = selectedSections[course.id];
             if (!sectionIdToUse) {
               Swal.fire({ 
@@ -167,7 +157,6 @@ function CourseSelection() {
         }
         const response = await addCourseSelection(course.id, sectionIdToUse);
         
-        // Update state locally without full refresh
         setAvailableCourses(prev => prev.map(c => 
           c.id === course.id ? { ...c, isSelected: true, selectedSectionId: sectionIdToUse } : c
         ));
@@ -184,7 +173,6 @@ function CourseSelection() {
           };
         });
         
-        // Check if there's a warning about credit limit
         if (response?.warning) {
           Swal.fire({ 
             icon: "warning", 
@@ -197,7 +185,6 @@ function CourseSelection() {
     } catch (error) {
       const message = error.response?.data?.message || "Update failed.";
       Swal.fire({ icon: "error", title: "Error", text: message });
-      // Reload courses on error to ensure consistency
       await loadCourses();
     }
   };
@@ -370,10 +357,6 @@ function CourseSelection() {
                       };
                       const statusBadge = getStatusBadge();
  
-                      // Get selected section
-                      // Priority: 1. course.selectedSectionId (from registration for submitted/approved courses)
-                      // 2. For regular students, use their section (first/only section in array)
-                      // 3. For irregular students, use the selected section from state
                       const isSubmittedOrApproved = (course.isSelected && (registrationStatus === 'pending' || registrationStatus === 'approved')) || isRegistered;
                       const selectedSectionId = course.selectedSectionId 
                         ? course.selectedSectionId
@@ -381,7 +364,6 @@ function CourseSelection() {
                           ? (course.sections && course.sections.length > 0 ? course.sections[0].id : null)
                           : (selectedSections[course.id] || null));
  
-                      // Find section by matching IDs (handle both string and object ID formats)
                       const selectedSection = selectedSectionId 
                         ? course.sections?.find(s => {
                             const sectionId = s.id?.toString();
@@ -390,13 +372,10 @@ function CourseSelection() {
                           })
                         : (course.isRegular && course.sections && course.sections.length > 0 ? course.sections[0] : null);
  
-                      // Helper function to get instructor name by ID
                       const getInstructorName = (instructorId) => {
-                        // First try to find in teachers array
                         const teacher = teachers.find((t) => t.teacherId === instructorId);
                         if (teacher?.name) return teacher.name;
  
-                        // Then try to match with instructorNames array from backend
                         if (Array.isArray(course.instructors) && Array.isArray(course.instructorNames)) {
                           const index = course.instructors.findIndex(id => id === instructorId);
                           if (index >= 0 && course.instructorNames[index]) {
@@ -404,23 +383,17 @@ function CourseSelection() {
                           }
                         }
  
-                        // Fallback to ID if name not found
                         return instructorId;
                       };
  
-                      // Get instructor for selected section
                       let instructorNames = "—";
  
-                      // Check if course uses section-specific instructor assignments
                       const hasSectionSpecificInstructors = course.instructorSections && 
                         Array.isArray(course.instructorSections) && 
                         course.instructorSections.length > 0;
  
                       if (selectedSection) {
-                        // Always check for section-specific instructor first when a section is selected
                         if (hasSectionSpecificInstructors) {
-                          // Find instructor assigned to this specific section
-                          // Use case-insensitive matching to handle any case differences
                           const sectionNameUpper = selectedSection.sectionName?.toUpperCase().trim();
                           const sectionInstructor = course.instructorSections.find(instSec => {
                             if (!instSec.sections || !Array.isArray(instSec.sections)) return false;
@@ -433,8 +406,6 @@ function CourseSelection() {
                             const instructorId = sectionInstructor.instructorId;
                             instructorNames = getInstructorName(instructorId);
                           } else {
-                            // Section-specific assignments exist but this section has no instructor assigned
-                            // Fallback to general course instructors for submitted/approved courses
                             if (isSubmittedOrApproved) {
                               instructorNames =
                                 Array.isArray(course.instructorNames) && course.instructorNames.length > 0
@@ -450,7 +421,6 @@ function CourseSelection() {
                             }
                           }
                         } else {
-                          // No section-specific assignments: fallback to general course instructors
                           instructorNames =
                             Array.isArray(course.instructorNames) && course.instructorNames.length > 0
                               ? course.instructorNames.join(", ")
@@ -462,7 +432,6 @@ function CourseSelection() {
                               : course.instructor || "—";
                         }
                       } else if (isSubmittedOrApproved) {
-                        // For submitted/approved courses without section, show general instructors
                         instructorNames =
                           Array.isArray(course.instructorNames) && course.instructorNames.length > 0
                             ? course.instructorNames.join(", ")
@@ -473,7 +442,6 @@ function CourseSelection() {
                                 .join(", ")
                             : course.instructor || "—";
                       } else {
-                        // No section selected: show — (irregular students must select a section first)
                         instructorNames = "—";
                       }
  
@@ -486,14 +454,12 @@ function CourseSelection() {
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {course.sections && course.sections.length > 0 ? (
                               (course.isRegular || isSubmittedOrApproved) ? (
-                                // Regular students OR submitted/approved courses: show section name as text (no dropdown)
                                 <div className="flex flex-col gap-1">
                                   <span className="text-gray-700">
                                     {selectedSection?.sectionName || course.sections[0]?.sectionName || "—"}
                                   </span>
                                 </div>
                               ) : (
-                                // Irregular students (not yet submitted/approved): show dropdown
                                 <select
                                   className="border rounded-lg p-2 text-sm min-w-[150px] bg-white cursor-pointer text-gray-700"
                                   value={selectedSections[course.id] || ""}
@@ -516,14 +482,12 @@ function CourseSelection() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {(() => {
-                              // Use section schedule if available, otherwise fall back to course schedule for submitted/approved courses
                               const scheduleToShow = selectedSection?.schedule || (isSubmittedOrApproved ? course.schedule : null);
  
                               if (!scheduleToShow) {
                                 return "—";
                               }
  
-                              // Handle new daySchedules structure (per-day scheduling)
                               if (scheduleToShow?.daySchedules && Array.isArray(scheduleToShow.daySchedules) && scheduleToShow.daySchedules.length > 0) {
                                 return (
                                   <>
@@ -537,7 +501,6 @@ function CourseSelection() {
                                 );
                               }
  
-                              // Handle legacy structure (single time for all days)
                               if ((scheduleToShow?.days || []).length > 0) {
                                 return (
                                   <>
@@ -567,7 +530,6 @@ function CourseSelection() {
                                   </span>
                                 );
                               } else if (isSubmittedOrApproved && course.seats) {
-                                // Fallback to course-level seat info if section not found for submitted/approved courses
                                 return (
                                   <span>
                                     {course.seats.enrolled}/{course.seats.total}

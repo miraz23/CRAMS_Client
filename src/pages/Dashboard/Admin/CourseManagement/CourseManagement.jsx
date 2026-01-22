@@ -7,7 +7,6 @@ import Swal from "sweetalert2";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 
-// Initial Course Data structure matching backend API
 const emptyCourse = {
     courseCode: "",
     courseName: "",
@@ -34,7 +33,6 @@ const CourseManagement = () => {
     const [teachers, setTeachers] = useState([]);
     const [sections, setSections] = useState([]);
 
-    // Fetch courses from API
     useEffect(() => {
         fetchCourses();
         fetchTeachers();
@@ -120,7 +118,6 @@ const CourseManagement = () => {
             setNewCourseData((prev) => ({
                 ...prev,
                 instructors: values,
-                // prune instructorSections for removed instructors
                 instructorSections: Object.fromEntries(
                     Object.entries(prev.instructorSections || {}).filter(([key]) => values.includes(key))
                 ),
@@ -128,12 +125,10 @@ const CourseManagement = () => {
             return;
         }
         
-        // If semester is changed, clear all instructor section assignments to prevent mismatches
         if (name === 'semester') {
             setNewCourseData((prev) => ({
                 ...prev,
                 [name]: value,
-                // Clear all instructor section assignments when semester changes
                 instructorSections: {},
             }));
             return;
@@ -159,7 +154,6 @@ const CourseManagement = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                // Find the course ID from the current courses list
                 const courseToUpdate = courses.find(c => c.courseCode === newCourseData.courseCode);
                 if (!courseToUpdate) {
                     Swal.fire({
@@ -256,13 +250,11 @@ const CourseManagement = () => {
         }
     };
 
-    // Get unique departments from courses
     const departments = useMemo(() => {
         const depts = new Set(courses.map(c => c.department).filter(Boolean));
         return ['All Departments', ...Array.from(depts)];
     }, [courses]);
 
-    // Calculate statistics from API response or courses
     const stats = useMemo(() => {
         const activeCourses = courses.filter(c => c.status === 'active').length;
         return {
@@ -271,11 +263,9 @@ const CourseManagement = () => {
         };
     }, [courses]);
 
-    // Filter and search courses (client-side filtering for better UX)
     const filteredCourses = useMemo(() => {
         let result = courses;
 
-        // Search filter
         if (searchTerm.trim()) {
             const lowerSearchTerm = searchTerm.toLowerCase();
             result = result.filter(course =>
@@ -542,7 +532,6 @@ const CourseManagement = () => {
                                         </div>
                                         {newCourseData.instructors.map((instId) => {
                                             const selectedSections = newCourseData.instructorSections?.[instId] || [];
-                                            // Filter sections to only show those matching the course's semester
                                             const relevantSections = sections.filter(s => s.semester === newCourseData.semester);
                                             return (
                                                 <div key={instId} className="col-span-1 sm:col-span-2 border rounded-lg p-3 bg-gray-50">

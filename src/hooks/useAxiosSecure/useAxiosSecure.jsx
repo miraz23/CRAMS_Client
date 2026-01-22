@@ -14,8 +14,6 @@ const useAxiosSecure = () => {
 
     axiosSecure.interceptors.request.use(
         (config) => {
-            // Backend uses cookies for authentication, so no need to set authorization header
-            // Cookies are automatically sent with withCredentials: true
             return config;
         },
         (error) => {

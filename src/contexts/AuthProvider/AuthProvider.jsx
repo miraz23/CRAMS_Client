@@ -7,7 +7,6 @@ const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Check authentication status on mount
     useEffect(() => {
         checkAuthStatus();
     }, []);
@@ -35,16 +34,13 @@ const AuthProvider = ({ children }) => {
             let endpoint = '';
             let loginData = {};
 
-            // Determine which endpoint to use based on role
             if (role === 'Admin') {
                 endpoint = `${API_BASE_URL}/admin/login`;
                 loginData = { email, password };
             } else if (role === 'Student') {
                 endpoint = `${API_BASE_URL}/student/login`;
-                // Student login uses studentId instead of email
                 loginData = { studentId: email, password };
             } else {
-                // Advisor/Teacher login - adjust based on your backend
                 endpoint = `${API_BASE_URL}/teacher/login`;
                 loginData = { email, password };
             }
@@ -57,13 +53,10 @@ const AuthProvider = ({ children }) => {
                 const userData = response.data.data || response.data.user || {};
                 let derivedRole = role;
                 
-                // For Admin, use privilege from response
                 if (role === 'Admin') {
                     derivedRole = userData.privilege || role;
                 } 
-                // For Teacher, check if privilege is "Advisor" to set role as "Advisor"
                 else if (role === 'Teacher' || role === 'Advisor') {
-                    // Check if the teacher has "Advisor" privilege
                     if (userData.privilege === 'Advisor') {
                         derivedRole = 'Advisor';
                     } else {
@@ -100,7 +93,6 @@ const AuthProvider = ({ children }) => {
 
             const { email, password, role, fullName } = userData;
 
-            // Advisor/Teacher registration
             endpoint = `${API_BASE_URL}/teacher/register`;
             registrationData = { name: fullName, email, password };
 
@@ -120,11 +112,8 @@ const AuthProvider = ({ children }) => {
     };
 
     const updateUser = async (updatedData) => {
-        // Update user profile via backend API
-        // This will depend on your backend endpoints
         try {
             const role = localStorage.getItem('userRole');
-            // Implement based on your backend API structure
             return { success: true };
         } catch (error) {
             console.error('Update user error:', error);
@@ -156,7 +145,6 @@ const AuthProvider = ({ children }) => {
             return { success: true };
         } catch (error) {
             console.error('Logout error:', error);
-            // Clear local state even if API call fails
             setUser(null);
             localStorage.removeItem('userRole');
             localStorage.removeItem('studentUser');

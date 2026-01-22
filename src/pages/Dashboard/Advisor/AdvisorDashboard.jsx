@@ -56,7 +56,6 @@ export default function AdvisorDashboard() {
       setLoading(true);
       const data = await getAdvisorDashboard();
  
-      // Update stats
       const summary = data.summary || {};
       setStats([
         {
@@ -87,7 +86,6 @@ export default function AdvisorDashboard() {
         },
       ]);
  
-      // Format urgent reviews
       const formattedUrgentReviews = (data.urgentReviews || []).map((review) => {
         const submittedDate = review.submittedAt ? new Date(review.submittedAt) : new Date();
         const now = new Date();
@@ -105,7 +103,6 @@ export default function AdvisorDashboard() {
       });
       setUrgentReviews(formattedUrgentReviews);
  
-      // Format recent activity
       const formattedActivity = (data.recentActivity || []).map((activity) => {
         const actedDate = activity.actedAt ? new Date(activity.actedAt) : new Date();
         const now = new Date();

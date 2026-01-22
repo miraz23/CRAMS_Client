@@ -16,7 +16,6 @@ import StudentSidebar from "../../../Components/StudentSidebar/StudentSidebar";
 import { fetchRoutine } from "../../../api/studentApi";
 import useAuth from "../../../hooks/useAuth/useAuth";
 
-// Helper function to parse time string to minutes
 const parseTimeToMinutes = (timeStr) => {
   if (!timeStr) return null;
   const [time, period] = timeStr.split(' ');
@@ -27,7 +26,6 @@ const parseTimeToMinutes = (timeStr) => {
   return hour24 * 60 + parseInt(minutes || 0, 10);
 };
 
-// Helper function to check if a time falls within a time range
 const isTimeInRange = (timeStr, startTime, endTime) => {
   const timeMinutes = parseTimeToMinutes(timeStr);
   const startMinutes = parseTimeToMinutes(startTime);
@@ -37,7 +35,6 @@ const isTimeInRange = (timeStr, startTime, endTime) => {
   return timeMinutes >= startMinutes && timeMinutes < endMinutes;
 };
 
-// Course Details Modal Component
 const CourseDetailsModal = ({ course, isOpen, onClose }) => {
   if (!isOpen || !course) return null;
 
@@ -118,12 +115,10 @@ const CourseDetailsModal = ({ course, isOpen, onClose }) => {
   );
 };
 
-// Schedule Grid Component
 const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
   const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed'];
   const dayNames = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'];
   
-  // Time slots based on the image
   const timeSlots = [
     { start: '10:40 AM', end: '11:30 AM' },
     { start: '11:30 AM', end: '12:20 PM' },
@@ -134,7 +129,6 @@ const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
     { start: '3:30 PM', end: '4:20 PM' },
   ];
 
-  // Create a map of time slots to classes
   const scheduleMap = {};
   days.forEach((day) => {
     scheduleMap[day] = {};
@@ -143,7 +137,6 @@ const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
     });
   });
 
-  // Populate schedule map - place classes in the time slot they fall into
   Object.keys(weeklySchedule).forEach((day) => {
     if (!scheduleMap[day]) return;
     weeklySchedule[day].forEach((cls) => {
@@ -151,14 +144,11 @@ const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
       const classEndMinutes = parseTimeToMinutes(cls.endTime);
       
       if (classStartMinutes !== null) {
-        // Find which time slot this class belongs to
         timeSlots.forEach((slot, idx) => {
           const slotStartMinutes = parseTimeToMinutes(slot.start);
           const slotEndMinutes = parseTimeToMinutes(slot.end);
           
-          // Check if class overlaps with this time slot
           if (slotStartMinutes !== null && slotEndMinutes !== null) {
-            // Class starts during this slot or overlaps with it
             if ((classStartMinutes >= slotStartMinutes && classStartMinutes < slotEndMinutes) ||
                 (classEndMinutes !== null && classEndMinutes > slotStartMinutes && classStartMinutes < slotEndMinutes)) {
               scheduleMap[day][idx].push(cls);
@@ -197,7 +187,6 @@ const ScheduleGrid = ({ weeklySchedule, courses, onCourseClick }) => {
                   <td key={`${day}-${slotIdx}`} className="border border-gray-300 p-2 align-top" style={{ minHeight: '60px', width: '150px' }}>
                     {scheduleMap[day] && scheduleMap[day][slotIdx] && scheduleMap[day][slotIdx].length > 0 ? (
                       scheduleMap[day][slotIdx].map((cls, idx) => {
-                        // Find the full course details from the courses array
                         const fullCourse = courses.find(c => c.id === cls.courseId || c._id === cls.courseId);
                         return (
                           <div

@@ -36,7 +36,6 @@ export default function PendingReviews() {
       const data = await getPendingReviews();
       setSummary(data.summary || { totalPending: 0, withIssues: 0 });
  
-      // Format reviews for display
       const formattedReviews = (data.reviews || []).map((review, index) => ({
         id: index + 1,
         name: review.studentName || "Unknown Student",
@@ -80,7 +79,6 @@ export default function PendingReviews() {
       return;
     }
  
-    // Debug: Log registration IDs
     console.log("Approving registrations:", {
       studentId: review.studentMongoId,
       registrationIds: review.registrationIds,
@@ -115,7 +113,6 @@ export default function PendingReviews() {
           text: `${response.data?.approvedCount || review.totalCourses} course(s) for ${review.name} have been approved.`,
           timer: 2000,
         });
-        // Refresh the reviews list
         fetchPendingReviews();
       }
     } catch (error) {
@@ -171,7 +168,6 @@ export default function PendingReviews() {
           text: `All courses for ${review.name} have been rejected.`,
           timer: 2000,
         });
-        // Refresh the reviews list
         fetchPendingReviews();
       }
     } catch (error) {
@@ -217,9 +213,7 @@ export default function PendingReviews() {
           text: `${course.code} has been approved.`,
           timer: 2000,
         });
-        // Refresh the reviews list
         fetchPendingReviews();
-        // Close the detail view if it's open
         setSelectedReview(null);
       }
     } catch (error) {
@@ -274,9 +268,7 @@ export default function PendingReviews() {
           text: `${course.code} has been rejected.`,
           timer: 2000,
         });
-        // Refresh the reviews list
         fetchPendingReviews();
-        // Close the detail view if it's open
         setSelectedReview(null);
       }
     } catch (error) {

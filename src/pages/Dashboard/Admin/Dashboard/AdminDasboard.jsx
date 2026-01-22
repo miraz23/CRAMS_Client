@@ -57,7 +57,6 @@ const AdminDashboard = () => {
       const userOverview = userOverviewRes.data.data || {};
       const sections = sectionsRes.data.data || [];
 
-      // Update stats
       setStats([
         {
           label: "Total Courses",
@@ -85,7 +84,6 @@ const AdminDashboard = () => {
         },
       ]);
 
-      // Generate recent activity from courses (last 4 courses)
       const recentCourses = courses.slice(0, 4).map((course, index) => ({
         type: index === 0 ? "New course added" : "Course available",
         details: `${course.courseCode} ${course.courseName}`,
@@ -93,7 +91,6 @@ const AdminDashboard = () => {
       }));
       setRecentActivity(recentCourses);
 
-      // Generate system alerts based on course availability
       const alerts = [];
       courses.forEach((course) => {
         const availableSeats = course.availableSeats || 0;
@@ -124,7 +121,6 @@ const AdminDashboard = () => {
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);
-      // Navigate anyway even if API call fails
       navigate("/login");
     }
   };

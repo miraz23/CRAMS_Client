@@ -7,7 +7,6 @@ import DashboardLayout from "../layouts/DashboardLayout/DashboardLayout.jsx";
 import PrivateRoutes from "../routes/PrivateRoutes/PrivateRoutes.jsx";
 import Dashboard from "../pages/Dashboard/Dashboard.jsx";
 import Forbidden from "../pages/Forbidden/Forbidden.jsx";
-// Student Pages
 import StdDashboard from "../pages/Dashboard/Student/StdDashboard";
 import CourseSelection from "../pages/Dashboard/Student/CourseSelection";
 import MySchedule from "../pages/Dashboard/Student/MySchedule";
@@ -15,7 +14,6 @@ import Routine from "../pages/Dashboard/Student/Routine";
 import RegistrationStatus from "../pages/Dashboard/Student/RegistrationStatus";
 import ExtraCreditRequest from "../pages/Dashboard/Student/ExtraCreditRequest";
 import ContactAdvisor from "../pages/Dashboard/Student/ContactAdvisor";
-// Admin Pages
 import AdminDashboard from "../pages/Dashboard/Admin/Dashboard/AdminDasboard";
 import CourseManagement from "../pages/Dashboard/Admin/CourseManagement/CourseManagement";
 import SectionManagement from "../pages/Dashboard/Admin/SectionManagement/SectionManagement";

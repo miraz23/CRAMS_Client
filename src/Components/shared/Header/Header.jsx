@@ -25,7 +25,6 @@ const Header = () => {
   const isHome = location.pathname === "/";
 
   const headerClassName = useMemo(() => {
-    // Slightly different treatment when not on home (login/register pages).
     const base =
       "sticky top-0 z-50 border-b transition-colors duration-200 supports-[backdrop-filter]:backdrop-blur";
     const home =
@@ -44,12 +43,10 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    // Close mobile menu on route changes.
     setIsOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
-    // Lock scroll when mobile menu is open.
     const prev = document.body.style.overflow;
     if (isOpen) document.body.style.overflow = "hidden";
     return () => {

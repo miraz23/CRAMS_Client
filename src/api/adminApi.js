@@ -6,13 +6,11 @@ const adminClient = axios.create({
   withCredentials: true,
 });
 
-// Auth
 export const loginAdmin = (email, password) =>
   adminClient.post('/login', { email, password });
 
 export const logoutAdmin = () => adminClient.post('/logout');
 
-// Dashboard bundles commonly used admin data
 export const getDashboardData = async () => {
   const [coursesRes, userOverviewRes, sectionsRes] = await Promise.all([
     adminClient.get('/courses'),
@@ -27,13 +25,11 @@ export const getDashboardData = async () => {
   };
 };
 
-// Courses
 export const listCourses = (params = {}) => adminClient.get('/courses', { params });
 export const createCourse = (payload) => adminClient.post('/courses', payload);
 export const updateCourse = (id, payload) => adminClient.put(`/courses/${id}`, payload);
 export const deleteCourse = (id) => adminClient.delete(`/courses/${id}`);
 
-// Sections
 export const listSections = (params = {}) => adminClient.get('/sections', { params });
 export const getSection = (id) => adminClient.get(`/sections/${id}`);
 export const createSection = (payload) => adminClient.post('/sections', payload);
@@ -43,7 +39,6 @@ export const populateSectionsFromStudents = () => adminClient.post('/sections/po
 export const updateSectionCourseSchedule = (sectionId, courseId, schedule) =>
   adminClient.put(`/sections/${sectionId}/courses/${courseId}/schedule`, { schedule });
 
-// User management
 export const getUserOverview = () => adminClient.get('/user-management/overview');
 export const listStudents = () => adminClient.get('/user-management/students');
 export const listTeachers = () => adminClient.get('/user-management/teachers');
@@ -62,7 +57,6 @@ export const updateAdmin = (id, payload) =>
 export const deleteAdmin = (id) =>
   adminClient.delete(`/${id}`);
 
-// CSV Upload for Admin Creation
 export const uploadAdminCSV = (formData) =>
   adminClient.post('/upload-csv', formData, {
     headers: {
@@ -70,7 +64,6 @@ export const uploadAdminCSV = (formData) =>
     },
   });
 
-// CSV Upload for Student Creation
 export const uploadStudentCSV = (formData) =>
   adminClient.post('/upload-student-csv', formData, {
     headers: {
@@ -78,7 +71,6 @@ export const uploadStudentCSV = (formData) =>
     },
   });
 
-// CSV Upload for Teacher Creation
 export const uploadTeacherCSV = (formData) =>
   adminClient.post('/upload-teacher-csv', formData, {
     headers: {
@@ -86,7 +78,6 @@ export const uploadTeacherCSV = (formData) =>
     },
   });
 
-// System Settings
 export const getSystemSettings = () => adminClient.get('/system-settings');
 export const updateSystemSettings = (payload) => adminClient.put('/system-settings', payload);
 

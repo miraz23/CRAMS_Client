@@ -12,23 +12,19 @@ const SystemSettings = () => {
   const { logoutUser } = useAuth();
   const { role } = useUserRole();
   
-  // State for settings
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   
-  // Registration period settings
   const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const [registrationStartDate, setRegistrationStartDate] = useState('');
   const [registrationEndDate, setRegistrationEndDate] = useState('');
 
-  // Load settings on component mount
   useEffect(() => {
     loadSettings();
   }, []);
 
-  // Clear messages after 5 seconds
   useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
@@ -45,7 +41,6 @@ const SystemSettings = () => {
       const response = await getSystemSettings();
       const data = response.data.data;
       
-      // Set registration period settings
       setRegistrationEnabled(data.registrationPeriod?.enabled || false);
       setRegistrationStartDate(
         data.registrationPeriod?.startDate 
@@ -72,7 +67,6 @@ const SystemSettings = () => {
       setError(null);
       setSuccessMessage(null);
 
-      // Validate registration period dates if enabled
       if (registrationEnabled && registrationStartDate && registrationEndDate) {
         const start = new Date(registrationStartDate);
         const end = new Date(registrationEndDate);

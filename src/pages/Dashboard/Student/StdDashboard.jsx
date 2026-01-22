@@ -80,7 +80,6 @@ export default function StdDashboard() {
     [regSummary]
   );
 
-  // Format registration deadline
   const formatDeadline = () => {
     const regPeriod = systemSettings?.registrationPeriod;
     if (!regPeriod || !regPeriod.enabled) {
@@ -97,7 +96,6 @@ export default function StdDashboard() {
     return "Check portal notice";
   };
 
-  // Format days with classes
   const formatActiveDays = () => {
     const days = scheduleSummary.daysWithClasses;
     if (!days || days.length === 0) {

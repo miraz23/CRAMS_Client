@@ -21,7 +21,6 @@ import Swal from "sweetalert2";
 import useUserRole from "../../../../hooks/useUserRole/useUserRole";
 import useAuth from "../../../../hooks/useAuth/useAuth";
 
-// Stat Card Component
 const StatCard = ({ title, count, icon }) => (
   <div className="flex justify-between items-center bg-white p-6 rounded-lg shadow-sm border border-gray-200">
     <div>
@@ -34,7 +33,6 @@ const StatCard = ({ title, count, icon }) => (
   </div>
 );
 
-// Status Tag Component
 const StatusTag = ({ children, type }) => {
   const baseClasses = "text-xs font-semibold px-2 py-0.5 rounded-full mr-2";
   let colorClasses = "";
@@ -47,7 +45,6 @@ const StatusTag = ({ children, type }) => {
   return <span className={`${baseClasses} ${colorClasses}`}>{children}</span>;
 };
 
-// Edit Modal Component
 const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
   const [formData, setFormData] = useState(user);
 
@@ -292,7 +289,6 @@ const EditModal = ({ user, userType, onClose, onSave, isSuperAdmin }) => {
   );
 };
 
-// Main User Management Component
 const UserManagement = () => {
   const navigate = useNavigate();
   const { logoutUser } = useAuth();
@@ -466,7 +462,6 @@ const UserManagement = () => {
           timer: 1500,
         });
         
-        // Refresh the current tab
         if (activeTab === 'Students') {
           fetchStudents();
         } else if (activeTab === 'Teachers') {
@@ -477,7 +472,6 @@ const UserManagement = () => {
           fetchAdmins();
         }
         
-        // Refresh counts if privilege changed (teacher/advisor) or if admin was updated
         if (activeTab === 'Teachers' || activeTab === 'Advisors' || activeTab === 'Admins') {
           fetchUserOverviewData();
           if (activeTab === 'Admins' && isSuperAdmin) {
@@ -517,7 +511,6 @@ const UserManagement = () => {
 
     try {
       let response;
-      // Change Advisor back to Teacher
       response = await updateTeacher(user.id, { ...user, privilege: 'Teacher' });
 
       if (response?.data?.success) {
@@ -528,9 +521,7 @@ const UserManagement = () => {
           timer: 1500,
         });
 
-        // Refresh the lists
         fetchTeachers();
-        // Refresh counts
         fetchUserOverviewData();
       }
     } catch (error) {
@@ -590,7 +581,6 @@ const UserManagement = () => {
           fetchAdmins();
         }
         
-        // Refresh counts
         fetchUserOverviewData();
         if (activeTab === 'Admins' && isSuperAdmin) {
           fetchAdminsCount();
@@ -650,13 +640,10 @@ const UserManagement = () => {
           width: '600px',
         });
 
-        // Refresh admin list
         fetchAdmins();
-        // Refresh counts
         fetchAdminsCount();
         setCsvFile(null);
         
-        // Reset file input
         const fileInput = document.getElementById('csvFileInput');
         if (fileInput) fileInput.value = '';
       }
@@ -716,13 +703,10 @@ const UserManagement = () => {
           width: '600px',
         });
 
-        // Refresh student list
         fetchStudents();
-        // Refresh counts
         fetchUserOverviewData();
         setStudentCsvFile(null);
         
-        // Reset file input
         const fileInput = document.getElementById('studentCsvFileInput');
         if (fileInput) fileInput.value = '';
       }
@@ -782,13 +766,10 @@ const UserManagement = () => {
           width: '600px',
         });
 
-        // Refresh teacher list
         fetchTeachers();
-        // Refresh counts
         fetchUserOverviewData();
         setTeacherCsvFile(null);
         
-        // Reset file input
         const fileInput = document.getElementById('teacherCsvFileInput');
         if (fileInput) fileInput.value = '';
       }
@@ -809,7 +790,6 @@ const UserManagement = () => {
     if (activeTab === 'Students') {
       users = students;
     } else if (activeTab === 'Teachers') {
-      // Show all teachers including those with Advisor privilege
       users = teachers;
     } else if (activeTab === 'Advisors') {
       users = teachers.filter(t => (t.privilege || '').toLowerCase() === 'advisor');

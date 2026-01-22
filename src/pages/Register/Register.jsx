@@ -1,4 +1,3 @@
-// src/pages/Register.jsx
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,18 +16,15 @@ const Register = () => {
 
   const primaryBlue = "rgb(19, 102, 194)";
 
-  // ---------- VALIDATION ----------
   const isValidEmail = (e) =>
     /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e);
   const isIIUCEmail = (e) => e.toLowerCase().endsWith("@iiuc.ac.bd");
   const isValidStudentId = (id) => /^[A-Z][0-9]{6}$/.test(id);
 
-  // ---------- SUBMIT ----------
   const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // 1. Email
     if (!isValidEmail(email)) {
       Swal.fire({
         icon: "error",
@@ -48,7 +44,6 @@ const Register = () => {
       return;
     }
 
-    // 2. Student ID (only for Student)
     if (role === "Student" && !isValidStudentId(studentId)) {
       Swal.fire({
         icon: "error",
@@ -70,7 +65,6 @@ const Register = () => {
 
       await createUser(userData);
 
-      // Success
       Swal.fire({
         icon: "success",
         title: `Registered as ${role}!`,
@@ -79,7 +73,6 @@ const Register = () => {
         showConfirmButton: false,
       });
 
-      // Redirect to login
       navigate("/login");
     } catch (err) {
       console.error("Registration error:", err);

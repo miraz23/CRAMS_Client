@@ -43,7 +43,6 @@ export default function MyStudents() {
       
       setSummary(data.summary || { totalStudents: 0, pendingReviews: 0, averageCGPA: null });
       
-      // Format students for display
       const formattedStudents = (data.students || []).map((student, index) => ({
         id: index + 1,
         name: student.name || "Unknown Student",

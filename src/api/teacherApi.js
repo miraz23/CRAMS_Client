@@ -1,13 +1,11 @@
 import axios from 'axios';
 import API_BASE_URL from '../config/api';
 
-// Axios instance pre-configured for teacher/advisor endpoints
 const teacherClient = axios.create({
   baseURL: `${API_BASE_URL}/teacher`,
   withCredentials: true,
 });
 
-// Advisor Dashboard APIs
 export const getAdvisorDashboard = async (params = {}) => {
   const { data } = await teacherClient.get('/advisor/dashboard', { params });
   return data?.data || { summary: {}, urgentReviews: [], recentActivity: [] };
@@ -33,7 +31,6 @@ export const getApprovedCourses = async (params = {}) => {
   return data?.data || { summary: {}, courses: [] };
 };
 
-// Approve/Reject course registrations
 export const approveRegistration = async (registrationId, feedback = '') => {
   const { data } = await teacherClient.post(`/advisor/approve/${registrationId}`, { feedback });
   return data;
@@ -44,7 +41,6 @@ export const rejectRegistration = async (registrationId, rejectionReason = '') =
   return data;
 };
 
-// Bulk approve/reject
 export const bulkApproveRegistrations = async (studentId, registrationIds, feedback = '') => {
   const { data } = await teacherClient.post(`/advisor/bulk-approve/${studentId}`, { 
     registrationIds, 
@@ -61,7 +57,6 @@ export const bulkRejectRegistrations = async (studentId, registrationIds, reject
   return data;
 };
 
-// Extra Credit Request APIs
 export const getPendingExtraCreditRequests = async () => {
   const { data } = await teacherClient.get('/advisor/extra-credit-requests/pending');
   return data?.data || [];
