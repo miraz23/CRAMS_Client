@@ -1,13 +1,11 @@
 # CRAMS
 
-This repository contains two main folders:
-
-- `CRAMS_Client` - React frontend for the course registration and academic management system.
-- `CRAMS_Server` - Express/MongoDB backend API server.
-
 ## Overview
 
 ### CRAMS_Client
+
+Frontend: https://crams-client.vercel.app/
+Frontend Repository: https://github.com/miraz23/CRAMS_Client
 
 The client is built with React, Vite, Tailwind CSS, React Router, and Axios. It provides UI flows for:
 
@@ -34,6 +32,9 @@ Key files:
 
 The server is built with Express and MongoDB (Mongoose). It exposes API routes for admin, student, and teacher functionality.
 
+Backend API: https://crams-server.vercel.app/
+Backend Repository: https://github.com/miraz23/CRAMS_Server
+
 Key files:
 
 - `server.js` - app setup, middleware, routers, and error handling
@@ -58,15 +59,22 @@ The current CRAMS implementation includes:
 
 ## Documentation and Project References
 
-Additional documentation is available in the repository under `/docs` and in the client folder:
+Additional documentation is available in the client and server repository:
 
-- `docs/3.CRAMS_presentation.pptx.pdf` - project presentation and high-level feature overview
-- `docs/7.Process Model Justification Report_ CRAMS.pdf` - development process justification, technical context, and project approach
-- `docs/9.Test Cases & Testing_Report.pdf` - authentication, role flows, and feature test cases including student, advisor, admin, and super admin login tests
-- `CRAMS_Client/4.SRS_document_crams.pdf` - functional and non-functional requirements
-- `CRAMS_Client/8.Prototype_crams.pdf` - UI and prototype design reference
-- `CRAMS_Client/7.Process Model Justification Report_ CRAMS.pdf` - project process details
-- `CRAMS_Client/12.Ethical Reflection and Quality Considerations Report_ CRAMS.pdf` - quality and ethical considerations
+### Server Documentation (`CRAMS_Server`)
+
+- `CRAMS_Server/9.Test Cases & Testing_Report.pdf` - authentication, role flows, and feature test cases including student, advisor, admin, and super admin login tests
+- `CRAMS_Server/10.Crams.postman_collection.json` - Postman collection containing API requests for backend endpoint testing and validation
+- `CRAMS_Server/5. UML Diagram` - system design diagrams representing classes, interactions, and overall software structure
+- `CRAMS_Server/6. ER Diagram` - database entity relationships, attributes, and data modeling structure
+- `CRAMS_Server/7.Process Model Justification Report_ CRAMS.pdf` - development process justification, technical context, and project approach
+
+### Client Documentation (`CRAMS_Client`)
+
+- `CRAMS_Client/4.SRS_document_crams.pdf` - functional and non-functional requirements of the system
+- `CRAMS_Client/8.Prototype_crams.pdf` - UI prototype and design reference
+- `CRAMS_Client/7.Process Model Justification Report_ CRAMS.pdf` - project development process details and methodology
+- `CRAMS_Client/12.Ethical Reflection and Quality Considerations Report_ CRAMS.pdf` - quality assurance practices, ethical considerations, and software quality evaluation
 
 ## Prerequisites
 
